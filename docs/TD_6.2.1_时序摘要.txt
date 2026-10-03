@@ -16,10 +16,10 @@ Report Scheme       : 10 end point(s) per path group, 1 path(s) per end point
 Check Status
 -------------
 
-Corner   | Max      Min     
+Corner   | Max      Min
 ------------------------------------
-Slow     | yes      yes     
-Fast     | yes      yes     
+Slow     | yes      yes
+Fast     | yes      yes
 
 
 Timing Status
@@ -94,4 +94,3 @@ Utilization Statistics
   #treg                     0
 #pll                        2   out of      4   50.00%
 #gclk                       2   out of     16   12.50%
-
