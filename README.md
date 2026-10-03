@@ -61,7 +61,7 @@ Linux 命令行编译：
 TD_BIN=/你的TD安装目录/bin/td.sh bash prj/build_tf_image.sh
 ```
 
-脚本优先使用 `TD_BIN`，其次查找 PATH 中的 `td.sh`，最后尝试当前用户目录下的 `~/.local/opt/TD_Release_2026.2_NL/bin/td.sh`。本项目用 TD 6.2.3 验证，设备 EG4S20BG256，编译需要已安装的 TD 工具及许可证。
+本项目必须使用 **TD 6.2.1（Build 175876）**，设备 EG4S20BG256，编译需要已安装的 TD 工具及许可证。脚本优先使用 `TD_BIN`，其次使用 `~/.local/opt/TD_6.2.1_Release_175876_NL/bin/td.sh`，最后查找 PATH 中的 `td.sh`。脚本会拒绝其他 TD 版本，并检查是否生成本次编译的新 bit 文件及最终建立/保持时序是否通过。
 
 编译生成 `prj/TF_IMAGE_Runs/phy_1/TF_IMAGE.bit`。验证时序后可复制到 `release/TF_IMAGE.bit`；编译中间目录与日志已在 `.gitignore` 中排除。
 

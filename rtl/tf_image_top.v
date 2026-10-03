@@ -70,6 +70,8 @@ module tf_image_top (
         .locked(video_lock & memory_lock),.load_error(load_error_sync[1]),
         .run_enable(startup_done),.fast_start(has_loaded));
     wire ready_clock=sys_rst_n & startup_done & video_lock & memory_lock;
+    // Asynchronous assertion, three-clock synchronous release per domain.
+    // tf_image.sdc exempts only asynchronous requests entering these synchronizers.
     reg [2:0] sd_reset_pipe=0,mem_reset_pipe=0,video_reset_pipe=0;
     always @(posedge sd_clk or negedge ready_clock)
         if(!ready_clock) sd_reset_pipe<=0;else sd_reset_pipe<={sd_reset_pipe[1:0],1'b1};

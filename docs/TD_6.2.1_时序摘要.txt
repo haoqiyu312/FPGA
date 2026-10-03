@@ -1,0 +1,97 @@
+Created by          : Tang Dynasty v6.2.175876
+                    : Copyright (c) 2012-2025 Anlogic Inc.
+Generated           : Sat Oct  3 20:57:48 2026
+
+Top Model           : tf_image_top
+Device              : EG4S20BG256
+Speed               : NA
+STA coverage        : 99.83%
+Constraint File     : /home/hqy/github/FPGA/constraints/tf_image.sdc;
+Confidence          : Routed
+Check Corner        : Both (Slow and Fast)
+CRPR Enabled        : Yes
+Report Scheme       : 10 end point(s) per path group, 1 path(s) per end point
+
+
+Check Status
+-------------
+
+Corner   | Max      Min     
+------------------------------------
+Slow     | yes      yes     
+Fast     | yes      yes     
+
+
+Timing Status
+--------------------
+	SWNS: 0.152ns, STNS: 0.000ns
+	HWNS: 0.030ns, HTNS: 0.000ns
+	Period Check WNS: 0.000ns
+
+
+Clock Summary
+--------------------
+
+       Clock-Id:       C-Freq       Fanout   Clock-Name
+--------------------------------------------------------------------------------
+           clk0:       50.000          959   u_memory_pll/pll_inst.clkc[0]
+           clk1:       25.000          584   u_video_pll/pll_inst.clkc[1]
+           clk2:       40.000          489   u_memory_pll/pll_inst.clkc[1]
+           clk3:       50.000          267   sys_clk
+           clk4:      125.000           38   u_video_pll/pll_inst.clkc[0]
+           clk5:       40.000            1   u_memory_pll/pll_inst.clkc[2]
+--------------------------------------------------------------------------------
+
+       Name            Type         Rise(ns)   Fall(ns)          C-Period(ns)     C-Freq(MHz)          R-Period(ns)     R-Freq(MHz)         SWNS(ns)   STNS(ns)         HWNS(ns)   HTNS(ns)         Skew(ns)           Fanout        Max-Level        CC-From    CC-To
+       clk0           local            0.000     10.000                20.000          50.000                17.036          58.699            2.964      0.000            0.030      0.000            0.326              959               13             no       no
+       clk1           local            0.000     20.000                40.000          25.000                39.848          25.095            0.152      0.000            0.030      0.000            0.138              584               38             no       no
+       clk2           local            0.000     12.500                25.000          40.000                21.984          45.488            1.449      0.000            0.102      0.000            0.480              489               10             no       no
+       clk3           local            0.000     10.000                20.000          50.000                10.042          99.582            9.958      0.000            0.144      0.000            0.480              267                8             no       no
+       clk4           local            0.000      4.000                 8.000         125.000                 1.695         589.970            6.305      0.000            0.214      0.000            0.254               38                1             no       no
+       clk5           local           12.986      0.486                25.000          40.000                13.739          72.786            5.849      0.000           11.530      0.000            0.000                1                1             no       no
+
+Notes
+----------
+C-Period  :  constraint period
+C-Freq    :  constraint freq
+R-Period  :  report min period
+R-Freq    :  report fmax
+CC-From   :  has path(s) from cross-domain clock
+CC-To     :  has path(s) to cross-domain clock
+
+
+*   Clock R-Period data only takes intra-clock timing. SWNS/STNS/HWNS/HTNS take both intra-clock and inter-clock timing.
+*   If there is mismatch between R-Period and SWNS, check inter-clock timing of this clock as capture clock.
+*   SWNS/STNS/HWNS/HTNS of timing exception (SMCP/SMD) only counted in global Timing Status, not counted in Clock Summary.
+
+Intra clock domain timing
+--------------------------------------------------
+
+standard
+***Report Model: tf_image_top Device: EG4S20BG256***
+
+IO Statistics
+#IO                        37   out of    188   19.68%
+  #input                    9
+  #output                  28
+  #inout                    0
+
+Utilization Statistics
+#lut                     8418   out of  19600   42.95%
+#reg                     3485   out of  19600   17.78%
+#le                      9042
+  #lut only              5557   out of   9042   61.46%
+  #reg only               624   out of   9042    6.90%
+  #lut&reg               2861   out of   9042   31.64%
+#bram                      12   out of     64   18.75%
+  #bram9k                  12
+  #fifo9k                   0
+#bram32k                    0   out of     16    0.00%
+#dsp                        0   out of     29    0.00%
+#pad                       45   out of    188   23.94%
+  #ireg                     7
+  #oreg                    27
+  #treg                     0
+#pll                        2   out of      4   50.00%
+#gclk                       2   out of     16   12.50%
+
