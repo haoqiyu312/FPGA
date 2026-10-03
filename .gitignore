@@ -1,0 +1,46 @@
+# TD generated synthesis / place-and-route results
+/prj/*_Runs/
+/prj/log/
+/prj/.lock.f
+/prj/multirun_script.tcl
+/prj/run.sh
+/prj/*.log
+/prj/*.logw
+/prj/*.tmp
+*.db
+*.db-journal
+*.qor
+*.ts
+*.area
+*.timing
+*.log
+*.logw
+
+# Keep only the current downloadable bitstream
+*.bit
+!/release/TF_IMAGE.bit
+
+# Simulator outputs and scratch files
+*.vvp
+*.vcd
+*.fst
+*.out
+*.ppm
+bmp_bytes.hex
+
+# Python/editor/desktop generated files
+__pycache__/
+*.py[cod]
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# VMware/FUSE placeholders for files already deleted while open
+.fuse_hidden*
+
+# Obsolete GUI colorbar project
+/prj/HDMI_PROJECT.al
