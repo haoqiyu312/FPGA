@@ -14,7 +14,7 @@
 - 八位数码管显示 `01 OF 04`，每次按键蜂鸣提示。
 - 冷启动等待及失败重试，两个 HDMI 接口输出相同画面。
 
-HDMI 当前输出图片和加载动画。音频播放与视频文件解码尚未实现，蜂鸣器用于按键提示。
+HDMI 当前输出图片、加载动画及内置测试音：48 kHz、24 位双声道、1 kHz 正弦音，响半秒、静音半秒循环。使用 **HDMI_B** 接显示器，并从显示器耳机口验证声音。TF 卡 WAV 音频读取和视频文件解码尚未实现，蜂鸣器仍用于按键提示。
 
 ![中文界面与错误提示](docs/images/中文界面预览.png)
 
@@ -72,6 +72,7 @@ TD_BIN=/你的TD安装目录/bin/td.sh bash prj/build_tf_image.sh
 ```bash
 bash sim/run_catalog_tests.sh
 bash sim/run_ui_tests.sh
+bash sim/run_audio_tests.sh
 bash sim/run_loader_tests.sh
 ```
 
@@ -82,3 +83,5 @@ bash sim/run_loader_tests.sh
 ## 验证记录
 
 最新中文界面、字体像素、提示时长、错误持续显示和一拍字库输出对齐已通过仿真；动态总数按键、轮播、数码管测试通过。自动目录扫描和 307200 像素读取的验证结果见 [验证记录](docs/验证记录.md)。最新 bit 已完成布局布线与时序检查，实板中文显示需下载后确认。
+
+HDMI 音频结构、接口和实板检查步骤见 [HDMI 测试音说明](docs/HDMI测试音说明.md)。

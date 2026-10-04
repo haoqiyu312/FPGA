@@ -35,3 +35,7 @@ set_pin_assignment { digit_en[5] } { LOCATION = F10; IOSTANDARD = LVCMOS33; DRIV
 set_pin_assignment { digit_en[6] } { LOCATION = E11; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 8; PULLTYPE = NONE; }
 set_pin_assignment { digit_en[7] } { LOCATION = D11; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 8; PULLTYPE = NONE; }
 set_pin_assignment { buzzer_n } { LOCATION = H11; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 8; PULLTYPE = PULLUP; }
+
+# HDMI_B DDC, checked against HX4S20 board manual and reference pin.adc.
+set_pin_assignment { HDMI_DDC_SCL } { LOCATION = P2; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 8; PULLTYPE = PULLUP; }
+set_pin_assignment { HDMI_DDC_SDA } { LOCATION = R2; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 8; PULLTYPE = PULLUP; }

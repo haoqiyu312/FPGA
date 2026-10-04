@@ -218,9 +218,7 @@
           <Attr Name="CompileOrder" Val="26" />
         </FileInfo>
       </File>
-    </Verilog>
-    <VHDL>
-      <File Path="../rtl/vendor/hdmi_tx.vhd">
+      <File Path="../rtl/hdmi_test_audio.v">
         <FileInfo>
           <Attr Name="UsedInSyn" Val="true" />
           <Attr Name="UsedInP&amp;R" Val="true" />
@@ -228,7 +226,7 @@
           <Attr Name="CompileOrder" Val="27" />
         </FileInfo>
       </File>
-      <File Path="../rtl/vendor/enc_file/SerializerN_1_lvds.enc.vhd">
+      <File Path="../rtl/hdmi_video_stream.v">
         <FileInfo>
           <Attr Name="UsedInSyn" Val="true" />
           <Attr Name="UsedInP&amp;R" Val="true" />
@@ -236,7 +234,7 @@
           <Attr Name="CompileOrder" Val="28" />
         </FileInfo>
       </File>
-      <File Path="../rtl/vendor/enc_file/SerializerN_1_lvds_dat.enc.vhd">
+      <File Path="../rtl/hdmi_audio_output.v">
         <FileInfo>
           <Attr Name="UsedInSyn" Val="true" />
           <Attr Name="UsedInP&amp;R" Val="true" />
@@ -244,7 +242,7 @@
           <Attr Name="CompileOrder" Val="29" />
         </FileInfo>
       </File>
-      <File Path="../rtl/vendor/enc_file/TMDSEncoder.enc.vhd">
+      <File Path="../rtl/vendor/hdmi_audio/hdmi_1_4b_transmitter_core_wrapper.enc.v">
         <FileInfo>
           <Attr Name="UsedInSyn" Val="true" />
           <Attr Name="UsedInP&amp;R" Val="true" />
@@ -252,7 +250,7 @@
           <Attr Name="CompileOrder" Val="30" />
         </FileInfo>
       </File>
-      <File Path="../rtl/vendor/enc_file/DVITransmitter.enc.vhd">
+      <File Path="../rtl/vendor/hdmi_audio/hdmi_phy_warpper.v">
         <FileInfo>
           <Attr Name="UsedInSyn" Val="true" />
           <Attr Name="UsedInP&amp;R" Val="true" />
@@ -260,14 +258,24 @@
           <Attr Name="CompileOrder" Val="31" />
         </FileInfo>
       </File>
-    </VHDL>
+      <File Path="../rtl/vendor/hdmi_audio/lane_lvds_10_1.v">
+        <FileInfo>
+          <Attr Name="UsedInSyn" Val="true" />
+          <Attr Name="UsedInP&amp;R" Val="true" />
+          <Attr Name="BelongTo" Val="design_1" />
+          <Attr Name="CompileOrder" Val="32" />
+        </FileInfo>
+      </File>
+    </Verilog>
+    <VHDL>
+      </VHDL>
     <IP_FILE>
       <File Path="al_ip/video_pll/video_pll.ipc">
         <FileInfo>
           <Attr Name="UsedInSyn" Val="true" />
           <Attr Name="UsedInP&amp;R" Val="true" />
           <Attr Name="BelongTo" Val="design_1" />
-          <Attr Name="CompileOrder" Val="32" />
+          <Attr Name="CompileOrder" Val="33" />
         </FileInfo>
       </File>
     </IP_FILE>
@@ -277,7 +285,7 @@
           <Attr Name="UsedInSyn" Val="true" />
           <Attr Name="UsedInP&amp;R" Val="true" />
           <Attr Name="BelongTo" Val="constraint_1" />
-          <Attr Name="CompileOrder" Val="33" />
+          <Attr Name="CompileOrder" Val="34" />
         </FileInfo>
       </File>
     </ADC_FILE>
@@ -287,7 +295,7 @@
           <Attr Name="UsedInSyn" Val="true" />
           <Attr Name="UsedInP&amp;R" Val="true" />
           <Attr Name="BelongTo" Val="constraint_1" />
-          <Attr Name="CompileOrder" Val="34" />
+          <Attr Name="CompileOrder" Val="35" />
         </FileInfo>
       </File>
     </SDC_FILE>

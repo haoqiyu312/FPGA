@@ -17,3 +17,9 @@
 ## 示例照片
 
 四张示例照片来自 Pexels，页面及原图地址、转换参数见 `media/sources.json`。`media/originals/` 保留原图，`media/PIC01.BMP` 至 `PIC04.BMP` 是旋转/等比缩放/黑边填充后的上板素材。
+
+## HDMI 音频协议与物理层
+
+`rtl/vendor/hdmi_audio/` 中的加密 HDMI 1.4b 核、`hdmi_phy_warpper.v` 和 `lane_lvds_10_1.v` 来自赛题资料 `lab_ex5_i2s`，保持原始字节。协议编码和器件 DDR 串行发送复用该厂商 IP，不属于本项目自主算法。现工程不再实例化原 DVI 发射器。
+
+`hdmi_test_audio.v`、`hdmi_video_stream.v` 和 `hdmi_audio_output.v` 为本项目实现。测试音直接在像素时钟域产生 PCM 和固定比率的 N/CTS，不使用参考例程的音频 PLL、I2S 音源/接收器及 ACR 周期测量模块。仓库不分发厂商说明文档或工具许可证。

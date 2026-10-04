@@ -1,5 +1,5 @@
 // Automatically indexed FAT32/BMP -> embedded SDRAM -> existing video transmitter.
-// KEY1(A2) is reset. Both HDMI ports show the same image; no audio in this step.
+// KEY1(A2) is reset. Both HDMI ports mirror picture and test audio; EDID uses HDMI_B.
 module tf_image_top (
     input wire sys_clk, input wire sys_rst_n,
     input wire key_next_n, key_prev_n, key_auto_n,
@@ -9,6 +9,7 @@ module tf_image_top (
     output wire buzzer_n,
     output wire HDMI_CLK_P, HDMI_D0_P, HDMI_D1_P, HDMI_D2_P,
     output wire HDMI_CLK_P1, HDMI_D0_P1, HDMI_D1_P1, HDMI_D2_P1,
+    output wire HDMI_DDC_SCL, inout wire HDMI_DDC_SDA,
     output wire sd_ncs, sd_dclk, sd_mosi, input wire sd_miso
 );
     key_beeper u_key_beeper (.clk(sys_clk),
@@ -208,10 +209,10 @@ module tf_image_top (
         end
     end
     wire [23:0] output_rgb=osd_cover_delay[19] ? osd_delay[19] : (show_image ? image_rgb : loading_delay[20]);
-    hdmi_tx #(.FAMILY("EG4")) u_hdmi (.PXLCLK_I(pixel_clk),.PXLCLK_5X_I(serial_clk),
-        .RST_N(~video_rst),.VGA_HS(delayed_hs),.VGA_VS(delayed_vs),
-        .VGA_DE(delayed_de),.VGA_RGB(output_rgb),.HDMI_CLK_P(HDMI_CLK_P),
-        .HDMI_D0_P(HDMI_D0_P),.HDMI_D1_P(HDMI_D1_P),.HDMI_D2_P(HDMI_D2_P));
+    hdmi_audio_output u_hdmi (.pixel_clk(pixel_clk),.serial_clk(serial_clk),
+        .rst(video_rst),.vs(delayed_vs),.de(delayed_de),.rgb(output_rgb),
+        .clk_p(HDMI_CLK_P),.d0_p(HDMI_D0_P),.d1_p(HDMI_D1_P),.d2_p(HDMI_D2_P),
+        .ddc_scl(HDMI_DDC_SCL),.ddc_sda(HDMI_DDC_SDA));
     assign HDMI_CLK_P1=HDMI_CLK_P;
     assign HDMI_D0_P1=HDMI_D0_P;
     assign HDMI_D1_P1=HDMI_D1_P;
