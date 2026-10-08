@@ -11,8 +11,9 @@ module image_key_control #(
  reg [2:0] ready_sync=0;
  wire next_press,prev_press,auto_press;
  reg [6:0] reset_count=0;
- reg [2:0] sw_meta=0,sw_sync=0,sw_stable=0,sw_previous=0;
- reg [19:0] sw_count=0;
+ reg [2:0] sw_meta=0,sw_sync=0,sw_stable=0,sw_previous=0,sw_candidate=0;
+ localparam integer SW_COUNT_BITS=DEBOUNCE_CYCLES<=1 ? 1 : $clog2(DEBOUNCE_CYCLES);
+ reg [SW_COUNT_BITS-1:0] sw_count=0;
  reg [25:0] second_count=0;
  reg [4:0] elapsed_seconds=0;
  wire [4:0] interval_seconds=sw_stable[1:0]==0 ? 5'd2 : sw_stable[1:0]==1 ? 5'd5 : sw_stable[1:0]==2 ? 5'd10 : 5'd20;
@@ -29,12 +30,19 @@ module image_key_control #(
  always @(posedge clk or negedge reset_n) begin
   if(!reset_n) begin
    ready_sync<=0;image_index<=0;reset_count<=0;auto_mode<=0;
-   sw_meta<=0;sw_sync<=0;sw_stable<=0;sw_previous<=0;sw_count<=0;
+   sw_meta<=0;sw_sync<=0;sw_stable<=0;sw_previous<=0;sw_candidate<=0;sw_count<=0;
    second_count<=0;elapsed_seconds<=0;
   end else begin
    ready_sync<={ready_sync[1:0],image_ready};
    sw_meta<={direction_switch,interval_switch};sw_sync<=sw_meta;sw_previous<=sw_stable;
-   if(sw_sync==sw_stable)sw_count<=0;
+   // Accept only one candidate held for consecutive synchronized samples.
+   // Changing between two non-stable values must restart the debounce window.
+   if(sw_sync==sw_stable)begin sw_candidate<=sw_sync;sw_count<=0;end
+   else if(sw_sync!=sw_candidate)begin
+    sw_candidate<=sw_sync;
+    if(DEBOUNCE_CYCLES<=1)begin sw_stable<=sw_sync;sw_count<=0;end
+    else sw_count<=1;
+   end
    else if(sw_count==DEBOUNCE_CYCLES-1)begin sw_stable<=sw_sync;sw_count<=0;end
    else sw_count<=sw_count+1'b1;
    if(auto_press) auto_mode<=~auto_mode;
