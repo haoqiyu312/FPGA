@@ -1,8 +1,10 @@
 // Read-only FAT32 VIDEO.RV stream; fragmented root and file chains are supported.
-// RVF1: one 512-byte header followed by sector-aligned, top-down RGB332 frames.
+// RVF1: RGB332 frames. With AUDIO_SUPPORT, RVF2 interleaves one padded
+// mu-law audio block after each frame; publish only after both are committed.
 module fat32_video_reader #(
     parameter integer WATCHDOG_BITS=28,
-    parameter integer FRAME_PIXELS=307200
+    parameter integer FRAME_PIXELS=307200,
+    parameter integer AUDIO_SUPPORT=0
 )(
     input wire clk,rst,sd_ready,memory_ready,
     output reg sector_req, output reg [31:0] sector_lba,
@@ -12,11 +14,13 @@ module fat32_video_reader #(
     input wire write_finish_toggle,
     output reg frame_toggle, input wire consumed_toggle,
     output reg write_bank, output reg [3:0] status,
-    output reg [7:0] fps
+    output reg [7:0] fps,
+    output reg audio_enabled,output reg audio_valid,
+    output wire [13:0] audio_address,output wire [7:0] audio_data
 );
     localparam WAIT_READY=0,REQUEST=1,RECEIVE=2,DECIDE=3,START_WRITE=4,
         WAIT_WRITE=5,WAIT_COMMIT=6,WAIT_PRESENT=7,ADVANCE=8,FAILED=9,SEEK_DIRECTORY=10,CHECK_LENGTH=11;
-    localparam BOOT=0,BPB=1,DIRECTORY=2,HEADER=3,DATA=4,FAT=5;
+    localparam BOOT=0,BPB=1,DIRECTORY=2,HEADER=3,DATA=4,FAT=5,AUDIO=6;
     reg [3:0] state;
     reg [2:0] kind,return_kind;
     reg [8:0] byte_index;
@@ -32,6 +36,22 @@ module fat32_video_reader #(
     reg [31:0] verify_bytes;
     reg [13:0] verify_frames;
     reg [15:0] width,height;
+    reg [31:0] audio_rate,audio_samples,audio_bytes,audio_format;
+    reg [14:0] audio_count;
+    reg audio_loaded;
+    assign audio_address=audio_count[13:0];
+    assign audio_data=sector_byte;
+    reg [31:0] expected_samples,expected_audio_bytes;
+    always @* case(header_fps)
+        3:begin expected_samples=16000;expected_audio_bytes=16384;end
+        4:begin expected_samples=12000;expected_audio_bytes=12288;end
+        5:begin expected_samples=9600;expected_audio_bytes=9728;end
+        default:begin expected_samples=0;expected_audio_bytes=0;end
+    endcase
+    wire is_audio=AUDIO_SUPPORT && magic==32'h32465652 && version==2;
+    wire audio_header_ok=header_fps>=3 && header_fps<=5 && audio_rate==48000 &&
+        audio_samples==expected_samples && audio_bytes==expected_audio_bytes && audio_format==1;
+    wire [31:0] frame_stride=FRAME_PIXELS+(audio_enabled ? audio_bytes : 0);
     reg [7:0] version,format_code,header_fps;
     reg [2:0] finish_sync,consumed_sync;
     reg memory_done;
@@ -40,7 +60,7 @@ module fat32_video_reader #(
     wire valid_cluster_size=sectors_per_cluster==1 || sectors_per_cluster==2 ||
         sectors_per_cluster==4 || sectors_per_cluster==8 || sectors_per_cluster==16 ||
         sectors_per_cluster==32 || sectors_per_cluster==64 || sectors_per_cluster==128;
-    wire header_ok=magic==32'h31465652 && version==1 && format_code==1 &&
+    wire header_ok=((magic==32'h31465652 && version==1) || (is_audio && audio_header_ok)) && format_code==1 &&
         width==640 && height==480 && header_fps>=1 && header_fps<=5 &&
         frame_bytes==FRAME_PIXELS && frame_count!=0 && file_size>=512 &&
         frame_count<=13981; // maximum number of 640x480 frames in a FAT32 file
@@ -56,6 +76,7 @@ module fat32_video_reader #(
           9:expected_name="V";default:expected_name=" ";
         endcase end
     endfunction
+    always @* audio_valid=AUDIO_SUPPORT && !rst && state==RECEIVE && kind==AUDIO && sector_valid;
     always @(posedge clk or posedge rst) begin
         if(rst) begin
             state<=WAIT_READY;kind<=BOOT;return_kind<=DIRECTORY;
@@ -67,6 +88,8 @@ module fat32_video_reader #(
             entry_cluster<=0;entry_size<=0;chain_hops<=0;entry_attr<=0;
             entry_live<=0;name_match<=0;found_file<=0;directory_end<=0;
             verify_bytes<=0;verify_frames<=0;magic<=0;frame_count<=0;frame_index<=0;frame_bytes<=0;pixel_count<=0;
+            audio_rate<=0;audio_samples<=0;audio_bytes<=0;audio_format<=0;
+            audio_count<=0;audio_loaded<=0;audio_enabled<=0;
             width<=0;height<=0;version<=0;format_code<=0;header_fps<=0;fps<=5;
             finish_sync<=0;consumed_sync<=0;memory_done<=0;watchdog<=0;
             write_req<=0;pixel_valid<=0;pixel_data<=0;frame_toggle<=0;write_bank<=1;status<=0;
@@ -128,7 +151,12 @@ module fat32_video_reader #(
                         10:height[7:0]<=sector_byte;11:height[15:8]<=sector_byte;
                         12,13,14,15:frame_count[(byte_index-12)*8 +: 8]<=sector_byte;
                         16,17,18,19:frame_bytes[(byte_index-16)*8 +: 8]<=sector_byte;
+                        20,21,22,23:audio_rate[(byte_index-20)*8 +: 8]<=sector_byte;
+                        24,25,26,27:audio_samples[(byte_index-24)*8 +: 8]<=sector_byte;
+                        28,29,30,31:audio_bytes[(byte_index-28)*8 +: 8]<=sector_byte;
+                        32,33,34,35:audio_format[(byte_index-32)*8 +: 8]<=sector_byte;
                       endcase
+                      if(kind==AUDIO)audio_count<=audio_count+1'b1;
                       if(kind==DATA)begin
                           pixel_data<={sector_byte[7:5],sector_byte[7:5],sector_byte[7:6],
                               sector_byte[4:2],sector_byte[4:2],sector_byte[4:3],
@@ -167,10 +195,15 @@ module fat32_video_reader #(
                 HEADER:if(!header_ok)begin status<=12;state<=FAILED;end
                     else begin
                         verify_bytes<=file_size-512;verify_frames<=frame_count[13:0];
-                        fps<=header_fps;state<=CHECK_LENGTH;status<=3;
+                        fps<=header_fps;audio_enabled<=is_audio;state<=CHECK_LENGTH;status<=3;
                     end
-                DATA:if(pixel_count==FRAME_PIXELS)begin state<=WAIT_COMMIT;status<=4;end
+                DATA:if(pixel_count==FRAME_PIXELS)begin
+                        if(audio_enabled)begin return_kind<=AUDIO;state<=ADVANCE;end
+                        else begin state<=WAIT_COMMIT;status<=4;end
+                    end
                     else begin return_kind<=DATA;state<=ADVANCE;end
+                AUDIO:if(audio_count==audio_bytes)begin audio_loaded<=1;state<=WAIT_COMMIT;status<=4;end
+                    else begin return_kind<=AUDIO;state<=ADVANCE;end
                 FAT:if(next_cluster<2 || next_cluster>=32'h0ffffff0 || next_cluster==current_cluster ||
                     chain_hops>=file_size/512+65536)begin status<=13;state<=FAILED;end
                     else begin
@@ -180,13 +213,13 @@ module fat32_video_reader #(
               endcase
               // One subtraction per clock avoids a large combinational divider.
               CHECK_LENGTH:if(verify_frames==0)state<=START_WRITE;
-                  else if(verify_bytes<FRAME_PIXELS)begin status<=12;state<=FAILED;end
-                  else begin verify_bytes<=verify_bytes-FRAME_PIXELS;verify_frames<=verify_frames-1'b1;end
+                  else if(verify_bytes<frame_stride)begin status<=12;state<=FAILED;end
+                  else begin verify_bytes<=verify_bytes-frame_stride;verify_frames<=verify_frames-1'b1;end
               START_WRITE:begin
-                  write_req<=1;memory_done<=0;pixel_count<=0;state<=WAIT_WRITE;
+                  write_req<=1;memory_done<=0;pixel_count<=0;audio_count<=0;audio_loaded<=0;state<=WAIT_WRITE;
               end
               WAIT_WRITE:if(write_ack)begin write_req<=0;return_kind<=DATA;state<=ADVANCE;end
-              WAIT_COMMIT:if(memory_done)begin
+              WAIT_COMMIT:if(memory_done && (!audio_enabled || audio_loaded))begin
                   frame_toggle<=~frame_toggle;state<=WAIT_PRESENT;status<=5;
               end
               WAIT_PRESENT:if(consumed_sync[2]==frame_toggle)begin

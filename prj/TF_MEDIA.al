@@ -269,6 +269,7 @@
     <File Path="../rtl/fat32_video_reader.v"><FileInfo><Attr Name="UsedInSyn" Val="true" /><Attr Name="UsedInP&amp;R" Val="true" /><Attr Name="BelongTo" Val="design_1" /><Attr Name="CompileOrder" Val="40" /></FileInfo></File>
 <File Path="../rtl/video_frame_presenter.v"><FileInfo><Attr Name="UsedInSyn" Val="true" /><Attr Name="UsedInP&amp;R" Val="true" /><Attr Name="BelongTo" Val="design_1" /><Attr Name="CompileOrder" Val="41" /></FileInfo></File>
 <File Path="../rtl/media_key_control.v"><FileInfo><Attr Name="UsedInSyn" Val="true" /><Attr Name="UsedInP&amp;R" Val="true" /><Attr Name="BelongTo" Val="design_1" /><Attr Name="CompileOrder" Val="42" /></FileInfo></File>
+<File Path="../rtl/video_audio_buffer.v"><FileInfo><Attr Name="UsedInSyn" Val="true" /><Attr Name="UsedInP&amp;R" Val="true" /><Attr Name="BelongTo" Val="design_1" /><Attr Name="CompileOrder" Val="43" /></FileInfo></File>
 </Verilog>
     <VHDL>
       </VHDL>

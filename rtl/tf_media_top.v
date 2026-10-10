@@ -1,5 +1,5 @@
 // Shared FAT32 image/video player; KEY4 long hold switches mode.
-// KEY1 resets to image mode. HDMI is silent in both modes; use HDMI_B.
+// KEY1 resets to image mode. RVF2 soundtrack is sent over HDMI_B.
 module tf_media_top (
     input wire sys_clk, input wire sys_rst_n,
     input wire key_next_n, key_prev_n, key_auto_n,
@@ -101,6 +101,9 @@ module tf_media_top (
     wire [3:0] image_status,movie_status;
     assign load_status=video_sd ? movie_status : image_status;
     wire [7:0] video_fps;
+    wire audio_enabled,audio_write_valid;
+    wire [13:0] audio_write_address;
+    wire [7:0] audio_write_data;
     reg [3:0] status_meta_sys,status_sync_sys;
     reg [7:0] fps_meta_sys,fps_sync_sys;
     always @(posedge sys_clk or negedge media_reset_n)
@@ -155,14 +158,16 @@ module tf_media_top (
         .image_ready(image_ready),.status(image_status),.image_index(image_index),
         .image_total(catalog_total),.catalog_valid(catalog_valid),.image_name(image_name));
 
-    fat32_video_reader u_movie_loader (
+    fat32_video_reader #(.AUDIO_SUPPORT(1)) u_movie_loader (
         .clk(sd_clk),.rst(movie_rst),.sd_ready(sd_ready),.memory_ready(memory_init_sync[1]),
         .sector_req(mov_sector_req),.sector_lba(mov_sector_lba),.sector_byte(sector_byte),
         .sector_valid(sector_valid),.sector_end(sector_end),
         .write_req(mov_write_req),.write_ack(write_ack_sync[2]),.pixel_valid(mov_pixel_valid),
         .pixel_data(mov_pixel_data),.write_finish_toggle(finish_toggle),
         .frame_toggle(frame_toggle),.consumed_toggle(consumed_toggle),
-        .write_bank(write_bank),.status(movie_status),.fps(video_fps));
+        .write_bank(write_bank),.status(movie_status),.fps(video_fps),
+        .audio_enabled(audio_enabled),.audio_valid(audio_write_valid),
+        .audio_address(audio_write_address),.audio_data(audio_write_data));
     wire [9:0] x,y;
     wire de,hs,vs;
     video_timing_640x480 u_timing (.pixel_clk(pixel_clk),.rst_n(~video_rst),
@@ -202,9 +207,23 @@ module tf_media_top (
             pause_sync<={pause_sync[1:0],pause_toggle};
             if(pause_sync[2]!=pause_sync[1])paused<=~paused;
         end
-    video_frame_presenter u_movie_presenter (.clk(pixel_clk),.rst(video_rst | ~video_pixel),
+    wire audio_busy,frame_started,audio_tick;
+    wire [23:0] audio_pcm;
+    reg [1:0] audio_enable_sync;
+    reg [7:0] audio_fps_meta,audio_fps_sync;
+    always @(posedge pixel_clk or posedge video_rst)
+        if(video_rst)begin audio_enable_sync<=0;audio_fps_meta<=3;audio_fps_sync<=3;end
+        else begin audio_enable_sync<={audio_enable_sync[0],audio_enabled};
+                   audio_fps_meta<=video_fps;audio_fps_sync<=audio_fps_meta;end
+    video_audio_buffer u_movie_audio (.write_clk(sd_clk),.write_valid(audio_write_valid),
+        .write_bank(write_bank),.write_address(audio_write_address),.write_data(audio_write_data),
+        .clk(pixel_clk),.rst(video_rst | ~video_pixel),.enabled(audio_enable_sync[1]),
+        .paused(paused),.start(frame_started),.read_bank(read_bank),.sample_tick(audio_tick),
+        .fps(audio_fps_sync),.busy(audio_busy),.pcm_sample(audio_pcm));
+    video_frame_presenter #(.AUDIO_SYNC(1)) u_movie_presenter (.clk(pixel_clk),.rst(video_rst | ~video_pixel),
         .vblank(x==0 && y==480),.frame_start(x==0 && y==0),.paused(paused),
         .frame_toggle(frame_toggle),.fps(video_fps),.consumed_toggle(consumed_toggle),
+        .audio_busy(audio_busy),.frame_started(frame_started),
         .read_bank(read_bank),.read_req(movie_read_req),.read_ack(read_ack),.show_frame(movie_shown));
     wire fifo_read_en,delayed_de,delayed_hs,delayed_vs;
     wire [31:0] fifo_pixel;
@@ -277,7 +296,8 @@ module tf_media_top (
     end
     wire [23:0] picture_rgb=osd_cover_delay[19] ? osd_delay[19] : (show_image ? image_rgb : loading_delay[20]);
     wire [23:0] output_rgb=video_pixel ? (show_image ? image_rgb : 24'h000000) : picture_rgb;
-    hdmi_audio_output #(.TEST_AUDIO(0)) u_hdmi (.pixel_clk(pixel_clk),.serial_clk(serial_clk),
+    hdmi_audio_output #(.TEST_AUDIO(0),.EXTERNAL_AUDIO(1)) u_hdmi (.pixel_clk(pixel_clk),.serial_clk(serial_clk),
+        .pcm_left(audio_pcm),.pcm_right(audio_pcm),.audio_tick(audio_tick),
         .rst(video_rst),.vs(delayed_vs),.de(delayed_de),.rgb(output_rgb),
         .clk_p(HDMI_CLK_P),.d0_p(HDMI_D0_P),.d1_p(HDMI_D1_P),.d2_p(HDMI_D2_P),
         .ddc_scl(HDMI_DDC_SCL),.ddc_sda(HDMI_DDC_SDA));

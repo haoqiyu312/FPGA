@@ -1,12 +1,13 @@
 `timescale 1ns/1ps
 module tb_video_reader;
+ parameter integer AUDIO_SUPPORT=0;
  reg clk=0;always #5 clk=~clk;
  reg rst=1;wire req,wrreq,pvalid,bank,toggle;wire [31:0] lba,pdata;wire [3:0] status;wire [7:0] fps;
  reg [7:0] data=0;reg valid=0,last=0,ack=0,finish=0,consumed=0;
  integer scenario=0,active=0,index=0,address=0,delay_count=0;
  integer count=0,frames=0,hold_count=0,base,fb,db;
  reg pending=0,last_toggle=0;
- fat32_video_reader #(.WATCHDOG_BITS(22)) dut(
+ fat32_video_reader #(.WATCHDOG_BITS(22),.AUDIO_SUPPORT(AUDIO_SUPPORT)) dut(
   .clk(clk),.rst(rst),.sd_ready(scenario!=6),.memory_ready(1'b1),
   .sector_req(req),.sector_lba(lba),.sector_byte(data),.sector_valid(valid),.sector_end(last),
   .write_req(wrreq),.write_ack(ack),.pixel_valid(pvalid),.pixel_data(pdata),

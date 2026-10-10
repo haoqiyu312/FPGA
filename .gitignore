@@ -25,6 +25,7 @@
 # Locally generated video media
 /VIDEO.RV
 /release/VIDEO.RV
+/release/VIDEO_*.RV
 
 # Simulator outputs and scratch files
 *.vvp

@@ -1,21 +1,28 @@
-TF_MEDIA combined image/video hardware-validation candidate
+TF_MEDIA image/video/HDMI soundtrack hardware-validation candidate
 Date: 2026-10-11
 Device: EG4S20BG256
 Tool: TD Release 6.2.1 SP1 Build 178840
 Top: tf_media_top
 Build: TD_BIN=.../bin/td.sh bash prj/build_tf_media.sh (exit 0)
-Final routed timing: SWNS 0.496 ns, STNS 0.000 ns, HWNS 0.011 ns, HTNS 0.000 ns
-STA coverage: 99.93%; slow and fast corners, setup and hold checked
-Report: prj/TF_MEDIA_Runs/phy_1/TF_MEDIA_pr.timing (generated 2026-10-11 01:05:48)
-SHA-256: 390bc19a725b2eddac19b646aacd1dcfea5740a5cbc5e4d20cc053b1b7f5ffcf
-Reset constraints: all 9 release-chain registers and ready_clock/video_ready nets confirmed in routed database
-Python video converter/demo tests: 8 passed
-Shell syntax, project file paths/top/source uniqueness, git diff checks: passed
-Final-build source consistency: SHA-256 checked, no source edits during build
-RTL simulations: NOT RUN (iverilog/vvp unavailable; run_media_tests.sh returns 127)
-CI: new media key/frame-address tests added; remote execution NOT VERIFIED
-Hardware: NOT TESTED; image/video switching, SD throughput and screen compatibility need board validation
+Final routed timing: SWNS 0.161 ns, STNS 0.000 ns, HWNS 0.004 ns, HTNS 0.000 ns
+STA coverage: 99.93%; both corners, setup and hold checked
+Report: prj/TF_MEDIA_Runs/phy_1/TF_MEDIA_pr.timing (generated 2026-10-11 01:28:00)
+SHA-256: 179a0eb9ad4a2be727dc40e83389312cda1ff8908bf109d6efb8f9d2e0fcef60
+Synthesis resources: LUT 12076/19600, REG 6067/19600, ERAM9K 60/64, PLL 2/4
+Python: original 8 and new audio/video 7 tests passed (15 total)
+Audio encoder: all 65536 PCM16 inputs match independent CPython audioop reference
+Shell syntax, Python compilation, TD source paths and git diff checks: passed
+RTL simulations: NOT RUN (iverilog/vvp unavailable; run_audio_video_tests.sh returns 127)
+Actual ffmpeg soundtrack conversion: NOT RUN locally (ffmpeg/ffprobe unavailable); CI case added
+CI: new soundtrack reader, buffer, synchronization, legacy compatibility tests added; remote execution NOT VERIFIED
+Hardware: NOT TESTED; HDMI earphone output, pause/restart/loop, SD throughput and screen compatibility need board validation
+Audio: RVF2, 48 kHz mono mu-law -> PCM24 on both HDMI channels; 3/4/5 fps
+Compatibility: RVF1 remains silent; image mode is silent
 Controls: KEY1 reset to image; KEY2 next image/restart video; KEY3 previous image;
           KEY4 short release slideshow/pause; KEY4 long hold ~2 seconds mode switch
-Media: FAT32 root BMP images and VIDEO.RV coexist; output remains 640x480; HDMI silent
-See docs/图片视频合并播放.md for preparation, controls and test instructions.
+Audio and picture bank published together; no bank reuse while audio busy; pause outputs silence without advancing audio
+Throughput stalls and display quantization may introduce silence between audio blocks; no seamless audio guarantee
+Demo: locally generated release/VIDEO.RV, 5 seconds, 15 frames, 240000 samples, 4854272 bytes
+Demo SHA-256: e1085e1a01184cd8b9f9c5c29129a46ecec652a00f014ca5bed592b379e943f7
+Demo media is ignored by git; reproduce with python3 tools/make_video_demo.py release/VIDEO.RV --seconds 5 --fps 3 --audio
+See docs/视频音频播放.md for preparation, format and test instructions.

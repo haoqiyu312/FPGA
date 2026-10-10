@@ -17,8 +17,15 @@ jobs:
         run: bash sim/run_media_tests.sh
       - name: Video reader, presentation and conversion
         run: bash sim/run_video_tests.sh
+      - name: Audio/video reader, buffer, synchronization and converter
+        run: bash sim/run_audio_video_tests.sh
       - name: Convert a real encoded clip
         run: |
           ffmpeg -v error -f lavfi -i testsrc2=size=128x96:rate=3 -t 1 -c:v mpeg4 /tmp/test.mp4
           python3 tools/convert_video.py /tmp/test.mp4 /tmp/VIDEO.RV --fps 3
           python3 -c 'from pathlib import Path; import struct; d=Path("/tmp/VIDEO.RV").read_bytes(); assert len(d)==512+3*307200; assert struct.unpack_from("<I",d,12)[0]==3'
+      - name: Convert an encoded clip with a soundtrack
+        run: |
+          ffmpeg -v error -f lavfi -i testsrc2=size=128x96:rate=3 -f lavfi -i sine=frequency=440:sample_rate=48000 -t 1 -c:v mpeg4 -c:a pcm_s16le /tmp/av.mkv
+          python3 tools/convert_video.py /tmp/av.mkv /tmp/AV.RV --fps 3 --audio
+          python3 -c 'from pathlib import Path; import struct; d=Path("/tmp/AV.RV").read_bytes(); assert d[:4]==b"RVF2"; assert len(d)==512+3*(307200+16384); assert struct.unpack_from("<IIII",d,20)==(48000,16000,16384,1); assert len(set(d[512+307200:512+307200+16000]))>10'
