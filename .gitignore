@@ -19,6 +19,11 @@
 # Keep only the current downloadable bitstream
 *.bit
 !/release/TF_IMAGE.bit
+!/release/TF_VIDEO.bit
+
+# Locally generated video media
+/VIDEO.RV
+/release/VIDEO.RV
 
 # Simulator outputs and scratch files
 *.vvp

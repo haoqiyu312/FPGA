@@ -1,5 +1,5 @@
 // Use Anlogic protocol/PHY IP; video framing and PCM/ACR are project logic.
-module hdmi_audio_output (
+module hdmi_audio_output #(parameter integer TEST_AUDIO=1) (
  input wire pixel_clk,serial_clk,rst,vs,de,input wire [23:0] rgb,
  output wire clk_p,d0_p,d1_p,d2_p,
  output wire ddc_scl,inout wire ddc_sda
@@ -31,8 +31,8 @@ module hdmi_audio_output (
  ) u_core(.I_pixel_clk(pixel_clk),.I_rst(rst),.I_edid_read_trig(edid_trigger),
   .O_edid_read_valid(),.O_edid_read_data(),.I_axis_s_user(sof),
   .I_axis_s_valid(valid),.I_axis_s_last(last),.I_axis_s_data(data),.O_axis_s_ready(),
-  .I_audio_valid(sample_valid),.I_audio_left_data(left_sample),
-  .I_audio_right_data(right_sample),.I_acr_valid(acr_valid),.I_acr_cts(acr_cts),
+  .I_audio_valid(sample_valid),.I_audio_left_data(TEST_AUDIO ? left_sample : 24'd0),
+  .I_audio_right_data(TEST_AUDIO ? right_sample : 24'd0),.I_acr_valid(acr_valid),.I_acr_cts(acr_cts),
   .I_acr_n(acr_n),.O_video_locked(),.O_ddc_scl(ddc_scl),.IO_ddc_sda(ddc_sda),
   .O_ch0_tmds_data(ch0),.O_ch1_tmds_data(ch1),.O_ch2_tmds_data(ch2),
   .O_clk_tmds_data(chclk));

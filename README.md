@@ -20,6 +20,22 @@ HDMI 当前输出图片、加载动画及内置测试音：48 kHz、24 位双声
 
 上图从中文 OSD 的 RTL 仿真采集：左图关闭轮播，仅显示状态；右图开启轮播，多显示一行间隔和方向，图片背景透过文字空白。
 
+## 视频播放开发版
+
+新增独立工程 `prj/TF_VIDEO.al`：从 TF 卡根目录 `VIDEO.RV` 连续播放预转换视频，
+640×480、RGB332、1–5 fps，默认推荐 3 fps，双缓冲、循环播放、KEY4 暂停/继续。
+音频由外接设备播放，视频工程 HDMI 静音；本版不保证音画同步。
+MP4 等文件需要电脑端预转换，不能直接复制后播放。
+
+```bash
+python3 tools/convert_video.py input.mp4 VIDEO.RV --fps 3
+# 无 ffmpeg 时先生成移动测试图案：
+python3 tools/make_video_demo.py VIDEO.RV
+TD_BIN=/你的TD安装目录/bin/td.sh bash prj/build_tf_video.sh
+```
+
+TF 卡准备、状态码、格式、带宽限制和验证情况见 [视频播放说明](docs/视频播放.md)。
+
 ## 目录
 
 ```text

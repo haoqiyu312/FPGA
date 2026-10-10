@@ -2,7 +2,8 @@
 // Eight positions, left to right: "01 OF 32". No valid images: "00 OF 00".
 module image_number_display #(
  parameter integer SLOT_CYCLES=50000,
- parameter integer BLANK_CYCLES=100
+ parameter integer BLANK_CYCLES=100,
+ parameter integer RAW_INDEX=0
 )(input wire clk,reset_n,input wire [4:0] image_index,
  input wire [5:0] total_count,
  output reg [7:0] seg_n=8'hff,output reg [7:0] digit_en=8'hff);
@@ -41,7 +42,7 @@ module image_number_display #(
    else count<=count+1'b1;
    if(count==0)begin
     digit_en<=8'hff;
-    if(digit==0)begin image_latched<=total_count==0 ? 6'd0 : {1'b0,image_index}+1'b1;total_latched<=total_count;end
+    if(digit==0)begin image_latched<=RAW_INDEX ? {1'b0,image_index} : (total_count==0 ? 6'd0 : {1'b0,image_index}+1'b1);total_latched<=total_count;end
    end
    // Break before make: disable old digit, change segments, enable next digit.
    if(count==BLANK_CYCLES/2)seg_n<=encode(symbol);

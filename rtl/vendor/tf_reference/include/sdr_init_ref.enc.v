@@ -8,7 +8,7 @@
 
 `define signle_bit 0
 
-`include "/home/hqy/VMShare/final_project/rtl/vendor/tf_reference/include/global_def.v"
+`include "../rtl/vendor/tf_reference/include/global_def.v"
 
 module sdr_init_ref #( parameter self_refresh_open=1
 			)

@@ -1,0 +1,22 @@
+name: RTL and video conversion tests
+on: [push, pull_request]
+jobs:
+  simulation:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install simulation and conversion tools
+        run: sudo apt-get update && sudo apt-get install -y iverilog ffmpeg
+      - name: Existing image regressions
+        run: |
+          bash sim/run_catalog_tests.sh
+          bash sim/run_ui_tests.sh
+          bash sim/run_audio_tests.sh
+          bash sim/run_loader_tests.sh
+      - name: Video reader, presentation and conversion
+        run: bash sim/run_video_tests.sh
+      - name: Convert a real encoded clip
+        run: |
+          ffmpeg -v error -f lavfi -i testsrc2=size=128x96:rate=3 -t 1 -c:v mpeg4 /tmp/test.mp4
+          python3 tools/convert_video.py /tmp/test.mp4 /tmp/VIDEO.RV --fps 3
+          python3 -c 'from pathlib import Path; import struct; d=Path("/tmp/VIDEO.RV").read_bytes(); assert len(d)==512+3*307200; assert struct.unpack_from("<I",d,12)[0]==3'

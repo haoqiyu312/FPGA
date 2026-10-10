@@ -1,0 +1,15 @@
+TF_VIDEO first hardware-validation candidate
+Date: 2026-10-10
+Device: EG4S20BG256
+Tool: TD Release 6.2.1, Build 178840 (SP1)
+Top: tf_video_top
+Build: TD_BIN=.../bin/td.sh bash prj/build_tf_video.sh
+Final timing: SWNS 1.847 ns, STNS 0.000 ns, HWNS 0.012 ns, HTNS 0.000 ns
+SHA-256: 4b222d2c546dc15b327387f746091d6aa309fbd244921d2fa91ae7fb61235d0c
+Python tests: 8 passed
+Demo: 15 distinct 640x480 RGB332 frames, 3 fps, exact sector-aligned size verified
+RTL simulation: NOT RUN (iverilog/vvp unavailable; package source unreachable)
+Real ffmpeg conversion: NOT RUN (ffmpeg unavailable)
+GitHub Actions: NOT RUN locally
+Hardware: NOT TESTED; no USB device access in current execution environment
+See docs/视频播放.md for preparation, format, controls, constraints and test instructions.

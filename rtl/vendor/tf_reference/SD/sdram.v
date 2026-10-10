@@ -7,7 +7,7 @@
 
 `define DEBUG
 
-`include "/home/hqy/VMShare/final_project/rtl/vendor/tf_reference/include/global_def.v"
+`include "../rtl/vendor/tf_reference/include/global_def.v"
 
 module sdram(
     `ifdef SIMULATION
