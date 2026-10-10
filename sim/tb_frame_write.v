@@ -7,7 +7,7 @@ wire ack,finish,en,busy,clear;
 wire [20:0] addr;
 integer n=0,in_burst=0,expected,previous=-1,bursts=0;
 frame_fifo_write #(.BURST_SIZE(BURST),.WRITE_V_FLIP(1),.FRAME_WIDTH(640),.FRAME_HEIGHT(480)) dut(
-.rst(rst),.mem_clk(clk),.Sdr_init_done(1'b1),.Sdr_init_ref_vld(1'b0),.Sdr_busy(1'b0),
+.write_v_flip(1'b1),.rst(rst),.mem_clk(clk),.Sdr_init_done(1'b1),.Sdr_init_ref_vld(1'b0),.Sdr_busy(1'b0),
 .App_rd_busy(1'b0),.O_wr_busy(busy),.App_wr_en(en),.App_wr_addr(addr),
 .write_req(req),.write_req_ack(ack),.write_finish(finish),
 .write_addr_0(21'd0),.write_addr_1(21'd0),.write_addr_2(21'd0),.write_addr_3(21'd0),

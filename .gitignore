@@ -16,10 +16,11 @@
 *.log
 *.logw
 
-# Keep only the current downloadable bitstream
+# Downloadable standalone and combined bitstreams
 *.bit
 !/release/TF_IMAGE.bit
 !/release/TF_VIDEO.bit
+!/release/TF_MEDIA.bit
 
 # Locally generated video media
 /VIDEO.RV

@@ -13,6 +13,8 @@ jobs:
           bash sim/run_ui_tests.sh
           bash sim/run_audio_tests.sh
           bash sim/run_loader_tests.sh
+      - name: Combined player mode keys and shared frame writer
+        run: bash sim/run_media_tests.sh
       - name: Video reader, presentation and conversion
         run: bash sim/run_video_tests.sh
       - name: Convert a real encoded clip

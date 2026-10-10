@@ -112,7 +112,7 @@ module tf_video_top (
     wire [3:0] app_wr_mask;
     // Two full RGB888 buffers; input frames are already top-down.
     frame_read_write #(.BURST_SIZE(128),.WRITE_V_FLIP(0),.FRAME_WIDTH(640),.FRAME_HEIGHT(480)) u_frame (
-        .rst(mem_rst),.mem_clk(mem_clk),.Sdr_init_done(memory_initialized),
+        .write_v_flip(1'b0),.rst(mem_rst),.mem_clk(mem_clk),.Sdr_init_done(memory_initialized),
         .Sdr_init_ref_vld(memory_refresh),.Sdr_busy(memory_busy),
         .App_rd_en(app_rd_en),.App_rd_addr(app_rd_addr),
         .Sdr_rd_en(sdram_rd_valid),.Sdr_rd_dout(sdram_rd_data),

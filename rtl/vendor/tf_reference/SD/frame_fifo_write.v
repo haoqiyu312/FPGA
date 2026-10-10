@@ -6,11 +6,13 @@ module frame_fifo_write
 	parameter ADDR_BITS              = 21,
 	parameter BURST_BITS             = 9,
 	parameter BURST_SIZE             = 128,
+	parameter RUNTIME_V_FLIP         = 0,
 	parameter WRITE_V_FLIP           = 1,      // 1: write image rows upside-down to cancel BMP bottom-up storage
 	parameter FRAME_WIDTH            = 640,
 	parameter FRAME_HEIGHT           = 480
 )               
 (
+	input                            write_v_flip, // stable throughout a request; enabled by RUNTIME_V_FLIP
 	input                            rst,                  
 	input                            mem_clk,                    // external memory controller user interface clock
 	input							 Sdr_init_done,
@@ -40,6 +42,7 @@ module frame_fifo_write
 	output reg                       fifo_aclr,                  // to fifo asynchronous clear
 	input[9:0]                      rdusedw                     // from fifo read used words
 );
+wire flip_rows = RUNTIME_V_FLIP ? write_v_flip : WRITE_V_FLIP;
 localparam ONE                       = 256'd1;                   //256 bit '1'   you can use ONE[n-1:0] for n bit '1'
 localparam ZERO                      = 256'd0;                   //256 bit '0'
 
@@ -134,17 +137,17 @@ begin
 			begin
 				wr_x <= 16'd0;
 				if(write_addr_index_d1 == 2'd0)
-					App_wr_addr_r <= WRITE_V_FLIP ? (write_addr_0 + VFLIP_FIRST_ADDR_OFFSET) : write_addr_0;
+					App_wr_addr_r <= flip_rows ? (write_addr_0 + VFLIP_FIRST_ADDR_OFFSET) : write_addr_0;
 				else if(write_addr_index_d1 == 2'd1)
-					App_wr_addr_r <= WRITE_V_FLIP ? (write_addr_1 + VFLIP_FIRST_ADDR_OFFSET) : write_addr_1;
+					App_wr_addr_r <= flip_rows ? (write_addr_1 + VFLIP_FIRST_ADDR_OFFSET) : write_addr_1;
 				else if(write_addr_index_d1 == 2'd2)
-					App_wr_addr_r <= WRITE_V_FLIP ? (write_addr_2 + VFLIP_FIRST_ADDR_OFFSET) : write_addr_2;
+					App_wr_addr_r <= flip_rows ? (write_addr_2 + VFLIP_FIRST_ADDR_OFFSET) : write_addr_2;
 				else if(write_addr_index_d1 == 2'd3)
-					App_wr_addr_r <= WRITE_V_FLIP ? (write_addr_3 + VFLIP_FIRST_ADDR_OFFSET) : write_addr_3;
+					App_wr_addr_r <= flip_rows ? (write_addr_3 + VFLIP_FIRST_ADDR_OFFSET) : write_addr_3;
 			end
 		else if(App_wr_en)
 			begin
-				if(WRITE_V_FLIP)
+				if(flip_rows)
 				begin
 					if(wr_x == VFLIP_LINE_LAST_X)
 					begin

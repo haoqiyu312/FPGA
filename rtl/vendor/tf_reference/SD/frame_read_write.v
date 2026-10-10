@@ -8,11 +8,13 @@ module frame_read_write
 	parameter ADDR_BITS              = 21,
 	parameter BURST_BITS             = 9,//
 	parameter BURST_SIZE             = 256,
+	parameter RUNTIME_V_FLIP         = 0,
 	parameter WRITE_V_FLIP           = 1,      // 1: vertical flip when writing TF/BMP frame into SDRAM
 	parameter FRAME_WIDTH            = 640,
 	parameter FRAME_HEIGHT           = 480
 ) 
 (
+	input                            write_v_flip,
 	input                            rst,                  
 	input                            mem_clk,                    // external memory controller user interface clock
 	input							 Sdr_init_done,
@@ -112,11 +114,13 @@ frame_fifo_write
 	.BURST_BITS                 (BURST_BITS               ),
 	.BURST_SIZE                 (BURST_SIZE               ),
 	.WRITE_V_FLIP               (WRITE_V_FLIP             ),
+	.RUNTIME_V_FLIP             (RUNTIME_V_FLIP           ),
 	.FRAME_WIDTH                (FRAME_WIDTH              ),
 	.FRAME_HEIGHT               (FRAME_HEIGHT             )
 ) 
 frame_fifo_write_m0              
 (  
+    .write_v_flip(write_v_flip),
 	.rst                        (rst                      ),
 	.mem_clk                    (mem_clk                  ),
     .Sdr_init_done				(Sdr_init_done),

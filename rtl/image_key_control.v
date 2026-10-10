@@ -1,7 +1,10 @@
 module image_key_control #(
  parameter integer DEBOUNCE_CYCLES=1000000,
  parameter integer RESET_CYCLES=64,
- parameter integer CLOCK_HZ=50000000
+ parameter integer CLOCK_HZ=50000000,
+ // With EXTERNAL_AUTO, key_auto_n carries an active-low one-clock event.
+ // The combined player already debounces KEY4 and distinguishes long holds.
+ parameter integer EXTERNAL_AUTO=0
 )(input wire clk,reset_n,image_ready,key_next_n,key_prev_n,
  output reg [4:0] image_index=0,output wire run_reset_n,
  input wire key_auto_n,input wire [1:0] interval_switch,
@@ -9,7 +12,8 @@ module image_key_control #(
  input wire [5:0] image_total,
  output wire [1:0] stable_interval, output wire stable_direction);
  reg [2:0] ready_sync=0;
- wire next_press,prev_press,auto_press;
+ wire next_press,prev_press,auto_press,debounced_auto;
+ assign auto_press=EXTERNAL_AUTO ? ~key_auto_n : debounced_auto;
  reg [6:0] reset_count=0;
  reg [2:0] sw_meta=0,sw_sync=0,sw_stable=0,sw_previous=0,sw_candidate=0;
  localparam integer SW_COUNT_BITS=DEBOUNCE_CYCLES<=1 ? 1 : $clog2(DEBOUNCE_CYCLES);
@@ -23,7 +27,7 @@ module image_key_control #(
  assign run_reset_n=reset_n && reset_count==0;
  key_debounce #(.DEBOUNCE_CYCLES(DEBOUNCE_CYCLES)) u_next(clk,reset_n,key_next_n,next_press);
  key_debounce #(.DEBOUNCE_CYCLES(DEBOUNCE_CYCLES)) u_prev(clk,reset_n,key_prev_n,prev_press);
- key_debounce #(.DEBOUNCE_CYCLES(DEBOUNCE_CYCLES)) u_auto(clk,reset_n,key_auto_n,auto_press);
+ key_debounce #(.DEBOUNCE_CYCLES(DEBOUNCE_CYCLES)) u_auto(clk,reset_n,key_auto_n,debounced_auto);
  wire manual_step=next_press!=prev_press;
  wire auto_step=auto_mode && !auto_press && ready_sync[2] && reset_count==0 &&
                 sw_stable==sw_previous && second_count==CLOCK_HZ-1 && elapsed_seconds==interval_seconds-1;
