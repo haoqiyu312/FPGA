@@ -10,7 +10,8 @@ module tf_media_top (
     output wire HDMI_CLK_P, HDMI_D0_P, HDMI_D1_P, HDMI_D2_P,
     output wire HDMI_CLK_P1, HDMI_D0_P1, HDMI_D1_P1, HDMI_D2_P1,
     output wire HDMI_DDC_SCL, inout wire HDMI_DDC_SDA,
-    output wire sd_ncs, sd_dclk, sd_mosi, input wire sd_miso
+    output wire sd_ncs, sd_dclk, sd_mosi, input wire sd_miso,
+    inout wire touch_scl,touch_sda
 );
     key_beeper u_key_beeper (.clk(sys_clk),
         .keys_n({key_auto_n,key_prev_n,key_next_n,sys_rst_n}),.buzzer_n(buzzer_n));
@@ -21,10 +22,30 @@ module tf_media_top (
     sys_pll u_memory_pll (.refclk(sys_clk),.reset(~sys_rst_n),
         .extlock(memory_lock),.clk0_out(sd_clk),.clk1_out(mem_clk),.clk2_out(mem_clk_shift));
 
-    wire video_mode,short_press,media_reset_n;
-    media_key_control u_media_keys (.clk(sys_clk),.reset_n(sys_rst_n),
+    // Configuration-time reset also initializes the touch probe and full volume.
+    reg [2:0] touch_reset_pipe=0;
+    always @(posedge sys_clk or negedge sys_rst_n)
+        if(!sys_rst_n) touch_reset_pipe<=0;
+        else touch_reset_pipe<={touch_reset_pipe[1:0],1'b1};
+    wire touch_reset_n=sys_rst_n & touch_reset_pipe[2];
+    wire video_mode,physical_short,media_reset_n;
+    wire touch_online,touch_fault,touch_action_valid;
+    wire [2:0] touch_action,pressed_button;
+    wire [9:0] touch_x,touch_y;
+    touch_player_frontend u_touch (.clk(sys_clk),.reset_n(touch_reset_n),
+        .menu_visible(1'b1),.video_mode(video_mode),.touch_scl(touch_scl),.touch_sda(touch_sda),
+        .online(touch_online),.fault(touch_fault),.action_valid(touch_action_valid),
+        .action(touch_action),.pressed_button(pressed_button),.touch_x(touch_x),.touch_y(touch_y));
+    wire touch_event=touch_action_valid & media_reset_n;
+    wire short_press=physical_short | (touch_event && touch_action==2);
+    wire [3:0] volume_level;
+    media_volume_control u_volume (.clk(sys_clk),.reset_n(touch_reset_n),
+        .up_event(touch_event && touch_action==7),.down_event(touch_event && touch_action==6),
+        .level(volume_level));
+    media_key_control #(.EXTERNAL_ACTIONS(1)) u_media_keys (.clk(sys_clk),.reset_n(sys_rst_n),
         .key_auto_n(key_auto_n),.restart_n(key_next_n),.video_mode(video_mode),
-        .short_press(short_press),.media_reset_n(media_reset_n));
+        .short_press(physical_short),.media_reset_n(media_reset_n),
+        .mode_event(touch_event && touch_action==1),.restart_event(touch_event && touch_action==5));
     wire [3:0] load_status;
     wire image_ready;
     wire [4:0] image_index;
@@ -48,12 +69,14 @@ module tf_media_top (
     wire auto_mode;
     wire show_image;
     reg show_picture;
-    image_key_control #(.EXTERNAL_AUTO(1)) u_image_keys (.clk(sys_clk),.reset_n(media_reset_n),
+    image_key_control #(.EXTERNAL_AUTO(1),.EXTERNAL_STEP(1)) u_image_keys (.clk(sys_clk),.reset_n(media_reset_n),
         .image_ready(show_image & ~video_mode),.key_next_n(key_next_n | video_mode),.key_prev_n(key_prev_n | video_mode),
         .key_auto_n(~(short_press & ~video_mode)),.interval_switch(interval_switch),.auto_mode(auto_mode),
         .direction_switch(direction_switch),.image_total(image_total),
         .stable_interval(stable_interval),.stable_direction(stable_direction),
-        .image_index(image_index),.run_reset_n(run_reset_n));
+        .image_index(image_index),.run_reset_n(run_reset_n),
+        .next_event(touch_event && !video_mode && touch_action==4),
+        .prev_event(touch_event && !video_mode && touch_action==3));
     wire [7:0] image_seg,image_digit,video_seg,video_digit;
     image_number_display u_image_number (.clk(sys_clk),.reset_n(media_reset_n),
         .image_index(image_index),.total_count(image_total),.seg_n(image_seg),.digit_en(image_digit));
@@ -278,14 +301,34 @@ module tf_media_top (
     reg [19:0] osd_cover_delay;
     reg [23:0] osd_delay[0:19];
     reg [23:0] loading_delay[0:20];
+    // Mailbox transfers the complete UI snapshot; frame latch avoids tearing.
+    wire [8:0] ui_snapshot;
+    reg [8:0] ui_frame;
+    ui_state_bridge u_ui_bridge (.source_clk(sys_clk),.source_reset_n(touch_reset_n),
+        .source_data({touch_online,auto_mode,volume_level,pressed_button}),
+        .destination_clk(pixel_clk),.destination_reset_n(~video_rst),
+        .destination_data(ui_snapshot));
+    wire [23:0] menu_rgb;
+    touch_menu_overlay #(.SHOW_STATUS(1)) u_menu_overlay (.x(x),.y(y),.de(de),
+        .menu_visible(1'b1),.video_mode(video_pixel),.playing(video_pixel ? ~paused : ui_frame[7]),
+        .pressed_button(ui_frame[2:0]),.touch_online(ui_frame[8]),.volume_level(ui_frame[6:3]),
+        .rgb_in(24'd0),.rgb_out(menu_rgb));
+    reg [20:0] menu_cover_delay;
+    reg [23:0] menu_delay[0:20];
     integer i;
     always @(posedge pixel_clk or posedge video_rst) begin
         if(video_rst) begin
             osd_cover_delay<=0;
+            ui_frame<={1'b0,1'b0,4'd8,3'd0};menu_cover_delay<=0;
+            for(i=0;i<=20;i=i+1)menu_delay[i]<=0;
             for(i=0;i<=20;i=i+1)loading_delay[i]<=0;
             for(i=0;i<20;i=i+1)osd_delay[i]<=0;
         end
         else begin
+            if(x==0 && y==0)ui_frame<=ui_snapshot;
+            menu_cover_delay<={menu_cover_delay[19:0],(de && y>=400 && y<480)};
+            menu_delay[0]<=menu_rgb;
+            for(i=1;i<=20;i=i+1)menu_delay[i]<=menu_delay[i-1];
             loading_delay[0]<=status_frame>=10 ? 24'h000000 : loading_rgb;
             // The Chinese font contributes one clock; add twenty to total twenty-one.
             osd_cover_delay<={osd_cover_delay[18:0],osd_cover};
@@ -295,9 +338,12 @@ module tf_media_top (
         end
     end
     wire [23:0] picture_rgb=osd_cover_delay[19] ? osd_delay[19] : (show_image ? image_rgb : loading_delay[20]);
-    wire [23:0] output_rgb=video_pixel ? (show_image ? image_rgb : 24'h000000) : picture_rgb;
+    wire [23:0] base_rgb=video_pixel ? (show_image ? image_rgb : 24'h000000) : picture_rgb;
+    wire [23:0] output_rgb=menu_cover_delay[20] ? menu_delay[20] : base_rgb;
+    wire [23:0] volume_pcm;
+    media_volume_apply u_volume_apply (.pcm_in(audio_pcm),.level(ui_snapshot[6:3]),.pcm_out(volume_pcm));
     hdmi_audio_output #(.TEST_AUDIO(0),.EXTERNAL_AUDIO(1)) u_hdmi (.pixel_clk(pixel_clk),.serial_clk(serial_clk),
-        .pcm_left(audio_pcm),.pcm_right(audio_pcm),.audio_tick(audio_tick),
+        .pcm_left(volume_pcm),.pcm_right(volume_pcm),.audio_tick(audio_tick),
         .rst(video_rst),.vs(delayed_vs),.de(delayed_de),.rgb(output_rgb),
         .clk_p(HDMI_CLK_P),.d0_p(HDMI_D0_P),.d1_p(HDMI_D1_P),.d2_p(HDMI_D2_P),
         .ddc_scl(HDMI_DDC_SCL),.ddc_sda(HDMI_DDC_SDA));

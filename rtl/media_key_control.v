@@ -3,10 +3,12 @@
 module media_key_control #(
     parameter integer DEBOUNCE_CYCLES=1000000,
     parameter integer LONG_CYCLES=100000000,
-    parameter integer RESET_CYCLES=64
+    parameter integer RESET_CYCLES=64,
+    parameter integer EXTERNAL_ACTIONS=0
 )(input wire clk,reset_n,key_auto_n,restart_n,
   output reg video_mode=0, output reg short_press=0,
-  output wire media_reset_n);
+  output wire media_reset_n,
+  input wire mode_event,restart_event);
     localparam DB_BITS=DEBOUNCE_CYCLES<2 ? 1 : $clog2(DEBOUNCE_CYCLES);
     localparam HOLD_BITS=LONG_CYCLES<2 ? 1 : $clog2(LONG_CYCLES);
     localparam RESET_BITS=RESET_CYCLES<2 ? 1 : $clog2(RESET_CYCLES+1);
@@ -26,7 +28,7 @@ module media_key_control #(
         end else begin
             sync_key<={sync_key[0],key_auto_n};short_press<=0;
             if(reset_count!=0)reset_count<=reset_count-1'b1;
-            if(video_mode && restart_press)reset_count<=RESET_CYCLES;
+            if(video_mode && (restart_press || (EXTERNAL_ACTIONS && restart_event)))reset_count<=RESET_CYCLES;
             if(sync_key[1]==stable)debounce<=0;
             else if(debounce==DEBOUNCE_CYCLES-1) begin
                 debounce<=0;stable<=sync_key[1];
@@ -41,6 +43,11 @@ module media_key_control #(
                     video_mode<=~video_mode;reset_count<=RESET_CYCLES;
                     held_long<=1;hold_count<=0;
                 end else hold_count<=hold_count+1'b1;
+            end
+            // Touch mode switch has priority over a simultaneous physical key.
+            if(EXTERNAL_ACTIONS && mode_event && reset_count==0)begin
+                video_mode<=~video_mode;reset_count<=RESET_CYCLES;short_press<=0;
+                if(!stable)begin held_long<=1;hold_count<=0;end
             end
         end
     end

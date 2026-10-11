@@ -270,7 +270,16 @@
 <File Path="../rtl/video_frame_presenter.v"><FileInfo><Attr Name="UsedInSyn" Val="true" /><Attr Name="UsedInP&amp;R" Val="true" /><Attr Name="BelongTo" Val="design_1" /><Attr Name="CompileOrder" Val="41" /></FileInfo></File>
 <File Path="../rtl/media_key_control.v"><FileInfo><Attr Name="UsedInSyn" Val="true" /><Attr Name="UsedInP&amp;R" Val="true" /><Attr Name="BelongTo" Val="design_1" /><Attr Name="CompileOrder" Val="42" /></FileInfo></File>
 <File Path="../rtl/video_audio_buffer.v"><FileInfo><Attr Name="UsedInSyn" Val="true" /><Attr Name="UsedInP&amp;R" Val="true" /><Attr Name="BelongTo" Val="design_1" /><Attr Name="CompileOrder" Val="43" /></FileInfo></File>
-</Verilog>
+      <File Path="../rtl/touch_menu_hit.v"><FileInfo><Attr Name="UsedInSyn" Val="true" /><Attr Name="UsedInP&amp;R" Val="true" /><Attr Name="BelongTo" Val="design_1" /><Attr Name="CompileOrder" Val="100" /></FileInfo></File>
+      <File Path="../rtl/touch_menu_control.v"><FileInfo><Attr Name="UsedInSyn" Val="true" /><Attr Name="UsedInP&amp;R" Val="true" /><Attr Name="BelongTo" Val="design_1" /><Attr Name="CompileOrder" Val="101" /></FileInfo></File>
+      <File Path="../rtl/touch_menu_overlay.v"><FileInfo><Attr Name="UsedInSyn" Val="true" /><Attr Name="UsedInP&amp;R" Val="true" /><Attr Name="BelongTo" Val="design_1" /><Attr Name="CompileOrder" Val="102" /></FileInfo></File>
+      <File Path="../rtl/i2c_register_master.v"><FileInfo><Attr Name="UsedInSyn" Val="true" /><Attr Name="UsedInP&amp;R" Val="true" /><Attr Name="BelongTo" Val="design_1" /><Attr Name="CompileOrder" Val="103" /></FileInfo></File>
+      <File Path="../rtl/gt911_touch_reader.v"><FileInfo><Attr Name="UsedInSyn" Val="true" /><Attr Name="UsedInP&amp;R" Val="true" /><Attr Name="BelongTo" Val="design_1" /><Attr Name="CompileOrder" Val="104" /></FileInfo></File>
+      <File Path="../rtl/touch_coordinate_map.v"><FileInfo><Attr Name="UsedInSyn" Val="true" /><Attr Name="UsedInP&amp;R" Val="true" /><Attr Name="BelongTo" Val="design_1" /><Attr Name="CompileOrder" Val="105" /></FileInfo></File>
+      <File Path="../rtl/touch_player_frontend.v"><FileInfo><Attr Name="UsedInSyn" Val="true" /><Attr Name="UsedInP&amp;R" Val="true" /><Attr Name="BelongTo" Val="design_1" /><Attr Name="CompileOrder" Val="106" /></FileInfo></File>
+      <File Path="../rtl/ui_state_bridge.v"><FileInfo><Attr Name="UsedInSyn" Val="true" /><Attr Name="UsedInP&amp;R" Val="true" /><Attr Name="BelongTo" Val="design_1" /><Attr Name="CompileOrder" Val="107" /></FileInfo></File>
+      <File Path="../rtl/media_volume.v"><FileInfo><Attr Name="UsedInSyn" Val="true" /><Attr Name="UsedInP&amp;R" Val="true" /><Attr Name="BelongTo" Val="design_1" /><Attr Name="CompileOrder" Val="108" /></FileInfo></File>
+    </Verilog>
     <VHDL>
       </VHDL>
     <IP_FILE>
@@ -284,7 +293,7 @@
       </File>
     </IP_FILE>
     <ADC_FILE>
-      <File Path="../constraints/tf_image.adc">
+      <File Path="../constraints/tf_media.adc">
         <FileInfo>
           <Attr Name="UsedInSyn" Val="true" />
           <Attr Name="UsedInP&amp;R" Val="true" />

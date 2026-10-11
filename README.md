@@ -13,6 +13,8 @@ SD 卡根目录可同时保留 BMP 图片和 `VIDEO.RV`。两种模式均输出 
 详细准备、按键与验证情况见 [图片视频合并播放](docs/图片视频合并播放.md)。
 下文历史图片功能及测试音说明对应独立的 `TF_IMAGE` 工程。
 
+菜单与触控已接入合并工程：底部七个按钮控制模式、播放/轮播、上一张、下一张、重播、音量减和音量加。触控采用 GT911 I²C，开发板侧为 J1-1 SDA / J1-2 SCL；屏幕侧接点与上拉电压仍待确认，尚未实板验证。新测试版 [`TF_MEDIA_TOUCH.bit`](release/TF_MEDIA_TOUCH.bit) 已通过完整编译和最终时序；原 `TF_MEDIA.bit` 保留。下载及验证限制见 [触控开发说明](docs/触控开发.md)。
+
 # 安路 FPGA TF 卡图片播放器
 
 基于康芯 HX4S20 开发板（安路 EG4S20BG256）的图片播放器，使用 TF 卡读取 BMP，经 SDRAM 帧缓存输出到 HDMI。
@@ -90,7 +92,7 @@ Linux 命令行编译：
 TD_BIN=/你的TD安装目录/bin/td.sh bash prj/build_tf_image.sh
 ```
 
-本项目必须使用 **TD 6.2.1（Build 175876）**，设备 EG4S20BG256，编译需要已安装的 TD 工具及许可证。脚本优先使用 `TD_BIN`，其次使用 `~/.local/opt/TD_6.2.1_Release_175876_NL/bin/td.sh`，最后查找 PATH 中的 `td.sh`。脚本会拒绝其他 TD 版本，并检查是否生成本次编译的新 bit 文件及最终建立/保持时序是否通过。
+本项目必须使用 **TD 6.2.1**（历史版本 Build 175876；触控整合使用 Build 178840），设备 EG4S20BG256，编译需要已安装的 TD 工具及许可证。脚本优先使用 `TD_BIN`，其次使用 `~/.local/opt/TD_6.2.1_Release_175876_NL/bin/td.sh`，最后查找 PATH 中的 `td.sh`。脚本会拒绝其他 TD 版本，并检查是否生成本次编译的新 bit 文件及最终建立/保持时序是否通过。
 
 编译生成 `prj/TF_IMAGE_Runs/phy_1/TF_IMAGE.bit`。验证时序后可复制到 `release/TF_IMAGE.bit`；编译中间目录与日志已在 `.gitignore` 中排除。
 

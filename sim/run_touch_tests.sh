@@ -24,3 +24,9 @@ trap 'rm -rf -- "$test_dir"' EXIT
  "$project_dir/rtl/gt911_touch_reader.v" "$project_dir/rtl/touch_coordinate_map.v" \
  "$project_dir/sim/tb_gt911_reader.v"
 "$runner" "$test_dir/reader"
+"${compiler[@]}" -g2012 -s tb_touch_integration -o "$test_dir/integration" \
+ "$project_dir/rtl/key_debounce.v" "$project_dir/rtl/media_key_control.v" \
+ "$project_dir/rtl/media_volume.v" "$project_dir/rtl/ui_state_bridge.v" \
+ "$project_dir/rtl/image_key_control.v" \
+ "$project_dir/sim/tb_touch_integration.v"
+"$runner" "$test_dir/integration"
