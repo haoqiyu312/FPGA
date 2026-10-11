@@ -1,0 +1,93 @@
+{
+  "archive_sha256": "aa2a7358893d417e06f84c082a0630fa668cc3de48f38dd3081211fbac8ade10",
+  "overlays": [
+    {
+      "file": "4HDMIB_DTBO/waveshare-4dpic-3b.dtbo",
+      "sha256": "c21ba723d5a62e3afcaf80c982fd62a0b3c63f701858009c81ca1173b8c2b09c",
+      "touch_nodes": [
+        {
+          "node": "/fragment@0/__overlay__/ft6236@5d",
+          "compatible": [
+            "goodix,gt911"
+          ],
+          "address": "0x5d",
+          "touchscreen-size-x": [
+            720
+          ],
+          "touchscreen-size-y": [
+            720
+          ],
+          "interrupts": [
+            4,
+            2
+          ]
+        }
+      ]
+    },
+    {
+      "file": "4HDMIB_DTBO/waveshare-4dpic-4b.dtbo",
+      "sha256": "860279e52ace09843af7d30aae1360ec8ebe1b505141fe4bed9a7035d8659039",
+      "touch_nodes": [
+        {
+          "node": "/fragment@0/__overlay__/ft6236@14",
+          "compatible": [
+            "goodix,gt911"
+          ],
+          "address": "0x14",
+          "touchscreen-size-x": [
+            720
+          ],
+          "touchscreen-size-y": [
+            720
+          ],
+          "interrupts": [
+            4,
+            2
+          ]
+        }
+      ]
+    },
+    {
+      "file": "4HDMIB_DTBO/waveshare-4dpic-5b.dtbo",
+      "sha256": "ea80dde295a48930a0e1ba02980c6cd2dd58d0974893cc7a33b0235857f879e3",
+      "touch_nodes": [
+        {
+          "node": "/fragment@0/__overlay__/ft6236@14",
+          "compatible": [
+            "goodix,gt911"
+          ],
+          "address": "0x14",
+          "touchscreen-size-x": [
+            720
+          ],
+          "touchscreen-size-y": [
+            720
+          ],
+          "irq-gpios": [
+            4294967295,
+            4,
+            2
+          ]
+        },
+        {
+          "node": "/fragment@0/__overlay__/ft6236@5d",
+          "compatible": [
+            "goodix,gt911"
+          ],
+          "address": "0x5d",
+          "touchscreen-size-x": [
+            720
+          ],
+          "touchscreen-size-y": [
+            720
+          ],
+          "irq-gpios": [
+            4294967295,
+            4,
+            2
+          ]
+        }
+      ]
+    }
+  ]
+}

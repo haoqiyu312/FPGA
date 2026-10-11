@@ -17,3 +17,10 @@ trap 'rm -rf -- "$test_dir"' EXIT
  "$project_dir/rtl/touch_menu_hit.v" "$project_dir/rtl/touch_menu_control.v" \
  "$project_dir/rtl/touch_menu_overlay.v" "$project_dir/sim/tb_touch_menu.v"
 "$runner" "$test_dir/menu"
+"${compiler[@]}" -g2012 -s tb_touch_i2c -o "$test_dir/i2c" \
+ "$project_dir/rtl/i2c_register_master.v" "$project_dir/sim/tb_touch_i2c.v"
+"$runner" "$test_dir/i2c"
+"${compiler[@]}" -g2012 -s tb_gt911_reader -o "$test_dir/reader" \
+ "$project_dir/rtl/gt911_touch_reader.v" "$project_dir/rtl/touch_coordinate_map.v" \
+ "$project_dir/sim/tb_gt911_reader.v"
+"$runner" "$test_dir/reader"
