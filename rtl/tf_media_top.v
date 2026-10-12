@@ -1,4 +1,4 @@
-// Shared FAT32 image/video player; KEY4 long hold switches mode.
+// Shared FAT32 image/video player; KEY4 hold or KEY4+KEY2 switches mode.
 // KEY1 resets to image mode. RVF2 soundtrack is sent over HDMI_B.
 module tf_media_top (
     input wire sys_clk, input wire sys_rst_n,
@@ -42,7 +42,7 @@ module tf_media_top (
     media_volume_control u_volume (.clk(sys_clk),.reset_n(touch_reset_n),
         .up_event(touch_event && touch_action==7),.down_event(touch_event && touch_action==6),
         .level(volume_level));
-    media_key_control #(.EXTERNAL_ACTIONS(1)) u_media_keys (.clk(sys_clk),.reset_n(sys_rst_n),
+    media_key_control #(.EXTERNAL_ACTIONS(1),.CHORD_MODE(1)) u_media_keys (.clk(sys_clk),.reset_n(sys_rst_n),
         .key_auto_n(key_auto_n),.restart_n(key_next_n),.video_mode(video_mode),
         .short_press(physical_short),.media_reset_n(media_reset_n),
         .mode_event(touch_event && touch_action==1),.restart_event(touch_event && touch_action==5));
