@@ -13,8 +13,8 @@ module tf_media_top (
     output wire sd_ncs, sd_dclk, sd_mosi, input wire sd_miso,
     inout wire touch_scl,touch_sda
 );
-    key_beeper u_key_beeper (.clk(sys_clk),
-        .keys_n({key_auto_n,key_prev_n,key_next_n,sys_rst_n}),.buzzer_n(buzzer_n));
+    // The board buzzer is active low; keep it disabled for all key presses.
+    assign buzzer_n = 1'b1;
     wire pixel_clk, serial_clk, video_lock;
     wire sd_clk, mem_clk, mem_clk_shift, memory_lock;
     video_pll u_video_pll (.refclk(sys_clk),.reset(~sys_rst_n),

@@ -22,6 +22,7 @@
 !/release/TF_VIDEO.bit
 !/release/TF_MEDIA.bit
 !/release/TF_MEDIA_TOUCH.bit
+!/release/TF_MEDIA_TOUCH_SILENT.bit
 
 # Locally generated video media
 /VIDEO.RV
