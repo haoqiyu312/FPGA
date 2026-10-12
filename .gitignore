@@ -29,6 +29,7 @@
 /VIDEO.RV
 /release/VIDEO.RV
 /release/VIDEO_*.RV
+/release/music_ode_to_joy/
 
 # Simulator outputs and scratch files
 *.vvp
