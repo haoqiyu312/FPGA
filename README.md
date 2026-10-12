@@ -1,4 +1,13 @@
-# 康康stay
+# 安路 FPGA TF 卡图片与视频播放器
+
+## 当前进度（2026-10-12）
+
+- 用户已确认移动测试彩条正常播放；HDMI 音频仍无声，尚在排查，不能视为已完成实板音频验证。
+- 当前下载文件为 [`release/TF_MEDIA_SWITCH_FIX.bit`](release/TF_MEDIA_SWITCH_FIX.bit)，工程为 `prj/TF_MEDIA.al`。按键静音、长按和组合键切换已接入；菜单、触控及全部按键行为仍需分别确认。
+- 完整综合、布局布线和最终时序通过，SWNS 0.990 ns、HWNS 0.011 ns；视频/音频转换器共 15 项 Python 测试通过。RTL 仿真因缺少 iverilog/vvp 未运行。
+- 最新音乐测试是 16 秒《欢乐颂》合成旋律与动态琴键，附 WAV 试听；生成方式见下文。音轨数据已检查，实板出声仍待确认。
+
+具体待办及验证边界见 [当前进度](docs/当前进度.md)。本地提交与 GitHub 上传状态分别确认；此前推送因连接失败尚未完成。
 
 ## 图片与视频合并版
 
@@ -10,13 +19,33 @@ KEY2 在视频模式从头播放。KEY1 复位回图片模式。
 
 SD 卡根目录可同时保留 BMP 图片和 `VIDEO.RV`。两种模式均输出 640×480。带音轨的 RVF2 视频通过 HDMI 输出 48 kHz 单声道音频，
 屏幕耳机口可接有源音箱，暂停、重播、循环同时控制声音；图片和旧 RVF1 文件静音。
+这是当前程序的音频设计；用户实板仍反馈无声，正在排查文件搭配、屏幕 HP 输出和 FPGA HDMI 音频链路。
 转换命令和测试文件生成见 [视频音频播放](docs/视频音频播放.md)。
 详细准备、按键与验证情况见 [图片视频合并播放](docs/图片视频合并播放.md)。
 下文历史图片功能及测试音说明对应独立的 `TF_IMAGE` 工程。
 
 菜单与触控已接入合并工程：底部七个按钮控制模式、播放/轮播、上一张、下一张、重播、音量减和音量加。触控采用 GT911 I²C，开发板侧为 J1-1 SDA / J1-2 SCL；屏幕侧接点与上拉电压仍待确认，尚未实板验证。当前下载文件为 [`TF_MEDIA_SWITCH_FIX.bit`](release/TF_MEDIA_SWITCH_FIX.bit)；旧 `TF_MEDIA_TOUCH.bit` 和 `TF_MEDIA.bit` 保留。下载及验证限制见 [触控开发说明](docs/触控开发.md)。
 
-# 安路 FPGA TF 卡图片播放器
+## 最新文件上板与音乐测试
+
+1. TF 卡使用 FAT32。将预转换文件命名为 `VIDEO.RV`，放到卡根目录；MP4/AVI/MKV 不能直接播放，也不能只改后缀。
+2. 安全弹出 TF 卡，开发板断电插卡，再上电。
+3. BitWriter 删除旧列表项，添加 `release/TF_MEDIA_SWITCH_FIX.bit`，选择 **AL-LINK / PROGRAM_SRAM / 1 MHz**，Run 后等待成功。SRAM 下载后保持供电，断电会重新加载 Flash 中的程序。
+4. 默认图片模式。同时按住 KEY4+KEY2 约半秒后松开两键，或只按住 KEY4 约 2 秒，等待视频开始。短按 KEY4 暂停/继续，单按 KEY2 重播；组合键再次切回图片。
+
+生成容易辨认的音乐测试文件（Python 标准库，无需 ffmpeg）：
+
+```bash
+python3 tools/make_music_demo.py release/music_ode_to_joy
+```
+
+输出 `release/music_ode_to_joy/VIDEO.RV` 和电脑试听用的 `ODE_TO_JOY.wav`。将此 VIDEO.RV 替换到卡根目录即可，无需重新编译 FPGA。输出目录若已有文件，生成器会拒绝覆盖，可改用新目录。生成媒体不纳入 Git。
+
+有声 RVF2 需要合并播放器；旧独立 `TF_VIDEO.bit` 只支持无声 RVF1。移动彩条的有声版与无声版画面相同，不能靠画面判断有无音轨。
+
+以下为历史独立图片/视频工程说明，当前合并版以以上操作为准。
+
+## 历史独立图片播放器
 
 基于康芯 HX4S20 开发板（安路 EG4S20BG256）的图片播放器，使用 TF 卡读取 BMP，经 SDRAM 帧缓存输出到 HDMI。
 
