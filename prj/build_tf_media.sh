@@ -23,12 +23,13 @@ printf '%s\n' "$td_version"
 build_stamp="$(mktemp)"
 trap 'rm -f "$build_stamp"' EXIT
 "$td_program" build_tf_media.tcl
-bit_file="TF_MEDIA_Runs/phy_1/TF_MEDIA.bit"
+"$td_program" fix_tf_media_hold.tcl
+bit_file="TF_MEDIA_Runs/phy_1/TF_MEDIA_hold.bit"
 if [ ! -s "$bit_file" ] || [ ! "$bit_file" -nt "$build_stamp" ];then
  echo 'TD 未生成本次编译的新 bit 文件，请检查运行日志。' >&2
  exit 1
 fi
-timing_report="TF_MEDIA_Runs/phy_1/TF_MEDIA_pr.timing"
+timing_report="TF_MEDIA_Runs/phy_1/TF_MEDIA_hold.timing"
 if [ ! -s "$timing_report" ] || [ ! "$timing_report" -nt "$build_stamp" ];then
  echo '缺少本次编译的最终时序报告。' >&2
  exit 1

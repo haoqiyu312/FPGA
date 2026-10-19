@@ -23,3 +23,7 @@
 `rtl/vendor/hdmi_audio/` 中的加密 HDMI 1.4b 核、`hdmi_phy_warpper.v` 和 `lane_lvds_10_1.v` 来自赛题资料 `lab_ex5_i2s`，保持原始字节。协议编码和器件 DDR 串行发送复用该厂商 IP，不属于本项目自主算法。现工程不再实例化原 DVI 发射器。
 
 `hdmi_test_audio.v`、`hdmi_video_stream.v` 和 `hdmi_audio_output.v` 为本项目实现。测试音直接在像素时钟域产生 PCM 和固定比率的 N/CTS，不使用参考例程的音频 PLL、I2S 音源/接收器及 ACR 周期测量模块。仓库不分发厂商说明文档或工具许可证。
+
+## 文件菜单字体
+
+`rtl/browser_ascii_font.v` 使用 DejaVu Sans Mono 的 8×8 ASCII 点阵子集。DejaVu 修改部分属于公有领域，原始 Bitstream 字体遵循随附的 [字体许可证](docs/licenses/BROWSER_FONT_LICENSE.txt)。字库编译时无需安装字体。

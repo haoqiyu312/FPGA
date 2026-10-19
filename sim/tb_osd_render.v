@@ -3,8 +3,9 @@
 module tb_osd_render;
 reg clk=0;always #10 clk=~clk;
 reg rst=1;reg[9:0]x=100,y=100;reg auto_mode=0;
-wire active;wire[23:0]rgb;reg[7:0]bmp[0:921653];
-image_status_osd dut(clk,rst,x,y,1'b1,1'b1,4'd5,5'd0,6'd4,auto_mode,2'b01,1'b0,active,rgb,"PIC01   BMP");
+wire active;wire[23:0]rgb;reg[7:0]bmp[0:921653];wire[15:0]font_code,font_pixels;wire[3:0]font_row;
+osd_font16 font(.clk(clk),.codepoint(font_code),.row(font_row),.pixels(font_pixels),.codepoint_b(16'h0020),.row_b(4'd0),.pixels_b());
+image_status_osd dut(clk,rst,x,y,1'b1,1'b1,4'd5,5'd0,6'd4,auto_mode,2'b01,1'b0,1'b0,active,rgb,"PIC01   BMP",font_code,font_row,font_pixels);
 integer fd,px,py,scene,offset;reg[23:0]color;
 task tick;begin @(posedge clk);#1;end endtask
 task snapshot;begin repeat(4)tick;x=0;y=0;tick;x=100;y=100;tick;end endtask

@@ -5,9 +5,10 @@ module image_status_osd #(
 )(input wire pixel_clk,rst_n,input wire [9:0] x,y,input wire de,
  input wire image_shown,input wire [3:0] load_status,
  input wire [4:0] image_index,input wire [5:0] image_total,
- input wire auto_mode,input wire [1:0] interval_setting,input wire reverse_direction,
+ input wire auto_mode,input wire [1:0] interval_setting,input wire reverse_direction,input wire video_mode,
  output reg overlay_active,output reg [23:0] rgb,
- input wire [87:0] image_name);
+ input wire [87:0] image_name,
+ output wire [15:0] font_codepoint,output wire [3:0] font_row,input wire [15:0] font_pixels);
  reg [18:0] meta=0,sync=0,frame=0;
  // Packed snapshot is stable long before a displayed frame begins.
  wire shown=frame[18]; wire [3:0] status=frame[17:14];
@@ -15,15 +16,16 @@ module image_status_osd #(
  wire autoplay=frame[2];wire [1:0] interval=frame[1:0];
  // Direction is held separately so the snapshot layout stays explicit below.
  reg dir_meta=0,dir_sync=0,dir_frame=0;
+ reg video_meta=0,video_sync=0,video_frame=0;
  reg [87:0] name_meta={11{8'h20}},name_sync={11{8'h20}},name_frame={11{8'h20}};
  reg [7:0] notice=NOTICE_FRAMES;
  always @(posedge pixel_clk or negedge rst_n)begin
-  if(!rst_n)begin meta<=0;sync<=0;frame<=0;notice<=NOTICE_FRAMES;dir_meta<=0;dir_sync<=0;dir_frame<=0;name_meta<={11{8'h20}};name_sync<={11{8'h20}};name_frame<={11{8'h20}};end
+  if(!rst_n)begin meta<=0;sync<=0;frame<=0;notice<=NOTICE_FRAMES;dir_meta<=0;dir_sync<=0;dir_frame<=0;video_meta<=0;video_sync<=0;video_frame<=0;name_meta<={11{8'h20}};name_sync<={11{8'h20}};name_frame<={11{8'h20}};end
   else begin
    meta<={image_shown,load_status,image_index,image_total,auto_mode,interval_setting};sync<=meta;
-   dir_meta<=reverse_direction;dir_sync<=dir_meta;name_meta<=image_name;name_sync<=name_meta;
+   dir_meta<=reverse_direction;dir_sync<=dir_meta;video_meta<=video_mode;video_sync<=video_meta;name_meta<=image_name;name_sync<=name_meta;
    if(x==0 && y==0)begin
-    frame<=sync;dir_frame<=dir_sync;name_frame<=name_sync;
+    frame<=sync;dir_frame<=dir_sync;video_frame<=video_sync;name_frame<=name_sync;
     if(sync[18:2]!=frame[18:2] || name_sync!=name_frame ||
        (sync[2] && (sync[1:0]!=frame[1:0] || dir_sync!=dir_frame)))notice<=NOTICE_FRAMES;
     else if(notice!=0)notice<=notice-1'b1;
@@ -99,7 +101,7 @@ module image_status_osd #(
  end
  endfunction
  wire [511:0] filename_text=filename_line(name_frame);
- reg [511:0] counter_text,auto_text;
+ reg [511:0] counter_text,auto_text,controls_text;
  always @* begin
   counter_text={32{16'h0020}};
   counter_text[511 -: 16]=16'h0030+number/10;
@@ -110,6 +112,18 @@ module image_status_osd #(
   auto_text={32{16'h0020}};
   auto_text[511 -: 48]=48'h8f6e64adff1a; // 轮播：
   auto_text[463 -: 32]=autoplay ? 32'h5f00542f : 32'h517395ed; // 开启 / 关闭
+  auto_text[415 -: 32]=32'h95f49694; // 间隔
+  auto_text[383 -: 16]=16'hff1a;
+  auto_text[367 -: 16]=16'h0030+seconds/10;
+  auto_text[351 -: 16]=16'h0030+seconds%10;
+  auto_text[335 -: 16]=16'h79d2;
+  auto_text[303 -: 32]=32'h65b95411; // 方向
+  auto_text[271 -: 16]=16'hff1a;
+  auto_text[255 -: 32]=dir_frame ? 32'h50126b63 : 32'h6b636b63; // 倒序 / 正序
+  controls_text={32{16'h0020}};
+  controls_text=video_frame ?
+    512'h89c698910020004b003464ad653e002f6682505c0020957f63098fd456de83dc5355000000000000000000000000000000000000000000000000000000000000 :
+    512'h004b00324e0b4e005f200020004b00334e0a4e005f200020004b003464ad653e002f6682505c0020957f63098fd456de83dc5355000000000000000000000000;
  end
  reg [9:0] tx,ty;
  reg [4:0] column,column_pixel;
@@ -120,17 +134,17 @@ module image_status_osd #(
  always @* begin
   tx=0;ty=0;column=0;column_pixel=0;row_pixel=0;character=16'h0020;
   in_panel=0;in_text=0;selected_line={32{16'h0020}};
-  if(de && (!shown || notice!=0))begin
+  if(de)begin
    if(shown)begin
     if(y>=16 && y<32 && x>=16 && x<232)begin
      in_text=1;tx=x-16;ty=y-16;selected_line=filename_text;
     end else if(y>=16 && y<32 && x>=534 && x<624)begin
      in_text=1;tx=x-534;ty=y-16;selected_line=counter_text;
     end else if(x>=16 && x<592)begin
-     if(y>=(autoplay ? 424 : 452) && y<(autoplay ? 440 : 468))begin
-      in_text=1;tx=x-16;ty=y-(autoplay ? 424 : 452);selected_line=auto_text;
-     end else if(autoplay && y>=452 && y<468)begin
-      in_text=1;tx=x-16;ty=y-452;selected_line=line1;
+     if(y>=424 && y<440)begin
+      in_text=1;tx=x-16;ty=y-424;selected_line=auto_text;
+     end else if(y>=452 && y<468)begin
+      in_text=1;tx=x-16;ty=y-452;selected_line=controls_text;
      end
     end
    end else if(x>=16 && x<592)begin
@@ -144,8 +158,8 @@ module image_status_osd #(
    character=selected_line >> ((31-column)*16);
   end
  end
- wire [15:0] font_pixels;
- osd_font16 u_font(.clk(pixel_clk),.codepoint(character),.row(row_pixel),.pixels(font_pixels));
+ assign font_codepoint=character;
+ assign font_row=row_pixel;
  reg panel_delayed=0,text_delayed=0,error_delayed=0;
  reg [4:0] column_delayed=0;
  always @(posedge pixel_clk or negedge rst_n)begin

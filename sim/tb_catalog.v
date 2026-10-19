@@ -1,12 +1,12 @@
 `timescale 1ns/1ps
-module tb_catalog;
+module tb_catalog #(parameter QUICK_SELECT=0);
  reg clk=0;always #5 clk=~clk;
  reg rst=1;wire req;wire [31:0]lba;reg[7:0]data;
  reg valid=0,last=0,ack=0,finish=0;
  wire wrreq,pvalid,ready,catalog_valid;wire[31:0]pdata;wire[3:0]status;wire[5:0]total;wire[87:0]file_name;
  integer selected=0,scenario=0,active=0,index=0,delay_count=0,count=0;
  reg[31:0]address;reg[7:0]bmp[0:921653];
- fat32_bmp_loader #(.AUTO_SCAN(1),.WATCHDOG_BITS(24)) dut(
+ fat32_bmp_loader #(.AUTO_SCAN(1),.QUICK_SELECT(QUICK_SELECT),.WATCHDOG_BITS(24)) dut(
  .clk(clk),.rst(rst),.sd_ready(1'b1),.memory_ready(1'b1),.sector_req(req),.sector_lba(lba),
  .sector_byte(data),.sector_valid(valid),.sector_end(last),.write_req(wrreq),.write_ack(ack),
  .pixel_valid(pvalid),.pixel_data(pdata),.write_finish_toggle(finish),.image_ready(ready),
@@ -93,7 +93,7 @@ module tb_catalog;
  end
  integer offset,expected_item;reg[87:0]expected_name;
  always @(posedge clk)if(pvalid)begin
-  if(!catalog_valid)$fatal(1,"pixels before full catalog");
+  if(!QUICK_SELECT && !catalog_valid)$fatal(1,"pixels before full catalog");
   offset=54+count*3;
   if(pdata!=={bmp[offset+2],bmp[offset+1],bmp[offset],8'h00})$fatal(1,"pixel mismatch %d",count);
   count=count+1;
@@ -109,7 +109,7 @@ module tb_catalog;
   end else begin
    wait(count==307200);repeat(5)@(negedge clk);finish=1;wait(ready);#20;
    expected_item=selected==0 ? 1 : selected==1 ? 2 : selected==2 ? 3 : selected==3 ? 5 : 1;
-   if(total!=(scenario==3 ? 32 : 4) || dut.first_cluster!=start_cluster(scenario==3 ? 1 : expected_item) || status!=5)$fatal(1,"catalog selection/count total=%d selectedcluster=%d",total,dut.first_cluster);
+   if((!QUICK_SELECT && total!=(scenario==3 ? 32 : 4)) || dut.first_cluster!=start_cluster(scenario==3 ? 1 : expected_item) || status!=5)$fatal(1,"catalog selection/count total=%d selectedcluster=%d",total,dut.first_cluster);
    expected_name=selected==1 ? "I       bmp" : selected==2 ? "A       BMP" : selected==3 ? "C       BMP" : "H       BMP";
    if(scenario==3)expected_name="P       BMP";
    if(file_name!==expected_name)$fatal(1,"wrong selected filename %s expected %s",file_name,expected_name);

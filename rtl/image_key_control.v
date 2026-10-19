@@ -5,15 +5,19 @@ module image_key_control #(
  // With EXTERNAL_AUTO, key_auto_n carries an active-low one-clock event.
  // The combined player already debounces KEY4 and distinguishes long holds.
  parameter integer EXTERNAL_AUTO=0,
- parameter integer EXTERNAL_STEP=0
+ parameter integer EXTERNAL_STEP=0,
+ parameter integer EXTERNAL_SELECTION=0,
+ parameter integer EXTERNAL_AUTO_LEVEL=0
 )(input wire clk,reset_n,image_ready,key_next_n,key_prev_n,
  output reg [4:0] image_index=0,output wire run_reset_n,
  input wire key_auto_n,input wire [1:0] interval_switch,
  output reg auto_mode=0,input wire direction_switch,
  input wire [5:0] image_total,
  output wire [1:0] stable_interval, output wire stable_direction,
- input wire next_event,prev_event);
+ input wire next_event,prev_event,input wire [4:0] initial_index,
+ input wire auto_pause);
  reg [2:0] ready_sync=0;
+ reg initialize=1;
  wire next_press,prev_press,auto_press,debounced_auto,physical_next,physical_prev;
  assign next_press=physical_next | (EXTERNAL_STEP && next_event);
  assign prev_press=physical_prev | (EXTERNAL_STEP && prev_event);
@@ -24,8 +28,9 @@ module image_key_control #(
  reg [SW_COUNT_BITS-1:0] sw_count=0;
  reg [25:0] second_count=0;
  reg [4:0] elapsed_seconds=0;
- wire [4:0] interval_seconds=sw_stable[1:0]==0 ? 5'd2 : sw_stable[1:0]==1 ? 5'd5 : sw_stable[1:0]==2 ? 5'd10 : 5'd20;
- assign stable_interval=sw_stable[1:0];
+ wire [4:0] interval_seconds=EXTERNAL_AUTO_LEVEL ? (sw_stable[1] ? 5'd10 : 5'd5) :
+  sw_stable[1:0]==0 ? 5'd2 : sw_stable[1:0]==1 ? 5'd5 : sw_stable[1:0]==2 ? 5'd10 : 5'd20;
+ assign stable_interval=EXTERNAL_AUTO_LEVEL ? (sw_stable[1] ? 2'd2 : 2'd1) : sw_stable[1:0];
  assign stable_direction=sw_stable[2];
  wire [4:0] last_image=image_total-1'b1;
  assign run_reset_n=reset_n && reset_count==0;
@@ -37,7 +42,7 @@ module image_key_control #(
                 sw_stable==sw_previous && second_count==CLOCK_HZ-1 && elapsed_seconds==interval_seconds-1;
  always @(posedge clk or negedge reset_n) begin
   if(!reset_n) begin
-   ready_sync<=0;image_index<=0;reset_count<=0;auto_mode<=0;
+   initialize<=1;ready_sync<=0;image_index<=0;reset_count<=0;auto_mode<=0;
    sw_meta<=0;sw_sync<=0;sw_stable<=0;sw_previous<=0;sw_candidate<=0;sw_count<=0;
    second_count<=0;elapsed_seconds<=0;
   end else begin
@@ -53,7 +58,8 @@ module image_key_control #(
    end
    else if(sw_count==DEBOUNCE_CYCLES-1)begin sw_stable<=sw_sync;sw_count<=0;end
    else sw_count<=sw_count+1'b1;
-   if(auto_press) auto_mode<=~auto_mode;
+   if(EXTERNAL_AUTO_LEVEL)auto_mode<=sw_stable[0] && !auto_pause;
+   else if(auto_press) auto_mode<=~auto_mode;
    if(!auto_mode || auto_press || !ready_sync[2] || reset_count!=0 ||
       manual_step || auto_step || sw_stable!=sw_previous) begin
     second_count<=0;elapsed_seconds<=0;
@@ -71,6 +77,7 @@ module image_key_control #(
     reset_count<=RESET_CYCLES;
    end
    if(image_total!=0 && image_index>=image_total)image_index<=0;
+   if(EXTERNAL_SELECTION && initialize)begin image_index<=initial_index;initialize<=0;auto_mode<=0;end
   end
  end
 endmodule

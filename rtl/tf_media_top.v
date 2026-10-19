@@ -10,8 +10,7 @@ module tf_media_top (
     output wire HDMI_CLK_P, HDMI_D0_P, HDMI_D1_P, HDMI_D2_P,
     output wire HDMI_CLK_P1, HDMI_D0_P1, HDMI_D1_P1, HDMI_D2_P1,
     output wire HDMI_DDC_SCL, inout wire HDMI_DDC_SDA,
-    output wire sd_ncs, sd_dclk, sd_mosi, input wire sd_miso,
-    inout wire touch_scl,touch_sda
+    output wire sd_ncs, sd_dclk, sd_mosi, input wire sd_miso
 );
     // The board buzzer is active low; keep it disabled for all key presses.
     assign buzzer_n = 1'b1;
@@ -22,34 +21,68 @@ module tf_media_top (
     sys_pll u_memory_pll (.refclk(sys_clk),.reset(~sys_rst_n),
         .extlock(memory_lock),.clk0_out(sd_clk),.clk1_out(mem_clk),.clk2_out(mem_clk_shift));
 
-    // Configuration-time reset also initializes the touch probe and full volume.
+    // Configuration-time reset initializes control logic and HDMI audio level.
     reg [2:0] touch_reset_pipe=0;
     always @(posedge sys_clk or negedge sys_rst_n)
         if(!sys_rst_n) touch_reset_pipe<=0;
         else touch_reset_pipe<={touch_reset_pipe[1:0],1'b1};
     wire touch_reset_n=sys_rst_n & touch_reset_pipe[2];
-    wire video_mode,physical_short,media_reset_n;
-    wire touch_online,touch_fault,touch_action_valid;
-    wire [2:0] touch_action,pressed_button;
-    wire [9:0] touch_x,touch_y;
-    touch_player_frontend u_touch (.clk(sys_clk),.reset_n(touch_reset_n),
-        .menu_visible(1'b1),.video_mode(video_mode),.touch_scl(touch_scl),.touch_sda(touch_sda),
-        .online(touch_online),.fault(touch_fault),.action_valid(touch_action_valid),
-        .action(touch_action),.pressed_button(pressed_button),.touch_x(touch_x),.touch_y(touch_y));
-    wire touch_event=touch_action_valid & media_reset_n;
-    wire short_press=physical_short | (touch_event && touch_action==2);
-    wire [3:0] volume_level;
-    media_volume_control u_volume (.clk(sys_clk),.reset_n(touch_reset_n),
-        .up_event(touch_event && touch_action==7),.down_event(touch_event && touch_action==6),
-        .level(volume_level));
-    media_key_control #(.EXTERNAL_ACTIONS(1),.CHORD_MODE(1)) u_media_keys (.clk(sys_clk),.reset_n(sys_rst_n),
-        .key_auto_n(key_auto_n),.restart_n(key_next_n),.video_mode(video_mode),
-        .short_press(physical_short),.media_reset_n(media_reset_n),
-        .mode_event(touch_event && touch_action==1),.restart_event(touch_event && touch_action==5));
+    wire video_mode,physical_short,physical_long,media_reset_n;
+    // This display has no FPGA-compatible touch connection; use physical keys.
+    wire browser_visible,open_file,open_video,selected_valid;
+    wire [4:0] browser_scroll_first;
+    wire [4:0] selected_file,query_index,catalog_display_index,query_bmp_index;
+    wire [87:0] query_name,catalog_display_name;
+    wire [1:0] query_type,catalog_display_type;
+    wire key_next_pressed,key_prev_pressed;
+    key_debounce u_browser_next_key (.clk(sys_clk),.reset_n(touch_reset_n),
+        .key_n(key_next_n),.pressed(key_next_pressed));
+    key_debounce u_browser_prev_key (.clk(sys_clk),.reset_n(touch_reset_n),
+        .key_n(key_prev_n),.pressed(key_prev_pressed));
+    wire catalog_done_sd;wire [5:0] file_count_sd;wire [3:0] catalog_status_sd;
+    wire [7:0] debug_root_byte_sd;wire [15:0] debug_root_lba_sd;
+    reg [1:0] catalog_done_sys;
+    reg [5:0] file_count_sys;reg [3:0] catalog_status_sys;
+    reg [7:0] debug_root_byte_sys;reg [15:0] debug_root_lba_sys;
+    reg [4:0] requested_image=0;
+    reg [87:0] requested_video="VIDEO   RV ";
+    // Keep the mixed-media directory ordinal for the item currently opened.
+    reg [4:0] current_file_index=0;
+    always @(posedge sys_clk or negedge touch_reset_n)begin
+        if(!touch_reset_n)begin
+            catalog_done_sys<=0;file_count_sys<=0;catalog_status_sys<=0;
+            debug_root_byte_sys<=0;debug_root_lba_sys<=0;
+            requested_image<=0;requested_video<="VIDEO   RV ";current_file_index<=0;
+        end else begin
+            catalog_done_sys<={catalog_done_sys[0],catalog_done_sd};
+            if(catalog_done_sys[1])begin
+                file_count_sys<=file_count_sd;catalog_status_sys<=catalog_status_sd;
+                debug_root_byte_sys<=debug_root_byte_sd;debug_root_lba_sys<=debug_root_lba_sd;
+            end
+            if(open_file)begin
+                current_file_index<=selected_file;
+                if(open_video)requested_video<=query_name;else requested_image<=query_bmp_index;
+            end
+        end
+    end
+    touch_file_browser u_browser (.clk(sys_clk),.reset_n(touch_reset_n),.enable(media_reset_n),
+        .catalog_done(catalog_done_sys[1]),.file_count(file_count_sys),.query_type(query_type),
+        .visible(browser_visible),.scroll_first(browser_scroll_first),
+        .selection_valid(selected_valid),.selected(selected_file),.open_event(open_file),
+        .open_video(open_video),.query_index(query_index),
+        .nav_down(key_next_pressed),.nav_up(key_prev_pressed),
+        .nav_open(physical_short & browser_visible),
+        .nav_menu(physical_long));
+    wire short_press=physical_short & ~browser_visible;
+    media_key_control #(.EXTERNAL_ACTIONS(1),.EXTERNAL_OPEN(1),.BROWSER_KEYS(1)) u_media_keys (.clk(sys_clk),.reset_n(sys_rst_n),
+        .key_auto_n(key_auto_n),.restart_n(1'b1),.video_mode(video_mode),
+        .short_press(physical_short),.long_press(physical_long),.media_reset_n(media_reset_n),
+        .mode_event(1'b0),.restart_event(1'b0),.open_event(open_file),.open_video(open_video));
     wire [3:0] load_status;
     wire image_ready;
     wire [4:0] image_index;
     wire [5:0] catalog_total;
+    wire [5:0] browser_image_total;
     wire catalog_valid;
     wire [87:0] image_name;
     reg [5:0] image_total=0,total_meta=0,total_sync=0;
@@ -60,8 +93,8 @@ module tf_media_top (
     always @(posedge sys_clk or negedge media_reset_n) begin
         if(!media_reset_n)begin image_total<=0;total_meta<=0;total_sync<=0;catalog_sync<=0;end
         else begin
-            total_meta<=catalog_total;total_sync<=total_meta;
-            catalog_sync<={catalog_sync[0],catalog_valid};
+            total_meta<=browser_image_total;total_sync<=total_meta;
+            catalog_sync<={catalog_sync[0],catalog_done_sd};
             if(catalog_sync[1])image_total<=total_sync;
         end
     end
@@ -69,17 +102,24 @@ module tf_media_top (
     wire auto_mode;
     wire show_image;
     reg show_picture;
-    image_key_control #(.EXTERNAL_AUTO(1),.EXTERNAL_STEP(1)) u_image_keys (.clk(sys_clk),.reset_n(media_reset_n),
-        .image_ready(show_image & ~video_mode),.key_next_n(key_next_n | video_mode),.key_prev_n(key_prev_n | video_mode),
-        .key_auto_n(~(short_press & ~video_mode)),.interval_switch(interval_switch),.auto_mode(auto_mode),
+    reg image_paused=0;
+    always @(posedge sys_clk or negedge sys_rst_n)begin
+        if(!sys_rst_n)image_paused<=0;
+        else if(!interval_switch[0] || open_file)image_paused<=0;
+        else if(short_press && !video_mode)image_paused<=~image_paused;
+    end
+    image_key_control #(.EXTERNAL_STEP(1),.EXTERNAL_SELECTION(1),.EXTERNAL_AUTO_LEVEL(1)) u_image_keys (.clk(sys_clk),.reset_n(media_reset_n),
+        .image_ready(show_image & ~video_mode),.key_next_n(key_next_n | video_mode | browser_visible),.key_prev_n(key_prev_n | video_mode | browser_visible),
+        .key_auto_n(1'b1),.interval_switch(interval_switch),.auto_mode(auto_mode),.auto_pause(image_paused),
         .direction_switch(direction_switch),.image_total(image_total),
         .stable_interval(stable_interval),.stable_direction(stable_direction),
         .image_index(image_index),.run_reset_n(run_reset_n),
-        .next_event(touch_event && !video_mode && touch_action==4),
-        .prev_event(touch_event && !video_mode && touch_action==3));
-    wire [7:0] image_seg,image_digit,video_seg,video_digit;
-    image_number_display u_image_number (.clk(sys_clk),.reset_n(media_reset_n),
-        .image_index(image_index),.total_count(image_total),.seg_n(image_seg),.digit_en(image_digit));
+        .next_event(1'b0),.prev_event(1'b0),.initial_index(requested_image));
+    // In the browser show the highlighted row; during playback keep showing
+    // the directory row that was opened. The count covers the mixed-media list.
+    wire [4:0] displayed_file_index=browser_visible && selected_valid ? selected_file : current_file_index;
+    image_number_display u_file_number (.clk(sys_clk),.reset_n(media_reset_n),
+        .image_index(displayed_file_index),.total_count(file_count_sys),.seg_n(seg_n),.digit_en(digit_en));
     wire startup_done;
     reg [1:0] ready_sys_sync=0;
     reg has_loaded=0,video_started=0;
@@ -107,10 +147,10 @@ module tf_media_top (
         if(!ready_clock) sd_reset_pipe<=0;else sd_reset_pipe<={sd_reset_pipe[1:0],1'b1};
     always @(posedge mem_clk or negedge ready_clock)
         if(!ready_clock) mem_reset_pipe<=0;else mem_reset_pipe<={mem_reset_pipe[1:0],1'b1};
-    // Image reloads keep HDMI running; video retries must also reset the
-    // presenter so its bank/toggle state cannot outlive a reset reader.
-    (* dont_touch="true" *) wire video_ready=media_reset_n & video_started &
-        video_lock & memory_lock & (~video_mode | startup_done);
+    // Keep the HDMI timing/transmitter alive while the SD card is scanned or
+    // media is loading. The browser and loading UI must remain visible even
+    // when the card has no playable image or a media read fails.
+    (* dont_touch="true" *) wire video_ready=media_reset_n & video_lock & memory_lock;
     always @(posedge pixel_clk or negedge video_ready)
         if(!video_ready) video_reset_pipe<=0;else video_reset_pipe<={video_reset_pipe[1:0],1'b1};
     wire sd_rst=~sd_reset_pipe[2], mem_rst=~mem_reset_pipe[2], video_rst=~video_reset_pipe[2];
@@ -120,24 +160,13 @@ module tf_media_top (
     always @(posedge mem_clk) mode_mem<={mode_mem[0],video_mode};
     always @(posedge pixel_clk) mode_pixel<={mode_pixel[0],video_mode};
     wire video_sd=mode_sd[1],video_mem=mode_mem[1],video_pixel=mode_pixel[1];
-    wire image_rst=sd_rst | video_sd, movie_rst=sd_rst | ~video_sd;
+    wire image_rst=sd_rst | video_sd | ~catalog_done_sd, movie_rst=sd_rst | ~video_sd | ~catalog_done_sd;
     wire [3:0] image_status,movie_status;
     assign load_status=video_sd ? movie_status : image_status;
     wire [7:0] video_fps;
     wire audio_enabled,audio_write_valid;
     wire [13:0] audio_write_address;
     wire [7:0] audio_write_data;
-    reg [3:0] status_meta_sys,status_sync_sys;
-    reg [7:0] fps_meta_sys,fps_sync_sys;
-    always @(posedge sys_clk or negedge media_reset_n)
-        if(!media_reset_n)begin status_meta_sys<=0;status_sync_sys<=0;fps_meta_sys<=3;fps_sync_sys<=3;end
-        else begin status_meta_sys<=movie_status;status_sync_sys<=status_meta_sys;
-                   fps_meta_sys<=video_fps;fps_sync_sys<=fps_meta_sys;end
-    image_number_display #(.RAW_INDEX(1)) u_movie_number (.clk(sys_clk),.reset_n(media_reset_n),
-        .image_index({1'b0,status_sync_sys}),.total_count(fps_sync_sys[5:0]),
-        .seg_n(video_seg),.digit_en(video_digit));
-    assign seg_n=video_mode ? video_seg : image_seg;
-    assign digit_en=video_mode ? video_digit : image_digit;
     wire img_sector_req,mov_sector_req,img_write_req,mov_write_req,img_pixel_valid,mov_pixel_valid;
     wire [31:0] img_sector_lba,mov_sector_lba,img_pixel_data,mov_pixel_data;
     wire write_bank,read_bank,frame_toggle,consumed_toggle;
@@ -167,12 +196,27 @@ module tf_media_top (
     always @(posedge mem_clk or posedge mem_rst)
         if(mem_rst) finish_toggle<=0;
         else if(write_finish) finish_toggle<=~finish_toggle;
-    assign sector_req=video_sd ? mov_sector_req : img_sector_req;
-    assign sector_lba=video_sd ? mov_sector_lba : img_sector_lba;
+    // Catalog reset is independent of media reloads; its immutable names and
+    // counts survive opening another file. KEY1/card reset triggers a rescan.
+    reg [2:0] catalog_reset_pipe=0;
+    wire catalog_reset_n=sys_rst_n & video_lock & memory_lock;
+    always @(posedge sd_clk or negedge catalog_reset_n)
+        if(!catalog_reset_n)catalog_reset_pipe<=0;
+        else catalog_reset_pipe<={catalog_reset_pipe[1:0],1'b1};
+    wire cat_sector_req;wire [31:0] cat_sector_lba;
+    fat32_media_catalog u_catalog (.clk(sd_clk),.rst(~catalog_reset_pipe[2]),.sd_ready(sd_ready),
+        .sector_req(cat_sector_req),.sector_lba(cat_sector_lba),.sector_byte(sector_byte),
+        .sector_valid(sector_valid),.sector_end(sector_end),.done(catalog_done_sd),
+        .image_count(browser_image_total),.count(file_count_sd),.status(catalog_status_sd),.query_index(query_index),
+        .query_name(query_name),.query_type(query_type),.query_image_index(query_bmp_index),
+        .display_clk(pixel_clk),.display_index(catalog_display_index),.display_name(catalog_display_name),.display_type(catalog_display_type),
+        .debug_root_byte(debug_root_byte_sd),.debug_root_lba(debug_root_lba_sd));
+    assign sector_req=!catalog_done_sd ? cat_sector_req : video_sd ? mov_sector_req : img_sector_req;
+    assign sector_lba=!catalog_done_sd ? cat_sector_lba : video_sd ? mov_sector_lba : img_sector_lba;
     assign write_req=video_sd ? mov_write_req : img_write_req;
     assign pixel_valid=video_sd ? mov_pixel_valid : img_pixel_valid;
     assign pixel_data=video_sd ? mov_pixel_data : img_pixel_data;
-    fat32_bmp_loader #(.AUTO_SCAN(1)) u_loader (
+    fat32_bmp_loader #(.AUTO_SCAN(1),.QUICK_SELECT(1)) u_loader (
         .clk(sd_clk),.rst(image_rst),.sd_ready(sd_ready),.memory_ready(memory_init_sync[1]),
         .sector_req(img_sector_req),.sector_lba(img_sector_lba),.sector_byte(sector_byte),
         .sector_valid(sector_valid),.sector_end(sector_end),
@@ -181,7 +225,7 @@ module tf_media_top (
         .image_ready(image_ready),.status(image_status),.image_index(image_index),
         .image_total(catalog_total),.catalog_valid(catalog_valid),.image_name(image_name));
 
-    fat32_video_reader #(.AUDIO_SUPPORT(1)) u_movie_loader (
+    fat32_video_reader #(.AUDIO_SUPPORT(1),.EXTERNAL_NAME(1)) u_movie_loader (
         .clk(sd_clk),.rst(movie_rst),.sd_ready(sd_ready),.memory_ready(memory_init_sync[1]),
         .sector_req(mov_sector_req),.sector_lba(mov_sector_lba),.sector_byte(sector_byte),
         .sector_valid(sector_valid),.sector_end(sector_end),
@@ -190,7 +234,7 @@ module tf_media_top (
         .frame_toggle(frame_toggle),.consumed_toggle(consumed_toggle),
         .write_bank(write_bank),.status(movie_status),.fps(video_fps),
         .audio_enabled(audio_enabled),.audio_valid(audio_write_valid),
-        .audio_address(audio_write_address),.audio_data(audio_write_data));
+        .audio_address(audio_write_address),.audio_data(audio_write_data),.selected_name(requested_video));
     wire [9:0] x,y;
     wire de,hs,vs;
     video_timing_640x480 u_timing (.pixel_clk(pixel_clk),.rst_n(~video_rst),
@@ -293,42 +337,51 @@ module tf_media_top (
         .pixel_x(x),.pixel_y(y),.de(de),.rgb(loading_rgb));
     wire osd_cover;
     wire [23:0] osd_rgb;
+    wire [15:0] status_font_code,browser_font_code,status_font_pixels,browser_font_pixels;
+    wire [3:0] status_font_row,browser_font_row;
+    wire [87:0] playing_file_name=video_pixel ? requested_video : image_name;
+    osd_font16 u_shared_osd_font (.clk(pixel_clk),.codepoint(status_font_code),.row(status_font_row),
+        .pixels(status_font_pixels),.codepoint_b(browser_font_code),.row_b(browser_font_row),
+        .pixels_b(browser_font_pixels));
     image_status_osd u_status_osd (.pixel_clk(pixel_clk),.rst_n(~video_rst),
         .x(x),.y(y),.de(de),.image_shown(show_image),.load_status(load_status),
         .image_index(image_index),.image_total(image_total),.auto_mode(auto_mode),
         .interval_setting(stable_interval),.reverse_direction(stable_direction),
-        .overlay_active(osd_cover),.rgb(osd_rgb),.image_name(image_name));
+        .video_mode(video_pixel),.overlay_active(osd_cover),.rgb(osd_rgb),.image_name(playing_file_name),
+        .font_codepoint(status_font_code),.font_row(status_font_row),.font_pixels(status_font_pixels));
     reg [19:0] osd_cover_delay;
     reg [23:0] osd_delay[0:19];
     reg [23:0] loading_delay[0:20];
-    // Mailbox transfers the complete UI snapshot; frame latch avoids tearing.
-    wire [8:0] ui_snapshot;
-    reg [8:0] ui_frame;
-    ui_state_bridge u_ui_bridge (.source_clk(sys_clk),.source_reset_n(touch_reset_n),
-        .source_data({touch_online,auto_mode,volume_level,pressed_button}),
-        .destination_clk(pixel_clk),.destination_reset_n(~video_rst),
-        .destination_data(ui_snapshot));
-    wire [23:0] menu_rgb;
-    touch_menu_overlay #(.SHOW_STATUS(1)) u_menu_overlay (.x(x),.y(y),.de(de),
-        .menu_visible(1'b1),.video_mode(video_pixel),.playing(video_pixel ? ~paused : ui_frame[7]),
-        .pressed_button(ui_frame[2:0]),.touch_online(ui_frame[8]),.volume_level(ui_frame[6:3]),
-        .rgb_in(24'd0),.rgb_out(menu_rgb));
-    reg [20:0] menu_cover_delay;
-    reg [23:0] menu_delay[0:20];
+    wire [46:0] browser_snapshot;
+    reg [46:0] browser_frame;
+    ui_state_bridge #(.WIDTH(47)) u_browser_bridge (.source_clk(sys_clk),.source_reset_n(touch_reset_n),
+        .source_data({debug_root_byte_sys,debug_root_lba_sys,browser_visible,catalog_done_sys[1],file_count_sys,catalog_status_sys,
+                      browser_scroll_first,selected_valid,selected_file}),
+        .destination_clk(pixel_clk),.destination_reset_n(~video_rst),.destination_data(browser_snapshot));
+    wire browser_cover;wire [23:0] browser_rgb;
+    file_browser_overlay u_file_overlay (.clk(pixel_clk),.rst_n(~video_rst),.x(x),.y(y),.de(de),
+        .visible(browser_frame[22]),.ready(browser_frame[21]),.count(browser_frame[20:15]),
+        .debug_root_byte(browser_frame[46:39]),.debug_root_lba(browser_frame[38:23]),
+        .status(browser_frame[14:11]),.scroll_first(browser_frame[10:6]),.selection_valid(browser_frame[5]),
+        .selected(browser_frame[4:0]),.display_index(catalog_display_index),
+        .file_name(catalog_display_name),.file_type(catalog_display_type),.overlay_active(browser_cover),.rgb(browser_rgb),
+        .cn_codepoint(browser_font_code),.cn_font_row(browser_font_row),.cn_pixels(browser_font_pixels));
+    reg [19:0] browser_cover_delay;
+    reg [23:0] browser_delay[0:19];
     integer i;
     always @(posedge pixel_clk or posedge video_rst) begin
         if(video_rst) begin
+            browser_frame<=0;browser_cover_delay<=0;
+            for(i=0;i<20;i=i+1)browser_delay[i]<=0;
             osd_cover_delay<=0;
-            ui_frame<={1'b0,1'b0,4'd8,3'd0};menu_cover_delay<=0;
-            for(i=0;i<=20;i=i+1)menu_delay[i]<=0;
             for(i=0;i<=20;i=i+1)loading_delay[i]<=0;
             for(i=0;i<20;i=i+1)osd_delay[i]<=0;
         end
         else begin
-            if(x==0 && y==0)ui_frame<=ui_snapshot;
-            menu_cover_delay<={menu_cover_delay[19:0],(de && y>=400 && y<480)};
-            menu_delay[0]<=menu_rgb;
-            for(i=1;i<=20;i=i+1)menu_delay[i]<=menu_delay[i-1];
+            if(x==0 && y==0)browser_frame<=browser_snapshot;
+            browser_cover_delay<={browser_cover_delay[18:0],browser_cover};
+            browser_delay[0]<=browser_rgb;
+            for(i=1;i<20;i=i+1)browser_delay[i]<=browser_delay[i-1];
             loading_delay[0]<=status_frame>=10 ? 24'h000000 : loading_rgb;
             // The Chinese font contributes one clock; add twenty to total twenty-one.
             osd_cover_delay<={osd_cover_delay[18:0],osd_cover};
@@ -337,11 +390,12 @@ module tf_media_top (
             for(i=1;i<20;i=i+1)osd_delay[i]<=osd_delay[i-1];
         end
     end
-    wire [23:0] picture_rgb=osd_cover_delay[19] ? osd_delay[19] : (show_image ? image_rgb : loading_delay[20]);
-    wire [23:0] base_rgb=video_pixel ? (show_image ? image_rgb : 24'h000000) : picture_rgb;
-    wire [23:0] output_rgb=menu_cover_delay[20] ? menu_delay[20] : base_rgb;
+    wire [23:0] media_base=video_pixel ? (show_image ? image_rgb : 24'h000000) :
+                                      (show_image ? image_rgb : loading_delay[20]);
+    wire [23:0] base_rgb=osd_cover_delay[19] ? osd_delay[19] : media_base;
+    wire [23:0] output_rgb=browser_cover_delay[19] ? browser_delay[19] : base_rgb;
     wire [23:0] volume_pcm;
-    media_volume_apply u_volume_apply (.pcm_in(audio_pcm),.level(ui_snapshot[6:3]),.pcm_out(volume_pcm));
+    media_volume_apply u_volume_apply (.pcm_in(audio_pcm),.level(4'd8),.pcm_out(volume_pcm));
     hdmi_audio_output #(.TEST_AUDIO(0),.EXTERNAL_AUDIO(1)) u_hdmi (.pixel_clk(pixel_clk),.serial_clk(serial_clk),
         .pcm_left(volume_pcm),.pcm_right(volume_pcm),.audio_tick(audio_tick),
         .rst(video_rst),.vs(delayed_vs),.de(delayed_de),.rgb(output_rgb),

@@ -2,7 +2,7 @@
 module tb_video_audio_buffer;
  reg clk=0,wclk=0;always #5 clk=~clk;always #7 wclk=~wclk;
  reg rst=1,enabled=1,paused=0,start=0,bank=0,tick=0;
- reg valid=0,wbank=0;reg [13:0] address=0;reg [7:0] data=0,fps=3;
+ reg valid=0,wbank=0;reg [13:0] address=0;reg [7:0] data=0,fps=0;
  wire busy;wire [23:0] pcm;
  reg [15:0] golden[0:255];reg [1023:0] vectors;
  integer observed=0,expected_index=0,i;

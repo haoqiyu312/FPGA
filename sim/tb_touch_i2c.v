@@ -40,7 +40,11 @@ module tb_touch_i2c;
         end
     endtask
     task stop_seen;
-        begin @(posedge sda);if(scl!==1)$fatal(1,"missing STOP");end
+        begin : wait_stop
+            // A slave may release ACK while SCL is low before the master
+            // prepares STOP. Only SDA rising while SCL is high is STOP.
+            forever begin @(posedge sda);if(scl===1)disable wait_stop;end
+        end
     endtask
     reg [7:0] value;
     integer i,transactions=0;

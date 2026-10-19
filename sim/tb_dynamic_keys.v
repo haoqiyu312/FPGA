@@ -4,7 +4,7 @@ reg clk=0;always #10 clk=~clk;
 reg rst=1,ready=1,n=1,p=1,a=1,dir=0;reg[5:0]total=0;
 wire[4:0]index;wire run_n,mode;wire[1:0]sw;wire sd;
 image_key_control #(.DEBOUNCE_CYCLES(3),.RESET_CYCLES(8),.CLOCK_HZ(20)) dut(
-clk,rst,ready,n,p,index,run_n,a,2'b00,mode,dir,total,sw,sd);
+clk,rst,ready,n,p,index,run_n,a,2'b00,mode,dir,total,sw,sd,1'b0,1'b0,5'd0,1'b0);
 task ticks(input integer count);repeat(count)begin @(posedge clk);#1;end endtask
 task next_key;begin n=0;ticks(8);n=1;ticks(12);end endtask
 task prev_key;begin p=0;ticks(8);p=1;ticks(12);end endtask

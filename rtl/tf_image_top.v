@@ -184,11 +184,16 @@ module tf_image_top (
         .pixel_x(x),.pixel_y(y),.de(de),.rgb(loading_rgb));
     wire osd_cover;
     wire [23:0] osd_rgb;
+    wire [15:0] osd_font_code,osd_font_pixels;
+    wire [3:0] osd_font_row;
+    osd_font16 u_osd_font (.clk(pixel_clk),.codepoint(osd_font_code),.row(osd_font_row),
+        .pixels(osd_font_pixels),.codepoint_b(16'h0020),.row_b(4'd0),.pixels_b());
     image_status_osd u_status_osd (.pixel_clk(pixel_clk),.rst_n(~video_rst),
         .x(x),.y(y),.de(de),.image_shown(show_image),.load_status(load_status),
         .image_index(image_index),.image_total(image_total),.auto_mode(auto_mode),
-        .interval_setting(stable_interval),.reverse_direction(stable_direction),
-        .overlay_active(osd_cover),.rgb(osd_rgb),.image_name(image_name));
+        .interval_setting(stable_interval),.reverse_direction(stable_direction),.video_mode(1'b0),
+        .overlay_active(osd_cover),.rgb(osd_rgb),.image_name(image_name),
+        .font_codepoint(osd_font_code),.font_row(osd_font_row),.font_pixels(osd_font_pixels));
     reg [19:0] osd_cover_delay;
     reg [23:0] osd_delay[0:19];
     reg [23:0] loading_delay[0:20];

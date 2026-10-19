@@ -9,7 +9,7 @@ module ui_state_bridge #(parameter integer WIDTH=9)(
 );
     reg [WIDTH-1:0] mailbox;
     reg request,ack;
-    reg [2:0] ack_sync,request_sync;
+    (* async_reg="true" *) reg [2:0] ack_sync,request_sync;
     always @(posedge source_clk or negedge source_reset_n)begin
         if(!source_reset_n)begin mailbox<=0;request<=0;ack_sync<=0;end
         else begin

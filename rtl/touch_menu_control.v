@@ -47,9 +47,9 @@ module touch_menu_control #(
                     held<=1;candidate<=hit;gesture_video<=video_mode;
                 end else if(held && (hit!=candidate || gesture_video!=video_mode))
                     candidate<=0;
-            end else if(timer==TIMEOUT_CYCLES-1) begin
+            end else if(timer==TIMEOUT_CYCLES-1 && held) begin
                 armed<=0;held<=0;candidate<=0;
-            end else timer<=timer+1'b1;
+            end else if(timer!=TIMEOUT_CYCLES-1)timer<=timer+1'b1;
         end
     end
 endmodule

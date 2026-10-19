@@ -23,6 +23,14 @@ MESSAGES = {
     'error15': '错误15：读取状态异常',
     'format': '根目录BMP：640x480，24位',
     'retry': '按KEY1重试，请检查TF卡',
+    'browser_title': '存储卡文件',
+    'browser_back': '返回',
+    'browser_help': 'K2/K3上下移动 K4打开',
+    'browser_scan': '正在扫描存储卡',
+    'browser_empty': '根目录为空',
+    'browser_items': '项目',
+    'image_keys': 'K2下一张 K3上一张 K4播放/暂停 长按返回菜单',
+    'video_keys': '视频 K4播放/暂停 长按返回菜单',
 }
 EXTRA = '0123456789开启倒序轮播：' + ''.join(chr(i) for i in range(32,127))
 
@@ -55,14 +63,20 @@ def generate(font_path, font_index, output, preview=None):
         '// Copyright 2010-2012 Google Corporation; see docs/licenses/OSD_FONT_OFL.txt.',
         '// One synchronous pixel-clock read; bit 15 is the leftmost pixel.',
         'module osd_font16(input wire clk,input wire [15:0] codepoint,',
-        ' input wire [3:0] row,output reg [15:0] pixels);',
-        ' reg [7:0] glyph_index;',
+        ' input wire [3:0] row,output reg [15:0] pixels,',
+        ' input wire [15:0] codepoint_b,input wire [3:0] row_b,output reg [15:0] pixels_b);',
+        ' reg [7:0] glyph_index,glyph_index_b;',
         ' always @* begin',
         '  case(codepoint)',
     ]
     for idx, ch in enumerate(chars):
-        lines.append(f"   16'h{ord(ch):04x}:glyph_index=8'd{idx}; // {ch}")
-    lines += ['   default:glyph_index=0;', '  endcase', ' end',
+        comment = 'SPACE' if ch == ' ' else ch
+        lines.append(f"   16'h{ord(ch):04x}:glyph_index=8'd{idx}; // {comment}")
+    lines += ['   default:glyph_index=0;', '  endcase', '  case(codepoint_b)']
+    for idx, ch in enumerate(chars):
+        comment = 'SPACE' if ch == ' ' else ch
+        lines.append(f"   16'h{ord(ch):04x}:glyph_index_b=8'd{idx}; // {comment}")
+    lines += ['   default:glyph_index_b=0;', '  endcase', ' end',
               ' (* ram_style="bram" *) reg [15:0] font_rom[0:4095];',
               ' initial begin']
     for idx in range(256):
@@ -73,7 +87,10 @@ def generate(font_path, font_index, output, preview=None):
             if idx < len(chars):
                 bits = sum((1 << (15-x)) for x in range(16) if bitmaps[idx].getpixel((x, y)))
             lines.append(f"  font_rom[{idx*16+y}]=16'h{bits:04x};")
-    lines += [' end', ' always @(posedge clk) pixels<=font_rom[{glyph_index,row}];', 'endmodule', '']
+    lines += [' end', ' always @(posedge clk) begin',
+              '  pixels<=font_rom[{glyph_index,row}];',
+              '  pixels_b<=font_rom[{glyph_index_b,row_b}];',
+              ' end', 'endmodule', '']
     Path(output).write_text('\n'.join(lines), encoding='utf-8')
     if preview:
         # Preview exactly the generated monochrome pixels, not a separate text renderer.

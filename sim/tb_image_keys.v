@@ -3,7 +3,7 @@ module tb_image_keys;
 reg clk=0;always #10 clk=~clk;
 reg rst_n=1,ready=0,n=1,p=1;
 wire ignored_mode;wire [4:0] index;wire run_n;
-image_key_control #(.DEBOUNCE_CYCLES(5),.RESET_CYCLES(8)) dut(clk,rst_n,ready,n,p,index,run_n,1'b1,2'b00,ignored_mode,1'b0,6'd4,,,,);
+image_key_control #(.DEBOUNCE_CYCLES(5),.RESET_CYCLES(8)) dut(clk,rst_n,ready,n,p,index,run_n,1'b1,2'b00,ignored_mode,1'b0,6'd4,,,,,5'd0,1'b0);
 task ticks(input integer count);repeat(count)begin @(posedge clk);#1;end endtask
 task press_next;begin @(negedge clk);n=0;ticks(20);@(negedge clk);n=1;ticks(20);end endtask
 task press_prev;begin @(negedge clk);p=0;ticks(20);@(negedge clk);p=1;ticks(20);end endtask

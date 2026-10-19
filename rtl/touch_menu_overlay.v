@@ -12,7 +12,7 @@ module touch_menu_overlay #(parameter integer SHOW_STATUS=0)(
 );
     wire [2:0] button;
     touch_menu_hit u_hit (.x(x),.y(y),.button(button));
-    integer cx,dx,dy;
+    reg[9:0] cx;reg signed[10:0] dx,dy;
     reg ink,disabled;
     always @* begin
         rgb_out=rgb_in;ink=0;disabled=0;cx=0;dx=0;dy=0;
@@ -27,8 +27,9 @@ module touch_menu_overlay #(parameter integer SHOW_STATUS=0)(
                 rgb_out=disabled ? 24'h202830 :
                     (pressed_button==button ? 24'h1688B0 : 24'h304858);
                 case(button)
-                    1: ink=(dx>=-18 && dx<=-3 && dy>=-14 && dy<=14) ||
-                           (dx>=3 && dx<=18 && dy>=-14 && dy<=14);
+                    1: ink=(dx>=-18 && dx<=18 && dy>=-8 && dy<=14 &&
+                             (dx<=-14 || dx>=14 || dy<=-4 || dy>=10)) ||
+                           (dx>=-16 && dx<=-2 && dy>=-14 && dy<=-9);
                     2: if(playing) ink=(dy>=-16 && dy<=16) &&
                            ((dx>=-12 && dx<=-5) || (dx>=5 && dx<=12));
                        else ink=dx>=-12 && dx<=16 && dy<=((16-dx)/2) && dy>=-((16-dx)/2);

@@ -4,7 +4,8 @@
 module fat32_bmp_loader #(
     parameter integer WATCHDOG_BITS = 28,
     parameter integer SELECT_BY_NAME = 0,
-    parameter integer AUTO_SCAN = 0
+    parameter integer AUTO_SCAN = 0,
+    parameter integer QUICK_SELECT = 0
 )(
     input wire clk, input wire rst,
     input wire sd_ready, input wire memory_ready,
@@ -271,14 +272,25 @@ module fat32_bmp_loader #(
                                  fat_for_file<=0; kind<=FAT_ENTRY; state<=REQUEST;
                              end
                         SCAN_HEADER: begin
-                             if(header_ok) begin
+                             if(header_ok && !QUICK_SELECT) begin
                                  catalog_cluster[image_total[4:0]]<=first_cluster;
                                  catalog_size[image_total[4:0]]<=file_size;
                                  catalog_name[image_total[4:0]]<=candidate_name;
                                  image_total<=image_total+1'b1;
                              end
                              found_file<=0;directory_end<=0;
-                             if(header_ok && image_total==31) state<=SCAN_FINISH;
+                             if(QUICK_SELECT && header_ok && image_total==image_index) begin
+                                 // The shared browser already owns the complete catalog.
+                                 // Load the selected valid BMP directly, without a second RAM.
+                                 current_cluster<=first_cluster;image_name<=candidate_name;
+                                 cluster_sector<=0;chain_hops<=0;file_position<=0;
+                                 bmp_magic<=0;pixel_offset<=0;dib_size<=0;bmp_width<=0;bmp_height<=0;
+                                 bmp_planes<=0;bmp_bits<=0;bmp_compression<=0;header_valid<=0;
+                                 found_file<=1;status<=3;write_req<=1;state<=BEGIN_WRITE;
+                             end else if(QUICK_SELECT) begin
+                                 if(header_ok)image_total<=image_total+1'b1;
+                                 kind<=DIRECTORY;sector_lba<=directory_lba;state<=REQUEST;
+                             end else if(header_ok && image_total==31) state<=SCAN_FINISH;
                              else begin kind<=DIRECTORY;sector_lba<=directory_lba;state<=REQUEST;end
                          end
                         FILE_DATA: if (pixel_count==307200) begin
@@ -306,7 +318,7 @@ module fat32_bmp_loader #(
                 end
                 SCAN_FINISH: begin
                     catalog_valid<=1;
-                    if(image_total==0) begin status<=11;state<=ERROR;end
+                    if(QUICK_SELECT || image_total==0) begin status<=11;state<=ERROR;end
                     else begin
                         // Clamp stale/out-of-range selection after a card contents change.
                         first_cluster<=catalog_cluster[image_index<image_total ? image_index : 5'd0];

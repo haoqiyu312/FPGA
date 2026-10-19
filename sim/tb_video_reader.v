@@ -1,18 +1,20 @@
 `timescale 1ns/1ps
 module tb_video_reader;
  parameter integer AUDIO_SUPPORT=0;
+ parameter integer EXTERNAL_NAME=0;
+ localparam [87:0] CUSTOM_NAME="MOVIE1  RV ";
  reg clk=0;always #5 clk=~clk;
  reg rst=1;wire req,wrreq,pvalid,bank,toggle;wire [31:0] lba,pdata;wire [3:0] status;wire [7:0] fps;
  reg [7:0] data=0;reg valid=0,last=0,ack=0,finish=0,consumed=0;
  integer scenario=0,active=0,index=0,address=0,delay_count=0;
  integer count=0,frames=0,hold_count=0,base,fb,db;
  reg pending=0,last_toggle=0;
- fat32_video_reader #(.WATCHDOG_BITS(22),.AUDIO_SUPPORT(AUDIO_SUPPORT)) dut(
+ fat32_video_reader #(.WATCHDOG_BITS(22),.AUDIO_SUPPORT(AUDIO_SUPPORT),.EXTERNAL_NAME(EXTERNAL_NAME)) dut(
   .clk(clk),.rst(rst),.sd_ready(scenario!=6),.memory_ready(1'b1),
   .sector_req(req),.sector_lba(lba),.sector_byte(data),.sector_valid(valid),.sector_end(last),
   .write_req(wrreq),.write_ack(ack),.pixel_valid(pvalid),.pixel_data(pdata),
   .write_finish_toggle(finish),.frame_toggle(toggle),.consumed_toggle(consumed),
-  .write_bank(bank),.status(status),.fps(fps));
+  .write_bank(bank),.status(status),.fps(fps),.selected_name(CUSTOM_NAME));
  function [7:0] cardbyte;
   input integer sec,pos;
   integer cluster,ordinal,offset,nxt,ent,value;
@@ -58,6 +60,7 @@ module tb_video_reader;
      end
     end
    end
+   if(EXTERNAL_NAME && sec==db+8 && scenario!=2 && pos<11)cardbyte=CUSTOM_NAME[87-pos*8-:8];
   end
  endfunction
  always @(negedge clk)begin

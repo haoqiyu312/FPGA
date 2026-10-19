@@ -4,7 +4,8 @@
 module fat32_video_reader #(
     parameter integer WATCHDOG_BITS=28,
     parameter integer FRAME_PIXELS=307200,
-    parameter integer AUDIO_SUPPORT=0
+    parameter integer AUDIO_SUPPORT=0,
+    parameter integer EXTERNAL_NAME=0
 )(
     input wire clk,rst,sd_ready,memory_ready,
     output reg sector_req, output reg [31:0] sector_lba,
@@ -16,7 +17,8 @@ module fat32_video_reader #(
     output reg write_bank, output reg [3:0] status,
     output reg [7:0] fps,
     output reg audio_enabled,output reg audio_valid,
-    output wire [13:0] audio_address,output wire [7:0] audio_data
+    output wire [13:0] audio_address,output wire [7:0] audio_data,
+    input wire [87:0] selected_name
 );
     localparam WAIT_READY=0,REQUEST=1,RECEIVE=2,DECIDE=3,START_WRITE=4,
         WAIT_WRITE=5,WAIT_COMMIT=6,WAIT_PRESENT=7,ADVANCE=8,FAILED=9,SEEK_DIRECTORY=10,CHECK_LENGTH=11;
@@ -124,10 +126,10 @@ module fat32_video_reader #(
                         0:begin
                             entry_live<=sector_byte!=0 && sector_byte!=8'he5;
                             if(sector_byte==0)directory_end<=1;
-                            name_match<=sector_byte=="V";entry_cluster<=0;entry_size<=0;
+                            name_match<=sector_byte==(EXTERNAL_NAME ? selected_name[87-:8] : 8'h56);entry_cluster<=0;entry_size<=0;
                         end
                         1,2,3,4,5,6,7,8,9,10:
-                            name_match<=name_match && sector_byte==expected_name(byte_index[4:0]);
+                            name_match<=name_match && sector_byte==(EXTERNAL_NAME ? selected_name[87-byte_index[4:0]*8-:8] : expected_name(byte_index[4:0]));
                         11:entry_attr<=sector_byte;
                         20:entry_cluster[23:16]<=sector_byte;21:entry_cluster[31:24]<={4'b0,sector_byte[3:0]};
                         26:entry_cluster[7:0]<=sector_byte;27:entry_cluster[15:8]<=sector_byte;

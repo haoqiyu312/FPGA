@@ -3,7 +3,7 @@ module tb_auto;
 reg clk=0;always #10 clk=~clk;
 reg rst_n=1,ready=0,n=1,p=1,a=1;reg[1:0]sw=0;
 wire[4:0]index;wire run_n,mode;
-image_key_control #(.DEBOUNCE_CYCLES(3),.RESET_CYCLES(8),.CLOCK_HZ(100)) dut(clk,rst_n,ready,n,p,index,run_n,a,sw,mode,1'b0,6'd4,,,,);
+image_key_control #(.DEBOUNCE_CYCLES(3),.RESET_CYCLES(8),.CLOCK_HZ(100)) dut(clk,rst_n,ready,n,p,index,run_n,a,sw,mode,1'b0,6'd4,,,,,5'd0,1'b0);
 task ticks(input integer count);repeat(count)begin @(posedge clk);#1;end endtask
 task toggle_auto;begin @(negedge clk);a=0;ticks(8);@(negedge clk);a=1;ticks(8);end endtask
 integer i;

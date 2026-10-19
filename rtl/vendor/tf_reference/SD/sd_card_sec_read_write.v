@@ -136,7 +136,8 @@ begin
 				begin
 					state <= S_CMD16;
 					cmd_req <= 1'b0;
-					sd_init_done <= 1'b1;
+				// CMD16 must finish before a one-cycle sector request can be accepted.
+				// Advertising readiness here loses that first request in S_CMD16.
 					spi_clk_div <= SPI_HIGH_SPEED_DIV[15:0];
 				end
 				else if(cmd_req_ack)

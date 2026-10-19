@@ -40,7 +40,4 @@ set_pin_assignment { buzzer_n } { LOCATION = H11; IOSTANDARD = LVCMOS33; DRIVEST
 set_pin_assignment { HDMI_DDC_SCL } { LOCATION = P2; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 8; PULLTYPE = PULLUP; }
 set_pin_assignment { HDMI_DDC_SDA } { LOCATION = R2; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 8; PULLTYPE = PULLUP; }
 
-# HX4S20C J1-1 (D14) SDA, J1-2 (G11) SCL. Confirm panel pins and
-# external 3.3V pullups before connecting; no FPGA internal pullups assumed.
-set_pin_assignment { touch_sda } { LOCATION = D14; IOSTANDARD = LVCMOS33; PULLTYPE = NONE; }
-set_pin_assignment { touch_scl } { LOCATION = G11; IOSTANDARD = LVCMOS33; PULLTYPE = NONE; }
+# The display touch interface is not connected in this keyboard-only build.

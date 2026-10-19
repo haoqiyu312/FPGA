@@ -6,11 +6,13 @@ module media_key_control #(
     parameter integer LONG_CYCLES=50000000,
     parameter integer RESET_CYCLES=64,
     parameter integer EXTERNAL_ACTIONS=0,
-    parameter integer CHORD_MODE=0
+    parameter integer CHORD_MODE=0,
+    parameter integer EXTERNAL_OPEN=0,
+    parameter integer BROWSER_KEYS=0
 )(input wire clk,reset_n,key_auto_n,restart_n,
-  output reg video_mode=0, output reg short_press=0,
+  output reg video_mode=0, output reg short_press=0,output reg long_press=0,
   output wire media_reset_n,
-  input wire mode_event,restart_event);
+  input wire mode_event,restart_event,open_event,open_video);
     localparam DB_BITS=DEBOUNCE_CYCLES<2 ? 1 : $clog2(DEBOUNCE_CYCLES);
     localparam HOLD_BITS=LONG_CYCLES<2 ? 1 : $clog2(LONG_CYCLES);
     localparam RESET_BITS=RESET_CYCLES<2 ? 1 : $clog2(RESET_CYCLES+1);
@@ -34,9 +36,9 @@ module media_key_control #(
         if(!reset_n) begin
             sync_key<=3;sync_restart<=3;chord_latched<=0;chord_count<=0;
             stable<=1;held_long<=0;debounce<=0;
-            hold_count<=0;reset_count<=0;video_mode<=0;short_press<=0;
+            hold_count<=0;reset_count<=0;video_mode<=0;short_press<=0;long_press<=0;
         end else begin
-            sync_key<={sync_key[0],key_auto_n};short_press<=0;
+            sync_key<={sync_key[0],key_auto_n};short_press<=0;long_press<=0;
             sync_restart<={sync_restart[0],restart_n};
             // Debounce the complete chord, including release of both keys.
             if(CHORD_MODE && (chord_latched ? chord_up : chord_down))begin
@@ -58,7 +60,8 @@ module media_key_control #(
             if(!stable && !held_long && !chord_latched && !chord_trigger &&
                !(sync_key[1] && debounce==DEBOUNCE_CYCLES-1))begin
                 if(hold_count==LONG_CYCLES-1)begin
-                    video_mode<=~video_mode;reset_count<=RESET_CYCLES;
+                    if(BROWSER_KEYS)long_press<=1;
+                    else begin video_mode<=~video_mode;reset_count<=RESET_CYCLES;end
                     held_long<=1;hold_count<=0;
                 end else hold_count<=hold_count+1'b1;
             end
@@ -69,6 +72,10 @@ module media_key_control #(
             // Touch mode switch has priority over a simultaneous physical key.
             if(EXTERNAL_ACTIONS && mode_event && reset_count==0)begin
                 video_mode<=~video_mode;reset_count<=RESET_CYCLES;short_press<=0;
+                if(!stable)begin held_long<=1;hold_count<=0;end
+            end
+            if(EXTERNAL_OPEN && open_event && reset_count==0)begin
+                video_mode<=open_video;reset_count<=RESET_CYCLES;short_press<=0;
                 if(!stable)begin held_long<=1;hold_count<=0;end
             end
         end

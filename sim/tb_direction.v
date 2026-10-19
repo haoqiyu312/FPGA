@@ -3,7 +3,7 @@ module tb_direction;
 reg clk=0;always #10 clk=~clk;
 reg rst=1,ready=1,n=1,p=1,a=1,dir=0;
 wire [4:0] index;wire run_n,mode;
-image_key_control #(.DEBOUNCE_CYCLES(3),.RESET_CYCLES(8),.CLOCK_HZ(100)) dut(clk,rst,ready,n,p,index,run_n,a,2'b00,mode,dir,6'd4,,,,);
+image_key_control #(.DEBOUNCE_CYCLES(3),.RESET_CYCLES(8),.CLOCK_HZ(100)) dut(clk,rst,ready,n,p,index,run_n,a,2'b00,mode,dir,6'd4,,,,,5'd0,1'b0);
 task ticks(input integer count);repeat(count)begin @(posedge clk);#1;end endtask
 task step(input [1:0] expected);begin
  wait(!run_n);#1;if(index!=expected)$fatal(1,"index %d expected %d",index,expected);

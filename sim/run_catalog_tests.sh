@@ -24,3 +24,6 @@ for scenario in 1 2;do "$runner" ./catalog +scenario="$scenario";done
 "$runner" ./catalog +scenario=3 +image=31
 "${compiler[@]}" -g2012 -s tb_loader_timeout -o timeout "$project_dir/rtl/fat32_bmp_loader.v" "$project_dir/sim/tb_loader_timeout.v"
 "$runner" ./timeout
+
+"${compiler[@]}" -g2012 -s tb_catalog -Ptb_catalog.QUICK_SELECT=1 -o "$test_dir/quick" "$project_dir/rtl/fat32_bmp_loader.v" "$project_dir/sim/tb_catalog.v"
+for image in 0 1 2 3;do "$runner" ./quick +image="$image";done
