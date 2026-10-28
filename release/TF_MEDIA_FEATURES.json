@@ -1,0 +1,112 @@
+{
+  "built_at_utc": "2026-10-26T11:50:21.168654+00:00",
+  "device": "EG4S20BG256",
+  "tool": "Tang Dynasty 6.2.1 SP1 build 178840",
+  "file": "TF_MEDIA_FEATURES.bit",
+  "sha256": "5012a17cbbef5c9662e68583f862780f03a9082fb5fe499d8211ca7588d41769",
+  "timing": {
+    "SWNS_ns": 0.198,
+    "STNS_ns": 0.0,
+    "HWNS_ns": 0.022,
+    "HTNS_ns": 0.0
+  },
+  "resources": {
+    "lut": {
+      "used": 17546,
+      "capacity": 19600
+    },
+    "reg": {
+      "used": 9669,
+      "capacity": 19600
+    },
+    "bram": {
+      "used": 62,
+      "capacity": 64
+    },
+    "pll": {
+      "used": 2,
+      "capacity": 4
+    }
+  },
+  "features": [
+    "built-in Chinese subtitle layer",
+    "three image reveals",
+    "50/100/200 percent image scaling",
+    "RVF2 eight-band audio spectrum"
+  ],
+  "validation": {
+    "build": "passed",
+    "routed_timing": "passed",
+    "rtl_simulation": "not run: Icarus unavailable",
+    "hardware": "not tested"
+  },
+  "inputs_sha256": {
+    "constraints/tf_media.adc": "71839b3273eac9ba7f8fa6ee629a29172485a1f4b8a90326cba0f0b104b2e802",
+    "constraints/tf_media.sdc": "70c09603f96eb80c0cfbb02e8d45f2bc9776908263432d4964d800217e3c96b4",
+    "prj/TF_MEDIA.al": "4cc6dec6bca026e182c7788662eabb2e5b082fb4e8dd245eb5fd9ef2d857a3ca",
+    "prj/al_ip/video_pll/video_pll.ipc": "2a61988920f48a66240a21f94468bb77ce79641469221f04ce38a85205439a03",
+    "prj/al_ip/video_pll/video_pll.v": "e4ad0483f4c6a2ba007be9e8d7951667ea706e9f124505c23caa67e571efd1fd",
+    "prj/al_ip/video_pll/video_pll.vhd": "8b8bd37be09d04d10e8537909dabacc201d9c45651ef3cb9db950eb20f7765ad",
+    "prj/build_tf_media.sh": "ad34d8f96d8df1671e0e8f83815583d3f107b8908388e17ae29ceda05f79ac17",
+    "prj/build_tf_media.tcl": "9380901ff48e7599f4cd6c514fe734e35a1d2b8fd1a64233f357fc3ad2201eb7",
+    "prj/fix_tf_media_hold.tcl": "4ed1d096755f28219a0ac209cc4b5892dfecc2796e9a1493635c9e584dd725e9",
+    "rtl/audio_spectrum.v": "5fa5d1c63e52ff47c1a1259f932eb1cfa16886ba637555a972ad7ff84c291753",
+    "rtl/audio_spectrum_overlay.v": "6ef6f6990cab18abcce0c5850f2d7dc703cdab2cd4e772c39add01d1db7a6274",
+    "rtl/browser_ascii_font.v": "be0463893d0d48149ae684c437381227dc001f2fcf0d37ffea37b609cf55f5fc",
+    "rtl/fat32_bmp_loader.v": "28e215a41775adcc3ef3047b4c7466509f45ac7addc583fa7a9af46300720878",
+    "rtl/fat32_media_catalog.v": "4d5297b50091bf4636ad1616404c23c37276d0983d2779903e223e60b3d09e5f",
+    "rtl/fat32_video_reader.v": "9cdf7ccbc35d90e1f26188bf1b09040800dd98c2e5ece0a5c72954831a2660df",
+    "rtl/file_browser_overlay.v": "3e9a5e03d25c00f7ca74122e7b226dee17f0dd728df4c12e1fe64621968765b4",
+    "rtl/gt911_touch_reader.v": "249b2a83209d4768ecb2e81217f3ff7c4626fdc8a457abcdf81a8bd2c810e3bb",
+    "rtl/hdmi_audio_output.v": "45047ae640c40ba406a6e33313f916fb27baf115cfc8f7b50e0dc27571430b8b",
+    "rtl/hdmi_test_audio.v": "9d460122cb4e7b4b321d5eee5ae15c2a1150c5af6b85ec07e4b8d38c3b181ee4",
+    "rtl/hdmi_video_stream.v": "4bb999a37f16b748ba64970e6d034b3009a61ba73bd685f8f3c2a401c302779f",
+    "rtl/i2c_register_master.v": "634bbff9a49df2fb279d93379e3addc964c98275d23c468444e3eb1d108e29a4",
+    "rtl/image_key_control.v": "6bc401f72a5691fdeeac1c78de288b5b03ecc131c3fc0e6d13c00e0b31a577dc",
+    "rtl/image_number_display.v": "133e00f268ab2cb9ed0920c2b41481965dccc8f9478c566898731ee5c95bcc76",
+    "rtl/image_scale_address.v": "e56ad509a04786769243b47c45b99dd8f494d10780fd2a82862df4da84494704",
+    "rtl/image_status_osd.v": "e478d03f10fd6c7e33cfede7b09e5ea8373e9a50ed4952effed895f9263ec856",
+    "rtl/key_beeper.v": "f4fcb92259fe0782cde7b5606787958a95f6be9eda32f9e52d2b6f74482032eb",
+    "rtl/key_debounce.v": "63c1fa62c9dd6e472423042329d45e89808c27467bfa51079f01583a7ce3a9cc",
+    "rtl/loading_spinner_rgb.v": "1c9635dc45d01fba07f90065e024770427cf3290299c60764cb06e63d4183ca8",
+    "rtl/media_feature_keys.v": "f09dfb5aa834f3b98cdd604a51193d26e66f4d5f597e16ec5a57f23903438e29",
+    "rtl/media_key_control.v": "db95f2a44b9cf21f26b51e56ade712990b54c74ac084b0ba7c8e63a99b79b32f",
+    "rtl/media_subtitles.v": "c4141a914ecff6fc92ed928b2bde16beb4518bdd6c46acef6c816ea46f3fe34e",
+    "rtl/media_transition.v": "96ecef6268b690c5b1ba6c9e69530035615e15ee357da4b1a4a12ecef7bb7316",
+    "rtl/media_volume.v": "a3d63e1bf14cf6a6604dbe7615bd3e53837f40d32d88afdb7aa0bf918dd0a675",
+    "rtl/osd_font16.v": "e24d5e838cd02751ea93093fb2fc432764a6475394fb4350cf834541f3e95151",
+    "rtl/tf_image_top.v": "a51066e86e05b86d6f59025752a5c54c373a67a362baa92514dc73dfd375470b",
+    "rtl/tf_media_top.v": "eb7069fe91e25cd6c138549ad26eeb89ff0c2091c5bc313c7f6a0802f531306e",
+    "rtl/tf_startup_control.v": "27367ebde64a44d6e8396118cef33dfbcf29bb5758411e0fc042a78b6f2f54ef",
+    "rtl/tf_video_top.v": "a41ecf4b581e77db20aa990c83abbbf4bcb2a2783bbeef1296e6243387db0860",
+    "rtl/touch_coordinate_map.v": "785dfd73de1e4fed5dae420fe0073d76e93f9f2e659f75ba4d5cfd0039ad66c7",
+    "rtl/touch_file_browser.v": "243f6fb0f3fd35019bd21436b21798bec6c65a44125b8b01abed9238084d88f9",
+    "rtl/touch_menu_control.v": "3c57d8cae2a1931218b836f20afecce6e1fa8b9c3bf57f38740ddac546d04313",
+    "rtl/touch_menu_hit.v": "17082765e35dd7d54245420306038c0527657cea8045936ed8586ac84c4487c4",
+    "rtl/touch_menu_overlay.v": "6e8f9ea395dd7e87ee36b51c01362b66c95028f4df64cf39d3f59a4909f808a7",
+    "rtl/touch_player_frontend.v": "959823eee47078c84de9ba4317b3f5c619a34d4828c639470433517df8c54730",
+    "rtl/ui_state_bridge.v": "a462a229c293134bbbfaa2e5aaf031935020a0590d73da8601e127ba9794df69",
+    "rtl/vendor/hdmi_audio/hdmi_1_4b_transmitter_core_wrapper.enc.v": "867e0b0bdd874bc383d00918c9e1be3fe01edf41f343b6a0d73e262776596a63",
+    "rtl/vendor/hdmi_audio/hdmi_phy_warpper.v": "416b082b0987001bdbc0a7e20a557cb8fb1dca34e25dc881e6d28a8cb3cf4300",
+    "rtl/vendor/hdmi_audio/lane_lvds_10_1.v": "de9529321354f04837e051d0ec1681cf44783d4be3284703a788e081147500bc",
+    "rtl/vendor/tf_reference/IP/afifo_16_32_256.v": "5384b6ae7df9c6f7b5ff254f225cdb4f10ab3d6356251b505ed33d7c426d90a3",
+    "rtl/vendor/tf_reference/IP/afifo_32_16_256.v": "bd889ced60f9071eae4b9e352228a207c8bf70c815e2d3dc7950bbc00dcf5c1d",
+    "rtl/vendor/tf_reference/IP/sys_pll.v": "2ade52fcae3d9745bda6b06879554ac88a96e24f168ea15599ef62895fa39f07",
+    "rtl/vendor/tf_reference/SD/frame_fifo_read.v": "57cb4b69a2ad28e80e7f7344de1669d3fa186a8edff23165bea7ea3ac0f92553",
+    "rtl/vendor/tf_reference/SD/frame_fifo_write.v": "4387ed8c16b420e08652084431aa03cad12267aea49f99a475b9921b14685f5e",
+    "rtl/vendor/tf_reference/SD/frame_read_write.v": "f1f78440892c15395199fb4c0f7d406a3906eeef1f0cecb133e2bf053d634374",
+    "rtl/vendor/tf_reference/SD/sd_card_cmd.v": "a1a50502afd4e8b238b0627cd5f204c04738e761d49ab48f33da35e22ba4a5fa",
+    "rtl/vendor/tf_reference/SD/sd_card_sec_read_write.v": "e43cb67c997768f2daaf9f31aa607b0a3aff845100f15d5bf5ed23ea71e972db",
+    "rtl/vendor/tf_reference/SD/sd_card_top.v": "d5031b5b809a8df0a2c8cca194a511c5f74236e810cbe5e8436359f9e5f26a39",
+    "rtl/vendor/tf_reference/SD/sdram.v": "3513dcd165ff8a0edba80a3415174c4a9e5cf81af2a8eee376da6f1059f87e42",
+    "rtl/vendor/tf_reference/SD/spi_master.v": "37f7a21144fa5cca3cc5c3b5f68a5ad40b3108336b600e45a1367734ac61403c",
+    "rtl/vendor/tf_reference/SD/video_delay.v": "711554c6615cdec86e105fb78f6d4b0a4ee0987420bb5d7e6fe45f9027ed3d8f",
+    "rtl/vendor/tf_reference/include/global_def.v": "dc711de2240f1dd1855f5416a8b89cb314cd55062ae60a2cc7521e2155be23df",
+    "rtl/vendor/tf_reference/include/sdr_as_ram.enc.v": "1cb9065f935b45ab62a0e4ca1892494b7cbcad375c9bda82c03bf92554a6e471",
+    "rtl/vendor/tf_reference/include/sdr_init_ref.enc.v": "699c2117e0e7d9da87973553041b4418f033bac5d4114dc02f75deb91a1df282",
+    "rtl/vendor/tf_reference/include/sdr_wrrd.enc.v": "8ad6e44a16e5c1ad895a9461ed2a20b0449920f5139e3a0d091a2dcae400c1aa",
+    "rtl/video_audio_buffer.v": "e322cb38562e89ab4e56a0f2d75d817c81339697059f2b2ffa6cc83fde3e216f",
+    "rtl/video_frame_presenter.v": "28f252eac3bd435a4b2b1022f6b3e3561511dc0915ce16bc963da8203b2ef7a4",
+    "rtl/video_timing_registered.v": "3edd8f47f15bbc69570bab293de3b4b5f17c245bf6357ede33b6ff0781a1b93f"
+  }
+}

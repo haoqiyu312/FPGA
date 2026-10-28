@@ -1,0 +1,15 @@
+{
+  "bit": "TF_MEDIA_SW4_MENU.bit",
+  "sha256": "2f23bad2d208b9c8df54d75824059c0f124622e39f5315f1ed80bff6b041e949",
+  "tool": "TD 6.2.1 SP1 Build 178840",
+  "placement_seed": 3,
+  "timing_ns": {
+    "SWNS": 0.136,
+    "STNS": 0.0,
+    "HWNS": 0.03,
+    "HTNS": 0.0
+  },
+  "SW4": "up hides playback OSD; down shows it",
+  "rtl_simulation": "not run: Icarus unavailable",
+  "hardware_test": "user reports half-screen corruption and green video; diagnosis pending"
+}

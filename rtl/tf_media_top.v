@@ -4,7 +4,7 @@ module tf_media_top (
     input wire sys_clk, input wire sys_rst_n,
     input wire key_next_n, key_prev_n, key_auto_n,
     input wire [1:0] interval_switch,
-    input wire direction_switch,
+    input wire direction_switch, input wire menu_hide_switch,
     output wire [7:0] seg_n,digit_en,
     output wire buzzer_n,
     output wire HDMI_CLK_P, HDMI_D0_P, HDMI_D1_P, HDMI_D2_P,
@@ -14,6 +14,10 @@ module tf_media_top (
 );
     // The board buzzer is active low; keep it disabled for all key presses.
     assign buzzer_n = 1'b1;
+    reg [3:0] feature_frame;
+    wire [1:0] zoom_frame=feature_frame[3:2];
+    wire [15:0] status_font_code,browser_font_code,status_font_pixels,browser_font_pixels;
+    wire [3:0] status_font_row,browser_font_row;
     wire pixel_clk, serial_clk, video_lock;
     wire sd_clk, mem_clk, mem_clk_shift, memory_lock;
     video_pll u_video_pll (.refclk(sys_clk),.reset(~sys_rst_n),
@@ -35,10 +39,12 @@ module tf_media_top (
     wire [87:0] query_name,catalog_display_name;
     wire [1:0] query_type,catalog_display_type;
     wire key_next_pressed,key_prev_pressed;
-    key_debounce u_browser_next_key (.clk(sys_clk),.reset_n(touch_reset_n),
-        .key_n(key_next_n),.pressed(key_next_pressed));
-    key_debounce u_browser_prev_key (.clk(sys_clk),.reset_n(touch_reset_n),
-        .key_n(key_prev_n),.pressed(key_prev_pressed));
+    wire [1:0] zoom_setting;
+    wire subtitles_setting,spectrum_setting;
+    media_feature_keys u_feature_keys (.clk(sys_clk),.rst_n(touch_reset_n),
+        .next_n(key_next_n),.prev_n(key_prev_n),.browser_visible(browser_visible),.video_mode(video_mode),
+        .next_event(key_next_pressed),.prev_event(key_prev_pressed),.zoom(zoom_setting),
+        .subtitles(subtitles_setting),.spectrum(spectrum_setting));
     wire catalog_done_sd;wire [5:0] file_count_sd;wire [3:0] catalog_status_sd;
     wire [7:0] debug_root_byte_sd;wire [15:0] debug_root_lba_sd;
     reg [1:0] catalog_done_sys;
@@ -109,12 +115,12 @@ module tf_media_top (
         else if(short_press && !video_mode)image_paused<=~image_paused;
     end
     image_key_control #(.EXTERNAL_STEP(1),.EXTERNAL_SELECTION(1),.EXTERNAL_AUTO_LEVEL(1)) u_image_keys (.clk(sys_clk),.reset_n(media_reset_n),
-        .image_ready(show_image & ~video_mode),.key_next_n(key_next_n | video_mode | browser_visible),.key_prev_n(key_prev_n | video_mode | browser_visible),
+        .image_ready(show_image & ~video_mode),.key_next_n(1'b1),.key_prev_n(1'b1),
         .key_auto_n(1'b1),.interval_switch(interval_switch),.auto_mode(auto_mode),.auto_pause(image_paused),
         .direction_switch(direction_switch),.image_total(image_total),
         .stable_interval(stable_interval),.stable_direction(stable_direction),
         .image_index(image_index),.run_reset_n(run_reset_n),
-        .next_event(1'b0),.prev_event(1'b0),.initial_index(requested_image));
+        .next_event(key_next_pressed & ~video_mode & ~browser_visible),.prev_event(key_prev_pressed & ~video_mode & ~browser_visible),.initial_index(requested_image));
     // In the browser show the highlighted row; during playback keep showing
     // the directory row that was opened. The count covers the mixed-media list.
     wire [4:0] displayed_file_index=browser_visible && selected_valid ? selected_file : current_file_index;
@@ -317,10 +323,14 @@ module tf_media_top (
         .write_clk(sd_clk),.write_req(write_req),.write_req_ack(write_ack),.write_finish(write_finish),
         .write_addr_0(21'd0),.write_addr_1(21'd307200),.write_addr_2(21'd0),.write_addr_3(21'd0),
         .write_addr_index({1'b0,video_sd & write_bank}),.write_len(21'd307200),.write_en(pixel_valid),.write_data(pixel_data));
+    wire [20:0] scaled_rd_addr;
+    image_scale_address u_scale_address (.clk(mem_clk),.rst(mem_rst),.ack(read_ack),
+        .read_en(app_rd_en),.video_mode(video_mem),.zoom_request(zoom_frame),
+        .address(app_rd_addr),.mapped_address(scaled_rd_addr));
     sdram u_sdram (.Clk(mem_clk),.Clk_sft(mem_clk_shift),.Rst(mem_rst),
         .Sdr_init_done(memory_initialized),.Sdr_init_ref_vld(memory_refresh),.Sdr_busy(memory_busy),
         .App_wr_en(app_wr_en),.App_wr_addr(app_wr_addr),.App_wr_dm(app_wr_mask),.App_wr_din(app_wr_data),
-        .App_rd_en(app_rd_en),.App_rd_addr(app_rd_addr),.Sdr_rd_en(sdram_rd_valid),.Sdr_rd_dout(sdram_rd_data));
+        .App_rd_en(app_rd_en),.App_rd_addr(scaled_rd_addr),.Sdr_rd_en(sdram_rd_valid),.Sdr_rd_dout(sdram_rd_data));
 
     // Animate a spinner while loading; overlay persistent text on errors.
     // The multi-bit status is sampled twice, then latched at frame start.
@@ -335,20 +345,50 @@ module tf_media_top (
     wire [23:0] loading_rgb;
     loading_spinner_rgb u_loading_spinner (.pixel_clk(pixel_clk),.rst_n(~video_rst),
         .pixel_x(x),.pixel_y(y),.de(de),.rgb(loading_rgb));
+    // Atomic feature state crosses clocks, then changes only in vertical blank.
+    wire [3:0] feature_snapshot;
+    ui_state_bridge #(.WIDTH(4)) u_feature_bridge (.source_clk(sys_clk),.source_reset_n(touch_reset_n),
+        .source_data({zoom_setting,subtitles_setting,spectrum_setting}),
+        .destination_clk(pixel_clk),.destination_reset_n(~video_rst),.destination_data(feature_snapshot));
+    reg [9:0] output_x[0:20],output_y[0:20];
+    reg [47:0] spectrum_frame;
+    wire [47:0] spectrum_levels;
+    audio_spectrum u_spectrum (.clk(pixel_clk),.rst(video_rst),
+        .enabled(video_pixel && show_image && audio_enable_sync[1]),
+        .sample_tick(audio_tick && !paused),.sample(audio_pcm[23:8]),.levels(spectrum_levels));
+    integer coord_i;
+    always @(posedge pixel_clk or posedge video_rst)begin
+        if(video_rst)begin
+            feature_frame<=4'b0011;spectrum_frame<=0;
+            for(coord_i=0;coord_i<=20;coord_i=coord_i+1)begin output_x[coord_i]<=0;output_y[coord_i]<=0;end
+        end else begin
+            if(x==0 && y==480)begin feature_frame<=feature_snapshot;spectrum_frame<=spectrum_levels;end
+            output_x[0]<=x;output_y[0]<=y;
+            for(coord_i=1;coord_i<=20;coord_i=coord_i+1)begin output_x[coord_i]<=output_x[coord_i-1];output_y[coord_i]<=output_y[coord_i-1];end
+        end
+    end
+    wire subtitle_request,subtitle_panel,subtitle_ink;
+    wire [15:0] subtitle_font_code;
+    wire [3:0] subtitle_font_row;
+    media_subtitles u_subtitles (.clk(pixel_clk),.rst_n(~video_rst),
+        .frame_start(x==0 && y==0),.frame_started(frame_started),.shown(show_image),
+        .video_mode(video_pixel),.enabled(feature_frame[1]),.fps(audio_fps_sync),.zoom(zoom_frame),
+        .x(x),.y(y),.de(de),.font_request(subtitle_request),
+        .font_codepoint(subtitle_font_code),.font_row(subtitle_font_row),.font_pixels(status_font_pixels),
+        .panel(subtitle_panel),.ink(subtitle_ink));
     wire osd_cover;
     wire [23:0] osd_rgb;
-    wire [15:0] status_font_code,browser_font_code,status_font_pixels,browser_font_pixels;
-    wire [3:0] status_font_row,browser_font_row;
     wire [87:0] playing_file_name=video_pixel ? requested_video : image_name;
-    osd_font16 u_shared_osd_font (.clk(pixel_clk),.codepoint(status_font_code),.row(status_font_row),
+    osd_font16 u_shared_osd_font (.clk(pixel_clk),.codepoint(subtitle_request ? subtitle_font_code : status_font_code),.row(subtitle_request ? subtitle_font_row : status_font_row),
         .pixels(status_font_pixels),.codepoint_b(browser_font_code),.row_b(browser_font_row),
         .pixels_b(browser_font_pixels));
-    image_status_osd u_status_osd (.pixel_clk(pixel_clk),.rst_n(~video_rst),
+    image_status_osd #(.FEATURE_HINTS(1)) u_status_osd (.pixel_clk(pixel_clk),.rst_n(~video_rst),
         .x(x),.y(y),.de(de),.image_shown(show_image),.load_status(load_status),
         .image_index(image_index),.image_total(image_total),.auto_mode(auto_mode),
         .interval_setting(stable_interval),.reverse_direction(stable_direction),
         .video_mode(video_pixel),.overlay_active(osd_cover),.rgb(osd_rgb),.image_name(playing_file_name),
         .font_codepoint(status_font_code),.font_row(status_font_row),.font_pixels(status_font_pixels));
+    reg [19:0] subtitle_panel_delay,subtitle_ink_delay;
     reg [19:0] osd_cover_delay;
     reg [23:0] osd_delay[0:19];
     reg [23:0] loading_delay[0:20];
@@ -371,7 +411,7 @@ module tf_media_top (
     integer i;
     always @(posedge pixel_clk or posedge video_rst) begin
         if(video_rst) begin
-            browser_frame<=0;browser_cover_delay<=0;
+            browser_frame<=0;browser_cover_delay<=0;subtitle_panel_delay<=0;subtitle_ink_delay<=0;
             for(i=0;i<20;i=i+1)browser_delay[i]<=0;
             osd_cover_delay<=0;
             for(i=0;i<=20;i=i+1)loading_delay[i]<=0;
@@ -379,6 +419,8 @@ module tf_media_top (
         end
         else begin
             if(x==0 && y==0)browser_frame<=browser_snapshot;
+            subtitle_panel_delay<={subtitle_panel_delay[18:0],subtitle_panel};
+            subtitle_ink_delay<={subtitle_ink_delay[18:0],subtitle_ink};
             browser_cover_delay<={browser_cover_delay[18:0],browser_cover};
             browser_delay[0]<=browser_rgb;
             for(i=1;i<20;i=i+1)browser_delay[i]<=browser_delay[i-1];
@@ -390,9 +432,44 @@ module tf_media_top (
             for(i=1;i<20;i=i+1)osd_delay[i]<=osd_delay[i-1];
         end
     end
+    wire small_margin=!video_pixel && zoom_frame==1 &&
+        (output_x[20]<160 || output_x[20]>=480 || output_y[20]<120 || output_y[20]>=360);
+    wire [23:0] scaled_rgb=small_margin ? 24'h000000 : image_rgb;
+    wire [23:0] transition_rgb;
+    wire [1:0] transition_effect;
+    media_transition u_transition (.clk(pixel_clk),.rst_n(~video_rst),
+        .frame_start(x==0 && y==480),.shown(show_image),.video_mode(video_pixel),
+        .x(output_x[20]),.y(output_y[20]),.rgb_in(scaled_rgb),.rgb_out(transition_rgb),.effect(transition_effect));
     wire [23:0] media_base=video_pixel ? (show_image ? image_rgb : 24'h000000) :
-                                      (show_image ? image_rgb : loading_delay[20]);
-    wire [23:0] base_rgb=osd_cover_delay[19] ? osd_delay[19] : media_base;
+                                      (show_image ? transition_rgb : loading_delay[20]);
+    wire [23:0] subtitle_base=subtitle_ink_delay[19] ? 24'hfff3b0 :
+        subtitle_panel_delay[19] ? {1'b0,media_base[23:17],1'b0,media_base[15:9],1'b0,media_base[7:1]} : media_base;
+    wire spectrum_cover;
+    wire [23:0] spectrum_rgb;
+    audio_spectrum_overlay u_spectrum_overlay (.clk(pixel_clk),.rst_n(~video_rst),
+        .x(x),.y(y),.de(de),.visible(feature_frame[0] && video_pixel && show_image && audio_enable_sync[1]),
+        .levels(spectrum_frame),.active(spectrum_cover),.rgb(spectrum_rgb));
+    reg [19:0] spectrum_cover_delay;
+    reg [23:0] spectrum_delay[0:19];
+    integer spectrum_i;
+    always @(posedge pixel_clk or posedge video_rst)begin
+        if(video_rst)begin
+            spectrum_cover_delay<=0;
+            for(spectrum_i=0;spectrum_i<20;spectrum_i=spectrum_i+1)spectrum_delay[spectrum_i]<=0;
+        end else begin
+            spectrum_cover_delay<={spectrum_cover_delay[18:0],spectrum_cover};
+            spectrum_delay[0]<=spectrum_rgb;
+            for(spectrum_i=1;spectrum_i<20;spectrum_i=spectrum_i+1)spectrum_delay[spectrum_i]<=spectrum_delay[spectrum_i-1];
+        end
+    end
+    wire [23:0] visualized_rgb=spectrum_cover_delay[19] ? spectrum_delay[19] : subtitle_base;
+    // SW4 only masks the final status layer. Feature mailbox, framebuffer
+    // addressing, pixel consumption and HDMI timing retain the coffee baseline.
+    wire playback_osd_visible;
+    playback_osd_switch u_playback_osd_switch (
+        .clk(pixel_clk),.rst(video_rst),.hide_switch(menu_hide_switch),
+        .vblank(x==0 && y==480),.visible(playback_osd_visible));
+    wire [23:0] base_rgb=(osd_cover_delay[19] && playback_osd_visible) ? osd_delay[19] : visualized_rgb;
     wire [23:0] output_rgb=browser_cover_delay[19] ? browser_delay[19] : base_rgb;
     wire [23:0] volume_pcm;
     media_volume_apply u_volume_apply (.pcm_in(audio_pcm),.level(4'd8),.pcm_out(volume_pcm));
@@ -405,4 +482,27 @@ module tf_media_top (
     assign HDMI_D0_P1=HDMI_D0_P;
     assign HDMI_D1_P1=HDMI_D1_P;
     assign HDMI_D2_P1=HDMI_D2_P;
+endmodule
+
+// Pixel-domain level control, independent of the system-domain feature mailbox.
+// 500000 pixel clocks at 25 MHz give 20 ms of debounce. Visibility only changes
+// in vertical blanking, before the next active frame starts.
+module playback_osd_switch #(
+    parameter integer DEBOUNCE_CYCLES=500000
+)(input wire clk,rst,hide_switch,vblank,output reg visible);
+    (* async_reg="true" *) reg [1:0] switch_sync;
+    localparam integer COUNT_BITS=DEBOUNCE_CYCLES<=1 ? 1 : $clog2(DEBOUNCE_CYCLES);
+    reg [COUNT_BITS-1:0] stable_count;
+    reg stable_hidden;
+    always @(posedge clk or posedge rst)begin
+        if(rst)begin switch_sync<=0;stable_count<=0;stable_hidden<=0;visible<=1;end
+        else begin
+            switch_sync<={switch_sync[0],hide_switch};
+            if(switch_sync[1]==stable_hidden)stable_count<=0;
+            else if(DEBOUNCE_CYCLES<=1 || stable_count==DEBOUNCE_CYCLES-1)begin
+                stable_hidden<=switch_sync[1];stable_count<=0;
+            end else stable_count<=stable_count+1'b1;
+            if(vblank)visible<=~stable_hidden;
+        end
+    end
 endmodule

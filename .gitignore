@@ -25,6 +25,7 @@
 !/release/TF_MEDIA_TOUCH_SILENT.bit
 !/release/TF_MEDIA_SWITCH_FIX.bit
 !/release/TF_MEDIA_BROWSER.bit
+!/release/TF_MEDIA_FEATURES.bit
 
 # Locally generated video media
 /VIDEO.RV
@@ -56,3 +57,9 @@ Thumbs.db
 
 # Obsolete GUI colorbar project
 /prj/HDMI_PROJECT.al
+
+# Generated local coffee advertisement deliverables
+/release/coffee_ad/
+/release/coffee_demo/
+/release/COFFEE_DEMO.zip
+!/release/TF_MEDIA_COFFEE.bit

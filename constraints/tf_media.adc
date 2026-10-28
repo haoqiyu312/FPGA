@@ -41,3 +41,12 @@ set_pin_assignment { HDMI_DDC_SCL } { LOCATION = P2; IOSTANDARD = LVCMOS33; DRIV
 set_pin_assignment { HDMI_DDC_SDA } { LOCATION = R2; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 8; PULLTYPE = PULLUP; }
 
 # The display touch interface is not connected in this keyboard-only build.
+
+# SW4, board manual: up=1 (hide playback OSD), down=0 (show).
+set_pin_assignment { menu_hide_switch } { LOCATION = C5; IOSTANDARD = LVCMOS33; PULLTYPE = NONE; }
+
+# Keep both PLL reference-clock sinks on the sys_clk pad side of the device.
+# Locations are verified in the previous routed implementation; this avoids
+# routing the video PLL reference across the die while the memory PLL stays near R7.
+set_inst_assignment { u_video_pll/pll_inst } { LOCATION = x40y71z0; }
+set_inst_assignment { u_memory_pll/pll_inst } { LOCATION = x0y71z0; }

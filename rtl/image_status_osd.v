@@ -1,7 +1,8 @@
 // Chinese frame-latched OSD with a built-in 16x16 synchronous glyph ROM.
 // The output has one pixel-clock of latency; top-level delay accounts for it.
 module image_status_osd #(
- parameter integer NOTICE_FRAMES=120
+ parameter integer NOTICE_FRAMES=120,
+ parameter integer FEATURE_HINTS=0
 )(input wire pixel_clk,rst_n,input wire [9:0] x,y,input wire de,
  input wire image_shown,input wire [3:0] load_status,
  input wire [4:0] image_index,input wire [5:0] image_total,
@@ -124,6 +125,11 @@ module image_status_osd #(
   controls_text=video_frame ?
     512'h89c698910020004b003464ad653e002f6682505c0020957f63098fd456de83dc5355000000000000000000000000000000000000000000000000000000000000 :
     512'h004b00324e0b4e005f200020004b00334e0a4e005f200020004b003464ad653e002f6682505c0020957f63098fd456de83dc5355000000000000000000000000;
+  if(FEATURE_HINTS)begin
+  controls_text=video_frame ?
+    512'h004b003298918c310020004b00335b575e550020004b003464ad653e002f6682505c0020957f63098fd456de83dc535500200020002000200020002000200020 :
+    512'h004b0032002f0033520756fe002053cc952e7f29653e0020957f6309004b00335b575e550020004b003464ad653e002000200020002000200020002000200020;
+  end
  end
  reg [9:0] tx,ty;
  reg [4:0] column,column_pixel;

@@ -1,3 +1,9 @@
+> 咖啡广告场景演示包：[COFFEE_DEMO.zip](release/COFFEE_DEMO.zip)，含促销字幕固件、18 秒带音乐视频和三张海报。[电脑视频预览](release/coffee_demo/COFFEE_PREVIEW.webm)；[烧录、复制与演示步骤](docs/咖啡广告演示.md)。画面由 image_gen 生成，视频采用慢速镜头动画，配乐自制；媒体检查和完整固件时序通过，尚未实板验证。
+
+> 本地扩展版下载文件：[TF_MEDIA_FEATURES.bit](release/TF_MEDIA_FEATURES.bit)。已加入图层字幕、三种图片转场、50%/100%/200% 图片缩放及实际音轨八频段可视化；完整编译与最终时序通过，尚未实板验证。新按键、实现范围和验证状态见 [扩展加分功能](docs/扩展加分功能.md)。
+
+> SW4 显示修复版（2026-10-28）：[TF_MEDIA_SW4_R2.bit](release/TF_MEDIA_SW4_R2.bit)。SW4 拨上隐藏播放状态、文件名与操作提示，拨下显示，文件菜单保留。R2 完整布局布线和最终时序通过，用户已反馈实板成功；各功能逐项验收未记录。[验证结果与实板测试步骤](docs/SW4显示异常排查.md)。
+
 # 安路 FPGA TF 卡图片与视频播放器
 
 ## 本地新增：按键文件菜单

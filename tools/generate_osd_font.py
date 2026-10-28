@@ -8,6 +8,8 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 MESSAGES = {
+    'coffee_ad': '今日推荐：现磨咖啡香醇现萃，每一口都是好时光新品上市，欢迎到店品尝',
+    'feature_captions': '欢迎使用多媒体播放器图层字幕：文字与画面独立叠加音频可视化：随音乐节奏变化图片缩放：50% 100% 200%图片缩放：100% 原始画面图片缩放：50% 居中缩小图片缩放：200% 中心放大',
     'normal0': '图片 00/00  自动轮播：关闭',
     'normal1': '间隔：00秒  方向：正序',
     'init': '正在初始化TF卡',
@@ -30,7 +32,9 @@ MESSAGES = {
     'browser_empty': '根目录为空',
     'browser_items': '项目',
     'image_keys': 'K2下一张 K3上一张 K4播放/暂停 长按返回菜单',
+    'feature_image_keys': 'K2/3切图 双键缩放 长按K3字幕 K4播放',
     'video_keys': '视频 K4播放/暂停 长按返回菜单',
+    'feature_video_keys': 'K2频谱 K3字幕 K4播放/暂停 长按返回菜单',
 }
 EXTRA = '0123456789开启倒序轮播：' + ''.join(chr(i) for i in range(32,127))
 
@@ -49,7 +53,7 @@ def glyphs(font_path, font_index):
         x = round((16 - font.getlength(ch)) / 2)
         ImageDraw.Draw(canvas).text((x, -top), ch, font=font, fill=255)
         if height != 16:
-            canvas = canvas.resize((16, 16), Image.Resampling.LANCZOS)
+            canvas = canvas.resize((16, 16), getattr(Image, 'Resampling', Image).LANCZOS)
         bitmap = canvas.point(lambda v: 255 if v >= 105 else 0).convert('1')
         bitmaps.append(bitmap)
     return chars, bitmaps
@@ -107,7 +111,7 @@ def generate(font_path, font_index, output, preview=None):
             for column, ch in enumerate(text):
                 mask = by_char[ch].convert('L')
                 image.paste('#e8f4ff', (12+column*18, 12+line*28), mask)
-        image.resize((1216, 320), Image.Resampling.NEAREST).save(preview)
+        image.resize((1216, 320), getattr(Image, 'Resampling', Image).NEAREST).save(preview)
     return len(chars)
 
 

@@ -6,8 +6,8 @@ set_false_path -through [get_nets {video_ready}] -to [get_regs {video_reset_pipe
 
 # Browser mailbox toggles enter three-register synchronizers. Cut only the
 # asynchronous input net; the following synchronizer stages remain timed.
-set_false_path -through [get_nets {u_browser_bridge/ack u_ui_bridge/ack}] -to [get_regs {u_browser_bridge/ack_sync* u_ui_bridge/ack_sync*}]
-set_false_path -through [get_nets {u_browser_bridge/request u_ui_bridge/request}] -to [get_regs {u_browser_bridge/request_sync* u_ui_bridge/request_sync*}]
+set_false_path -through [get_nets {u_browser_bridge/ack u_ui_bridge/ack u_feature_bridge/ack}] -to [get_regs {u_browser_bridge/ack_sync* u_ui_bridge/ack_sync* u_feature_bridge/ack_sync*}]
+set_false_path -through [get_nets {u_browser_bridge/request u_ui_bridge/request u_feature_bridge/request}] -to [get_regs {u_browser_bridge/request_sync* u_ui_bridge/request_sync* u_feature_bridge/request_sync*}]
 # Catalog buses stop changing before done crosses two system clocks. These
 # destinations are consumed only after done; catalog RAM stays immutable
 # until KEY1 reset. No blanket clock-group exception is applied.
@@ -32,3 +32,7 @@ set_false_path -through [get_nets {show_image}] -to [get_clocks sys_clk]
 
 # The BMP loader's ready pulse enters ready_sys_sync[0] before system logic.
 set_false_path -through [get_nets {u_loader/image_ready}] -to [get_clocks sys_clk]
+
+# Zoom selection is held throughout a frame and sampled by two memory-clock
+# stages before read_ack latches it. Only the asynchronous first stage is cut.
+set_false_path -from [get_regs {feature_frame*}] -to [get_regs {u_scale_address/zoom_meta*}]
