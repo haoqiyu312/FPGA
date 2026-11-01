@@ -12,6 +12,9 @@ module tf_media_top (
     output wire HDMI_DDC_SCL, inout wire HDMI_DDC_SDA,
     output wire sd_ncs, sd_dclk, sd_mosi, input wire sd_miso
 );
+    localparam WIDTH=720, HEIGHT=720, FRAME_PIXELS=WIDTH*HEIGHT;
+    // 25 MHz / (1000*833) = 30.012 Hz; custom square timing, VIC 0.
+    localparam HTOTAL=1000, VTOTAL=833, HSA=96,HBP=96,HFP=88,VSA=2,VBP=33,VFP=78;
     // The board buzzer is active low; keep it disabled for all key presses.
     assign buzzer_n = 1'b1;
     reg [3:0] feature_frame;
@@ -210,7 +213,7 @@ module tf_media_top (
         if(!catalog_reset_n)catalog_reset_pipe<=0;
         else catalog_reset_pipe<={catalog_reset_pipe[1:0],1'b1};
     wire cat_sector_req;wire [31:0] cat_sector_lba;
-    fat32_media_catalog u_catalog (.clk(sd_clk),.rst(~catalog_reset_pipe[2]),.sd_ready(sd_ready),
+    fat32_media_catalog #(.FRAME_WIDTH(WIDTH),.FRAME_HEIGHT(HEIGHT),.AUDIO_RATE(12000)) u_catalog (.clk(sd_clk),.rst(~catalog_reset_pipe[2]),.sd_ready(sd_ready),
         .sector_req(cat_sector_req),.sector_lba(cat_sector_lba),.sector_byte(sector_byte),
         .sector_valid(sector_valid),.sector_end(sector_end),.done(catalog_done_sd),
         .image_count(browser_image_total),.count(file_count_sd),.status(catalog_status_sd),.query_index(query_index),
@@ -222,7 +225,7 @@ module tf_media_top (
     assign write_req=video_sd ? mov_write_req : img_write_req;
     assign pixel_valid=video_sd ? mov_pixel_valid : img_pixel_valid;
     assign pixel_data=video_sd ? mov_pixel_data : img_pixel_data;
-    fat32_bmp_loader #(.AUTO_SCAN(1),.QUICK_SELECT(1)) u_loader (
+    fat32_bmp_loader #(.FRAME_WIDTH(WIDTH),.FRAME_HEIGHT(HEIGHT),.AUTO_SCAN(1),.QUICK_SELECT(1)) u_loader (
         .clk(sd_clk),.rst(image_rst),.sd_ready(sd_ready),.memory_ready(memory_init_sync[1]),
         .sector_req(img_sector_req),.sector_lba(img_sector_lba),.sector_byte(sector_byte),
         .sector_valid(sector_valid),.sector_end(sector_end),
@@ -231,7 +234,7 @@ module tf_media_top (
         .image_ready(image_ready),.status(image_status),.image_index(image_index),
         .image_total(catalog_total),.catalog_valid(catalog_valid),.image_name(image_name));
 
-    fat32_video_reader #(.AUDIO_SUPPORT(1),.EXTERNAL_NAME(1)) u_movie_loader (
+    fat32_video_reader #(.FRAME_WIDTH(WIDTH),.FRAME_HEIGHT(HEIGHT),.AUDIO_SUPPORT(1),.AUDIO_RATE(12000),.EXTERNAL_NAME(1)) u_movie_loader (
         .clk(sd_clk),.rst(movie_rst),.sd_ready(sd_ready),.memory_ready(memory_init_sync[1]),
         .sector_req(mov_sector_req),.sector_lba(mov_sector_lba),.sector_byte(sector_byte),
         .sector_valid(sector_valid),.sector_end(sector_end),
@@ -243,7 +246,7 @@ module tf_media_top (
         .audio_address(audio_write_address),.audio_data(audio_write_data),.selected_name(requested_video));
     wire [9:0] x,y;
     wire de,hs,vs;
-    video_timing_640x480 u_timing (.pixel_clk(pixel_clk),.rst_n(~video_rst),
+    video_timing_640x480 #(.WIDTH(WIDTH),.HEIGHT(HEIGHT),.HTOTAL(HTOTAL),.VTOTAL(VTOTAL),.HSA(HSA),.HBP(HBP),.VSA(VSA),.VBP(VBP)) u_timing (.pixel_clk(pixel_clk),.rst_n(~video_rst),
         .pixel_x(x),.pixel_y(y),.de(de),.hsync(hs),.vsync(vs));
     reg [2:0] image_sync,ack_sync;
     wire read_ack;
@@ -262,7 +265,7 @@ module tf_media_top (
             // Refill/reset the read FIFO in vertical blanking, never mid-frame.
             if(!image_sync[2]) begin
                 image_read_req<=0;frame_primed<=0;show_picture<=0;
-            end else if(x==0 && y==480) image_read_req<=1;
+            end else if(x==0 && y==HEIGHT) image_read_req<=1;
             else if(ack_sync[2]) begin image_read_req<=0;frame_primed<=1;end
             if(x==0 && y==0 && frame_primed && image_sync[2]) show_picture<=1;
         end
@@ -288,13 +291,13 @@ module tf_media_top (
         if(video_rst)begin audio_enable_sync<=0;audio_fps_meta<=3;audio_fps_sync<=3;end
         else begin audio_enable_sync<={audio_enable_sync[0],audio_enabled};
                    audio_fps_meta<=video_fps;audio_fps_sync<=audio_fps_meta;end
-    video_audio_buffer u_movie_audio (.write_clk(sd_clk),.write_valid(audio_write_valid),
+    video_audio_buffer #(.AUDIO_RATE(12000)) u_movie_audio (.write_clk(sd_clk),.write_valid(audio_write_valid),
         .write_bank(write_bank),.write_address(audio_write_address),.write_data(audio_write_data),
         .clk(pixel_clk),.rst(video_rst | ~video_pixel),.enabled(audio_enable_sync[1]),
         .paused(paused),.start(frame_started),.read_bank(read_bank),.sample_tick(audio_tick),
         .fps(audio_fps_sync),.busy(audio_busy),.pcm_sample(audio_pcm));
     video_frame_presenter #(.AUDIO_SYNC(1)) u_movie_presenter (.clk(pixel_clk),.rst(video_rst | ~video_pixel),
-        .vblank(x==0 && y==480),.frame_start(x==0 && y==0),.paused(paused),
+        .vblank(x==0 && y==HEIGHT),.frame_start(x==0 && y==0),.paused(paused),
         .frame_toggle(frame_toggle),.fps(video_fps),.consumed_toggle(consumed_toggle),
         .audio_busy(audio_busy),.frame_started(frame_started),
         .read_bank(read_bank),.read_req(movie_read_req),.read_ack(read_ack),.show_frame(movie_shown));
@@ -309,22 +312,22 @@ module tf_media_top (
     wire [20:0] app_rd_addr,app_wr_addr;
     wire [31:0] sdram_rd_data,app_wr_data;
     wire [3:0] app_wr_mask;
-    // 128 divides 640: BMP row flips occur between bursts, never inside one.
-    frame_read_write #(.BURST_SIZE(128),.RUNTIME_V_FLIP(1),.WRITE_V_FLIP(1),.FRAME_WIDTH(640),.FRAME_HEIGHT(480)) u_frame (
+    // 16 divides image rows, frame banks and 256-word SDRAM pages; no burst crosses a page.
+    frame_read_write #(.BURST_SIZE(16),.RUNTIME_V_FLIP(1),.WRITE_V_FLIP(1),.FRAME_WIDTH(WIDTH),.FRAME_HEIGHT(HEIGHT)) u_frame (
         .write_v_flip(~video_mem),.rst(mem_rst),.mem_clk(mem_clk),.Sdr_init_done(memory_initialized),
         .Sdr_init_ref_vld(memory_refresh),.Sdr_busy(memory_busy),
         .App_rd_en(app_rd_en),.App_rd_addr(app_rd_addr),
         .Sdr_rd_en(sdram_rd_valid),.Sdr_rd_dout(sdram_rd_data),
         .read_clk(pixel_clk),.read_req(read_req),.read_req_ack(read_ack),.read_finish(),
-        .read_addr_0(21'd0),.read_addr_1(21'd307200),.read_addr_2(21'd0),.read_addr_3(21'd0),
-        .read_addr_index({1'b0,video_pixel & read_bank}),.read_len(21'd307200),
+        .read_addr_0(21'd0),.read_addr_1(FRAME_PIXELS),.read_addr_2(21'd0),.read_addr_3(21'd0),
+        .read_addr_index({1'b0,video_pixel & read_bank}),.read_len(FRAME_PIXELS),
         .read_en(fifo_read_en & show_image),.read_data(fifo_pixel),
         .App_wr_en(app_wr_en),.App_wr_addr(app_wr_addr),.App_wr_din(app_wr_data),.App_wr_dm(app_wr_mask),
         .write_clk(sd_clk),.write_req(write_req),.write_req_ack(write_ack),.write_finish(write_finish),
-        .write_addr_0(21'd0),.write_addr_1(21'd307200),.write_addr_2(21'd0),.write_addr_3(21'd0),
-        .write_addr_index({1'b0,video_sd & write_bank}),.write_len(21'd307200),.write_en(pixel_valid),.write_data(pixel_data));
+        .write_addr_0(21'd0),.write_addr_1(FRAME_PIXELS),.write_addr_2(21'd0),.write_addr_3(21'd0),
+        .write_addr_index({1'b0,video_sd & write_bank}),.write_len(FRAME_PIXELS),.write_en(pixel_valid),.write_data(pixel_data));
     wire [20:0] scaled_rd_addr;
-    image_scale_address u_scale_address (.clk(mem_clk),.rst(mem_rst),.ack(read_ack),
+    image_scale_address #(.WIDTH(WIDTH),.HEIGHT(HEIGHT)) u_scale_address (.clk(mem_clk),.rst(mem_rst),.ack(read_ack),
         .read_en(app_rd_en),.video_mode(video_mem),.zoom_request(zoom_frame),
         .address(app_rd_addr),.mapped_address(scaled_rd_addr));
     sdram u_sdram (.Clk(mem_clk),.Clk_sft(mem_clk_shift),.Rst(mem_rst),
@@ -343,7 +346,7 @@ module tf_media_top (
         end
     end
     wire [23:0] loading_rgb;
-    loading_spinner_rgb u_loading_spinner (.pixel_clk(pixel_clk),.rst_n(~video_rst),
+    loading_spinner_rgb #(.WIDTH(WIDTH),.HEIGHT(HEIGHT)) u_loading_spinner (.pixel_clk(pixel_clk),.rst_n(~video_rst),
         .pixel_x(x),.pixel_y(y),.de(de),.rgb(loading_rgb));
     // Atomic feature state crosses clocks, then changes only in vertical blank.
     wire [3:0] feature_snapshot;
@@ -362,7 +365,7 @@ module tf_media_top (
             feature_frame<=4'b0011;spectrum_frame<=0;
             for(coord_i=0;coord_i<=20;coord_i=coord_i+1)begin output_x[coord_i]<=0;output_y[coord_i]<=0;end
         end else begin
-            if(x==0 && y==480)begin feature_frame<=feature_snapshot;spectrum_frame<=spectrum_levels;end
+            if(x==0 && y==HEIGHT)begin feature_frame<=feature_snapshot;spectrum_frame<=spectrum_levels;end
             output_x[0]<=x;output_y[0]<=y;
             for(coord_i=1;coord_i<=20;coord_i=coord_i+1)begin output_x[coord_i]<=output_x[coord_i-1];output_y[coord_i]<=output_y[coord_i-1];end
         end
@@ -370,7 +373,7 @@ module tf_media_top (
     wire subtitle_request,subtitle_panel,subtitle_ink;
     wire [15:0] subtitle_font_code;
     wire [3:0] subtitle_font_row;
-    media_subtitles u_subtitles (.clk(pixel_clk),.rst_n(~video_rst),
+    media_subtitles #(.WIDTH(WIDTH),.HEIGHT(HEIGHT)) u_subtitles (.clk(pixel_clk),.rst_n(~video_rst),
         .frame_start(x==0 && y==0),.frame_started(frame_started),.shown(show_image),
         .video_mode(video_pixel),.enabled(feature_frame[1]),.fps(audio_fps_sync),.zoom(zoom_frame),
         .x(x),.y(y),.de(de),.font_request(subtitle_request),
@@ -382,7 +385,7 @@ module tf_media_top (
     osd_font16 u_shared_osd_font (.clk(pixel_clk),.codepoint(subtitle_request ? subtitle_font_code : status_font_code),.row(subtitle_request ? subtitle_font_row : status_font_row),
         .pixels(status_font_pixels),.codepoint_b(browser_font_code),.row_b(browser_font_row),
         .pixels_b(browser_font_pixels));
-    image_status_osd #(.FEATURE_HINTS(1)) u_status_osd (.pixel_clk(pixel_clk),.rst_n(~video_rst),
+    image_status_osd #(.WIDTH(WIDTH),.HEIGHT(HEIGHT),.NOTICE_FRAMES(60),.FEATURE_HINTS(1)) u_status_osd (.pixel_clk(pixel_clk),.rst_n(~video_rst),
         .x(x),.y(y),.de(de),.image_shown(show_image),.load_status(load_status),
         .image_index(image_index),.image_total(image_total),.auto_mode(auto_mode),
         .interval_setting(stable_interval),.reverse_direction(stable_direction),
@@ -399,7 +402,7 @@ module tf_media_top (
                       browser_scroll_first,selected_valid,selected_file}),
         .destination_clk(pixel_clk),.destination_reset_n(~video_rst),.destination_data(browser_snapshot));
     wire browser_cover;wire [23:0] browser_rgb;
-    file_browser_overlay u_file_overlay (.clk(pixel_clk),.rst_n(~video_rst),.x(x),.y(y),.de(de),
+    file_browser_overlay #(.WIDTH(WIDTH),.HEIGHT(HEIGHT)) u_file_overlay (.clk(pixel_clk),.rst_n(~video_rst),.x(x),.y(y),.de(de),
         .visible(browser_frame[22]),.ready(browser_frame[21]),.count(browser_frame[20:15]),
         .debug_root_byte(browser_frame[46:39]),.debug_root_lba(browser_frame[38:23]),
         .status(browser_frame[14:11]),.scroll_first(browser_frame[10:6]),.selection_valid(browser_frame[5]),
@@ -433,12 +436,12 @@ module tf_media_top (
         end
     end
     wire small_margin=!video_pixel && zoom_frame==1 &&
-        (output_x[20]<160 || output_x[20]>=480 || output_y[20]<120 || output_y[20]>=360);
+        (output_x[20]<WIDTH/4 || output_x[20]>=WIDTH*3/4 || output_y[20]<HEIGHT/4 || output_y[20]>=HEIGHT*3/4);
     wire [23:0] scaled_rgb=small_margin ? 24'h000000 : image_rgb;
     wire [23:0] transition_rgb;
     wire [1:0] transition_effect;
-    media_transition u_transition (.clk(pixel_clk),.rst_n(~video_rst),
-        .frame_start(x==0 && y==480),.shown(show_image),.video_mode(video_pixel),
+    media_transition #(.WIDTH(WIDTH),.HEIGHT(HEIGHT)) u_transition (.clk(pixel_clk),.rst_n(~video_rst),
+        .frame_start(x==0 && y==HEIGHT),.shown(show_image),.video_mode(video_pixel),
         .x(output_x[20]),.y(output_y[20]),.rgb_in(scaled_rgb),.rgb_out(transition_rgb),.effect(transition_effect));
     wire [23:0] media_base=video_pixel ? (show_image ? image_rgb : 24'h000000) :
                                       (show_image ? transition_rgb : loading_delay[20]);
@@ -468,12 +471,12 @@ module tf_media_top (
     wire playback_osd_visible;
     playback_osd_switch u_playback_osd_switch (
         .clk(pixel_clk),.rst(video_rst),.hide_switch(menu_hide_switch),
-        .vblank(x==0 && y==480),.visible(playback_osd_visible));
+        .vblank(x==0 && y==HEIGHT),.visible(playback_osd_visible));
     wire [23:0] base_rgb=(osd_cover_delay[19] && playback_osd_visible) ? osd_delay[19] : visualized_rgb;
     wire [23:0] output_rgb=browser_cover_delay[19] ? browser_delay[19] : base_rgb;
     wire [23:0] volume_pcm;
     media_volume_apply u_volume_apply (.pcm_in(audio_pcm),.level(4'd8),.pcm_out(volume_pcm));
-    hdmi_audio_output #(.TEST_AUDIO(0),.EXTERNAL_AUDIO(1)) u_hdmi (.pixel_clk(pixel_clk),.serial_clk(serial_clk),
+    hdmi_audio_output #(.TEST_AUDIO(0),.EXTERNAL_AUDIO(1),.FRAME_WIDTH(WIDTH),.FRAME_HEIGHT(HEIGHT),.HTOTAL(HTOTAL),.HSA(HSA),.HFP(HFP),.HBP(HBP),.VTOTAL(VTOTAL),.VSA(VSA),.VFP(VFP),.VBP(VBP),.VIDEO_VIC(0)) u_hdmi (.pixel_clk(pixel_clk),.serial_clk(serial_clk),
         .pcm_left(volume_pcm),.pcm_right(volume_pcm),.audio_tick(audio_tick),
         .rst(video_rst),.vs(delayed_vs),.de(delayed_de),.rgb(output_rgb),
         .clk_p(HDMI_CLK_P),.d0_p(HDMI_D0_P),.d1_p(HDMI_D1_P),.d2_p(HDMI_D2_P),

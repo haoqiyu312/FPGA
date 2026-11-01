@@ -1,14 +1,14 @@
 // Reveal each newly loaded image over 32 display frames. No second image bank:
 // effects reveal from black, then leave all pixels unchanged. UI stays above it.
-module media_transition (
+module media_transition #(parameter integer WIDTH=640,HEIGHT=480) (
  input wire clk,rst_n,frame_start,shown,video_mode,
  input wire [9:0] x,y,input wire [23:0] rgb_in,
  output reg [23:0] rgb_out,output reg [1:0] effect
 );
  reg [5:0] progress;
  reg was_shown;
- wire [9:0] edge_x={progress,4'b0}+{progress,2'b0}; // progress * 20
- wire [9:0] edge_y={progress,3'b0}+{progress,2'b0}+{progress,1'b0}+progress;
+ wire [9:0] edge_x=progress*((WIDTH+31)/32); // progress * 20
+ wire [9:0] edge_y=progress*((HEIGHT+31)/32);
  wire [13:0] red_product=rgb_in[23:16]*progress;
  wire [13:0] green_product=rgb_in[15:8]*progress;
  wire [13:0] blue_product=rgb_in[7:0]*progress;

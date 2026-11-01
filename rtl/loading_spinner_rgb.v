@@ -1,6 +1,6 @@
 // Compact monochrome spinner on a pure black background.
 // Twelve softly edged dots; clockwise fading trail, ~20 steps/second.
-module loading_spinner_rgb (
+module loading_spinner_rgb #(parameter integer WIDTH=640,HEIGHT=480) (
  input wire pixel_clk,rst_n,
  input wire [9:0] pixel_x,pixel_y,
  input wire de,
@@ -39,6 +39,7 @@ module loading_spinner_rgb (
     10:begin cx=292;cy=224;end
     11:begin cx=304;cy=212;end
    endcase
+   cx=cx+(WIDTH-640)/2;cy=cy+(HEIGHT-480)/2;
    age=phase>=i ? phase-i : phase+12-i;
    case(age)
     0:brightness=255;

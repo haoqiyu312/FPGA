@@ -2,6 +2,7 @@
 // Supported images: 640x480, positive height (bottom-up), RGB24, BI_RGB.
 // Sector interface is independent of the board-specific SD SPI transport.
 module fat32_bmp_loader #(
+    parameter integer FRAME_WIDTH=640, FRAME_HEIGHT=480,
     parameter integer WATCHDOG_BITS = 28,
     parameter integer SELECT_BY_NAME = 0,
     parameter integer AUTO_SCAN = 0,
@@ -59,9 +60,9 @@ module fat32_bmp_loader #(
     reg [WATCHDOG_BITS-1:0] watchdog;
     wire [8:0] fat_byte_offset = {current_cluster[6:0],2'b00};
     wire header_ok = bmp_magic==16'h4d42 && dib_size>=40 &&
-        bmp_width==640 && bmp_height==480 && bmp_planes==1 &&
+        bmp_width==FRAME_WIDTH && bmp_height==FRAME_HEIGHT && bmp_planes==1 &&
         bmp_bits==24 && bmp_compression==0 && pixel_offset>=54 &&
-        pixel_offset<=file_size && (file_size-pixel_offset)>=921600;
+        pixel_offset<=file_size && (file_size-pixel_offset)>=FRAME_WIDTH*FRAME_HEIGHT*3;
     wire valid_cluster_size = sectors_per_cluster==1 || sectors_per_cluster==2 ||
         sectors_per_cluster==4 || sectors_per_cluster==8 || sectors_per_cluster==16 ||
         sectors_per_cluster==32 || sectors_per_cluster==64 || sectors_per_cluster==128;
@@ -207,7 +208,7 @@ module fat32_bmp_loader #(
                                 if (!header_ok) begin state<=ERROR; status<=12; end
                             end
                             if (kind==FILE_DATA && file_position>=pixel_offset && file_position>=54 &&
-                                pixel_count<307200 && (header_valid || file_position==54)) begin
+                                pixel_count<(FRAME_WIDTH*FRAME_HEIGHT) && (header_valid || file_position==54)) begin
                                 case (component)
                                     0: begin blue_byte<=sector_byte; component<=1; end
                                     1: begin green_byte<=sector_byte; component<=2; end
@@ -293,7 +294,7 @@ module fat32_bmp_loader #(
                              end else if(header_ok && image_total==31) state<=SCAN_FINISH;
                              else begin kind<=DIRECTORY;sector_lba<=directory_lba;state<=REQUEST;end
                          end
-                        FILE_DATA: if (pixel_count==307200) begin
+                        FILE_DATA: if (pixel_count==(FRAME_WIDTH*FRAME_HEIGHT)) begin
                                  status<=4; state<=WAIT_COMMIT;
                              end else if (file_position>=file_size) begin state<=ERROR; status<=12; end
                              else if (cluster_sector+1<sectors_per_cluster) begin

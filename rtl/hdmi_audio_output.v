@@ -1,5 +1,7 @@
 // Use Anlogic protocol/PHY IP; video framing and PCM/ACR are project logic.
-module hdmi_audio_output #(parameter integer TEST_AUDIO=1,EXTERNAL_AUDIO=0) (
+module hdmi_audio_output #(parameter integer TEST_AUDIO=1,EXTERNAL_AUDIO=0,
+ FRAME_WIDTH=640,FRAME_HEIGHT=480,HTOTAL=800,HSA=96,HFP=16,HBP=48,
+ VTOTAL=525,VSA=2,VFP=10,VBP=33,VIDEO_VIC=1) (
  input wire pixel_clk,serial_clk,rst,vs,de,input wire [23:0] rgb,
  output wire clk_p,d0_p,d1_p,d2_p,
  output wire ddc_scl,inout wire ddc_sda,
@@ -20,15 +22,15 @@ module hdmi_audio_output #(parameter integer TEST_AUDIO=1,EXTERNAL_AUDIO=0) (
    if(edid_wait<22'd2500000)edid_wait<=edid_wait+1'b1;
   end
  end
- hdmi_video_stream u_stream(.clk(pixel_clk),.rst(rst),.vs(vs),.de(de),.rgb(rgb),
+ hdmi_video_stream #(.FRAME_WIDTH(FRAME_WIDTH)) u_stream(.clk(pixel_clk),.rst(rst),.vs(vs),.de(de),.rgb(rgb),
   .valid(valid),.sof(sof),.last(last),.data(data));
  hdmi_test_audio u_pcm(.clk(pixel_clk),.rst(rst),.sample_valid(sample_valid),
   .left_sample(left_sample),.right_sample(right_sample),.acr_valid(acr_valid),
   .acr_n(acr_n),.acr_cts(acr_cts));
  hdmi_1_4b_transmitter_core_wrapper #(
-  .DEVICE("EG"),.HTOTAL(800),.HSA(96),.HFP(16),.HBP(48),.HACTIVE(640),
-  .VTOTAL(525),.VSA(2),.VFP(10),.VBP(33),.VACTIVE(480),
-  .VIDEO_VIC(1),.VIDEO_TPG("Disable"),.VIDEO_FORMAT("RGB"),
+  .DEVICE("EG"),.HTOTAL(HTOTAL),.HSA(HSA),.HFP(HFP),.HBP(HBP),.HACTIVE(FRAME_WIDTH),
+  .VTOTAL(VTOTAL),.VSA(VSA),.VFP(VFP),.VBP(VBP),.VACTIVE(FRAME_HEIGHT),
+  .VIDEO_VIC(VIDEO_VIC),.VIDEO_TPG("Disable"),.VIDEO_FORMAT("RGB"),
   .AUDIO_SAMPLE_RATE("48K"),.IIC_SCL_DIV(125)
  ) u_core(.I_pixel_clk(pixel_clk),.I_rst(rst),.I_edid_read_trig(edid_trigger),
   .O_edid_read_valid(),.O_edid_read_data(),.I_axis_s_user(sof),

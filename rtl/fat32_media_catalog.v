@@ -2,6 +2,7 @@
 // files in directory order; BMP/RV headers are checked before enabling OPEN.
 // Metadata RAM is only written during scanning. Readers must gate with done.
 module fat32_media_catalog #(
+ parameter FRAME_WIDTH=640, FRAME_HEIGHT=480,AUDIO_RATE=48000,
  parameter WATCHDOG_BITS=28,
  parameter READY_WATCHDOG_BITS=30
 )(
@@ -88,17 +89,25 @@ module fat32_media_catalog #(
  wire wma_ext=upper(entry_name[23:16])=="W" && upper(entry_name[15:8])=="M" && upper(entry_name[7:0])=="A";
  wire m4a_ext=upper(entry_name[23:16])=="M" && entry_name[15:8]=="4" && upper(entry_name[7:0])=="A";
  wire audio_ext=wav_ext || mp3_ext || aac_ext || ogg_ext || wma_ext || m4a_ext;
- wire valid_bmp=magic[15:0]==16'h4d42 && dib>=40 && width==640 && height==480 &&
+ wire valid_bmp=magic[15:0]==16'h4d42 && dib>=40 && width==FRAME_WIDTH && height==FRAME_HEIGHT &&
   bmp_planes==1 && bmp_bits==24 && compression==0 && pixel_offset>=54 &&
-  pixel_offset<=entry_size && entry_size-pixel_offset>=921600;
+  pixel_offset<=entry_size && entry_size-pixel_offset>=(FRAME_WIDTH*FRAME_HEIGHT*3);
  wire rv1=magic==32'h31465652 && rv_version==1;
- wire rv2=magic==32'h32465652 && rv_version==2 && rv_fps>=3 && rv_fps<=5 &&
-  rate==48000 && audio_format==1 &&
-  ((rv_fps==3 && samples==16000 && audio_bytes==16384) ||
-   (rv_fps==4 && samples==12000 && audio_bytes==12288) ||
-   (rv_fps==5 && samples==9600 && audio_bytes==9728));
- wire valid_rv=(rv1 || rv2) && rv_format==1 && rv_width==640 && rv_height==480 &&
-  rv_fps>=1 && rv_fps<=5 && frame_count!=0 && frame_count<=13981 && frame_bytes==307200 && entry_size>=307712;
+ reg[31:0] expected_samples,expected_audio_bytes;
+ always @* begin
+  case(rv_fps)
+   1:expected_samples=AUDIO_RATE;2:expected_samples=AUDIO_RATE/2;
+   3:expected_samples=AUDIO_RATE/3;4:expected_samples=AUDIO_RATE/4;
+   5:expected_samples=AUDIO_RATE/5;default:expected_samples=0;
+  endcase
+  expected_audio_bytes=((expected_samples+511)/512)*512;
+ end
+ wire rv2=magic==32'h32465652 && rv_version==2 && rv_fps>=(AUDIO_RATE==12000 ? 1 : 3) && rv_fps<=5 &&
+  rate==AUDIO_RATE && audio_format==1 &&
+  (samples==expected_samples && audio_bytes==expected_audio_bytes);
+ localparam FRAME_STORAGE_BYTES=((FRAME_WIDTH*FRAME_HEIGHT+511)/512)*512;
+ wire valid_rv=(rv1 || rv2) && rv_format==1 && rv_width==FRAME_WIDTH && rv_height==FRAME_HEIGHT &&
+  rv_fps>=1 && rv_fps<=5 && frame_count!=0 && frame_count<=((32'hffffffff-512)/FRAME_STORAGE_BYTES) && frame_bytes==FRAME_STORAGE_BYTES && entry_size>=512+FRAME_STORAGE_BYTES;
  function[31:0] address;input[31:0] c;begin address=data_base+((c-2)<<shift);end endfunction
  always @(posedge clk or posedge rst)begin
   if(rst)begin

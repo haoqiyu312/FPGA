@@ -1,6 +1,7 @@
 // Chinese frame-latched OSD with a built-in 16x16 synchronous glyph ROM.
 // The output has one pixel-clock of latency; top-level delay accounts for it.
 module image_status_osd #(
+ parameter integer WIDTH=640,HEIGHT=480,
  parameter integer NOTICE_FRAMES=120,
  parameter integer FEATURE_HINTS=0
 )(input wire pixel_clk,rst_n,input wire [9:0] x,y,input wire de,
@@ -73,7 +74,15 @@ module image_status_osd #(
     default:line0=512'h95198bef00310035ff1a8bfb53d672b660015f025e38002000200020002000200020002000200020002000200020002000200020002000200020002000200020; // 错误15：读取状态异常
    endcase
    if(status>=10)line1=512'h6309004b00450059003191cd8bd5ff0c8bf768c067e5005400465361002000200020002000200020002000200020002000200020002000200020002000200020; // 按KEY1重试，请检查TF卡
-   else line1=512'h683976ee5f550042004d0050ff1a0036003400300078003400380030ff0c003200344f4d00200020002000200020002000200020002000200020002000200020; // 根目录BMP：640x480，24位
+   else line1=512'h683976ee5f550042004d0050ff1a0036003400300078003400380030ff0c003200344f4d00200020002000200020002000200020002000200020002000200020; // Root BMP format; dimensions below come from the build parameters.
+  end
+  if(!shown && status<10)begin
+   line1[511-7*16 -: 16]=16'h0030+WIDTH/100;
+   line1[511-8*16 -: 16]=16'h0030+(WIDTH/10)%10;
+   line1[511-9*16 -: 16]=16'h0030+WIDTH%10;
+   line1[511-11*16 -: 16]=16'h0030+HEIGHT/100;
+   line1[511-12*16 -: 16]=16'h0030+(HEIGHT/10)%10;
+   line1[511-13*16 -: 16]=16'h0030+HEIGHT%10;
   end
  end
  // FAT short names use blank-padded eight-byte basename and three-byte suffix.
@@ -144,18 +153,18 @@ module image_status_osd #(
    if(shown)begin
     if(y>=16 && y<32 && x>=16 && x<232)begin
      in_text=1;tx=x-16;ty=y-16;selected_line=filename_text;
-    end else if(y>=16 && y<32 && x>=534 && x<624)begin
-     in_text=1;tx=x-534;ty=y-16;selected_line=counter_text;
+    end else if(y>=16 && y<32 && x>=WIDTH-106 && x<WIDTH-16)begin
+     in_text=1;tx=x-(WIDTH-106);ty=y-16;selected_line=counter_text;
     end else if(x>=16 && x<592)begin
-     if(y>=424 && y<440)begin
-      in_text=1;tx=x-16;ty=y-424;selected_line=auto_text;
-     end else if(y>=452 && y<468)begin
-      in_text=1;tx=x-16;ty=y-452;selected_line=controls_text;
+     if(y>=HEIGHT-56 && y<HEIGHT-40)begin
+      in_text=1;tx=x-16;ty=y-(HEIGHT-56);selected_line=auto_text;
+     end else if(y>=HEIGHT-28 && y<HEIGHT-12)begin
+      in_text=1;tx=x-16;ty=y-(HEIGHT-28);selected_line=controls_text;
      end
     end
    end else if(x>=16 && x<592)begin
     if(y>=16 && y<32)begin in_text=1;tx=x-16;ty=y-16;selected_line=line0;end
-    else if(y>=452 && y<468)begin in_text=1;tx=x-16;ty=y-452;selected_line=line1;end
+    else if(y>=HEIGHT-28 && y<HEIGHT-12)begin in_text=1;tx=x-16;ty=y-(HEIGHT-28);selected_line=line1;end
    end
   end
   in_panel=in_text;

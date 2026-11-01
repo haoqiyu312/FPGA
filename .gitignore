@@ -63,3 +63,8 @@ Thumbs.db
 /release/coffee_demo/
 /release/COFFEE_DEMO.zip
 !/release/TF_MEDIA_COFFEE.bit
+
+# Native square player generated deliverables
+/release/media720/
+/release/TF_MEDIA_720.zip
+!/release/TF_MEDIA_720.bit

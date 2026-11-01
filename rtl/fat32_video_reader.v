@@ -3,8 +3,11 @@
 // mu-law audio block after each frame; publish only after both are committed.
 module fat32_video_reader #(
     parameter integer WATCHDOG_BITS=28,
-    parameter integer FRAME_PIXELS=307200,
+    parameter integer FRAME_WIDTH=640, FRAME_HEIGHT=480,
+    parameter integer FRAME_PIXELS=FRAME_WIDTH*FRAME_HEIGHT,
+    parameter integer FRAME_STORAGE_BYTES=((FRAME_PIXELS+511)/512)*512,
     parameter integer AUDIO_SUPPORT=0,
+    parameter integer AUDIO_RATE=48000,
     parameter integer EXTERNAL_NAME=0
 )(
     input wire clk,rst,sd_ready,memory_ready,
@@ -45,15 +48,17 @@ module fat32_video_reader #(
     assign audio_data=sector_byte;
     reg [31:0] expected_samples,expected_audio_bytes;
     always @* case(header_fps)
-        3:begin expected_samples=16000;expected_audio_bytes=16384;end
-        4:begin expected_samples=12000;expected_audio_bytes=12288;end
-        5:begin expected_samples=9600;expected_audio_bytes=9728;end
+        1:begin expected_samples=AUDIO_RATE;expected_audio_bytes=((AUDIO_RATE+511)/512)*512;end
+        2:begin expected_samples=AUDIO_RATE/2;expected_audio_bytes=((AUDIO_RATE/2+511)/512)*512;end
+        3:begin expected_samples=AUDIO_RATE/3;expected_audio_bytes=((AUDIO_RATE/3+511)/512)*512;end
+        4:begin expected_samples=AUDIO_RATE/4;expected_audio_bytes=((AUDIO_RATE/4+511)/512)*512;end
+        5:begin expected_samples=AUDIO_RATE/5;expected_audio_bytes=((AUDIO_RATE/5+511)/512)*512;end
         default:begin expected_samples=0;expected_audio_bytes=0;end
     endcase
     wire is_audio=AUDIO_SUPPORT && magic==32'h32465652 && version==2;
-    wire audio_header_ok=header_fps>=3 && header_fps<=5 && audio_rate==48000 &&
+    wire audio_header_ok=header_fps>=(AUDIO_RATE==12000 ? 1 : 3) && header_fps<=5 && audio_rate==AUDIO_RATE &&
         audio_samples==expected_samples && audio_bytes==expected_audio_bytes && audio_format==1;
-    wire [31:0] frame_stride=FRAME_PIXELS+(audio_enabled ? audio_bytes : 0);
+    wire [31:0] frame_stride=FRAME_STORAGE_BYTES+(audio_enabled ? audio_bytes : 0);
     reg [7:0] version,format_code,header_fps;
     reg [2:0] finish_sync,consumed_sync;
     reg memory_done;
@@ -63,9 +68,9 @@ module fat32_video_reader #(
         sectors_per_cluster==4 || sectors_per_cluster==8 || sectors_per_cluster==16 ||
         sectors_per_cluster==32 || sectors_per_cluster==64 || sectors_per_cluster==128;
     wire header_ok=((magic==32'h31465652 && version==1) || (is_audio && audio_header_ok)) && format_code==1 &&
-        width==640 && height==480 && header_fps>=1 && header_fps<=5 &&
-        frame_bytes==FRAME_PIXELS && frame_count!=0 && file_size>=512 &&
-        frame_count<=13981; // maximum number of 640x480 frames in a FAT32 file
+        width==FRAME_WIDTH && height==FRAME_HEIGHT && header_fps>=1 && header_fps<=5 &&
+        frame_bytes==FRAME_STORAGE_BYTES && frame_count!=0 && file_size>=512 &&
+        frame_count<=(32'hffffffff-512)/FRAME_STORAGE_BYTES; // maximum number of 640x480 frames in a FAT32 file
     function [31:0] cluster_address;
         input [31:0] cluster;
         begin cluster_address=data_lba+((cluster-2)<<cluster_shift); end
@@ -159,7 +164,7 @@ module fat32_video_reader #(
                         32,33,34,35:audio_format[(byte_index-32)*8 +: 8]<=sector_byte;
                       endcase
                       if(kind==AUDIO)audio_count<=audio_count+1'b1;
-                      if(kind==DATA)begin
+                      if(kind==DATA && pixel_count<FRAME_PIXELS)begin
                           pixel_data<={sector_byte[7:5],sector_byte[7:5],sector_byte[7:6],
                               sector_byte[4:2],sector_byte[4:2],sector_byte[4:3],
                               sector_byte[1:0],sector_byte[1:0],sector_byte[1:0],sector_byte[1:0],8'b0};

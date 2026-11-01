@@ -1,3 +1,5 @@
+> 新增原生 720×720 方屏版本：见 [720 方屏使用说明](docs/720方屏使用说明.md)。独立工程 `prj/TF_MEDIA_720.al`，旧 R2 固件保留。
+
 > 咖啡广告场景演示包：[COFFEE_DEMO.zip](release/COFFEE_DEMO.zip)，含促销字幕固件、18 秒带音乐视频和三张海报。[电脑视频预览](release/coffee_demo/COFFEE_PREVIEW.webm)；[烧录、复制与演示步骤](docs/咖啡广告演示.md)。画面由 image_gen 生成，视频采用慢速镜头动画，配乐自制；媒体检查和完整固件时序通过，尚未实板验证。
 
 > 本地扩展版下载文件：[TF_MEDIA_FEATURES.bit](release/TF_MEDIA_FEATURES.bit)。已加入图层字幕、三种图片转场、50%/100%/200% 图片缩放及实际音轨八频段可视化；完整编译与最终时序通过，尚未实板验证。新按键、实现范围和验证状态见 [扩展加分功能](docs/扩展加分功能.md)。
