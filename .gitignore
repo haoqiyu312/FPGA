@@ -68,3 +68,11 @@ Thumbs.db
 /release/media720/
 /release/TF_MEDIA_720.zip
 !/release/TF_MEDIA_720.bit
+
+# Generated native-resolution showcase media and review drafts
+/release/resolution_showcase720*/
+/release/720升级效果演示.zip
+
+# Native-panel recovery candidate
+/release/TF_MEDIA_720_R2.zip
+!/release/TF_MEDIA_720_R2.bit

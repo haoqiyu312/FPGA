@@ -1,6 +1,6 @@
 // Built-in coffee advertisement captions; video cues advance with presented media
 // frames, so pause/loading freeze the timeline. Glyph ROM is shared with OSD.
-module media_subtitles #(parameter integer WIDTH=640,HEIGHT=480) (
+module media_subtitles #(parameter integer WIDTH=640,HEIGHT=480,FONT_LATENCY=1) (
  input wire clk,rst_n,frame_start,frame_started,shown,video_mode,enabled,
  input wire [7:0] fps,input wire [1:0] zoom,
  input wire [9:0] x,y,input wire de,
@@ -44,18 +44,23 @@ module media_subtitles #(parameter integer WIDTH=640,HEIGHT=480) (
    endcase
   end
  end
+ reg [511:0] text_ready;
+ // Cue state latches at frame start, hundreds of lines before subtitle pixels.
+ always @(posedge clk)text_ready<=text_line;
+ wire [511:0] rendered_text=FONT_LATENCY==2 ? text_ready : text_line;
  wire region=de && x>=(WIDTH-512)/2 && x<(WIDTH+512)/2 && y>=HEIGHT-104 && y<HEIGHT-80;
  wire text_region=region && y>=HEIGHT-100 && y<HEIGHT-84;
  wire [8:0] tx=x-(WIDTH-512)/2;
  assign font_request=text_region && display_enabled;
- assign font_codepoint=font_request ? text_line[511-tx[8:4]*16 -: 16] : 16'h0020;
+ assign font_codepoint=font_request ? rendered_text[511-tx[8:4]*16 -: 16] : 16'h0020;
  assign font_row=y-(HEIGHT-100);
  reg panel_d,ink_d;
  reg [3:0] bit_d;
+ reg panel_stage2,ink_stage2;reg[3:0] bit_stage2;
  always @(posedge clk or negedge rst_n)begin
-  if(!rst_n)begin panel_d<=0;ink_d<=0;bit_d<=0;end
-  else begin panel_d<=region && display_enabled;ink_d<=font_request;bit_d<=tx[3:0];end
+  if(!rst_n)begin panel_d<=0;ink_d<=0;bit_d<=0;panel_stage2<=0;ink_stage2<=0;bit_stage2<=0;end
+  else begin panel_stage2<=panel_d;ink_stage2<=ink_d;bit_stage2<=bit_d;panel_d<=region && display_enabled;ink_d<=font_request;bit_d<=tx[3:0];end
  end
- assign panel=panel_d;
- assign ink=ink_d && font_pixels[15-bit_d];
+ assign panel=FONT_LATENCY==2 ? panel_stage2 : panel_d;
+ assign ink=FONT_LATENCY==2 ? (ink_stage2 && font_pixels[15-bit_stage2]) : (ink_d && font_pixels[15-bit_d]);
 endmodule

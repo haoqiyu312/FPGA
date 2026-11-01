@@ -1,8 +1,9 @@
 // Chinese frame-latched OSD with a built-in 16x16 synchronous glyph ROM.
 // The output has one pixel-clock of latency; top-level delay accounts for it.
 module image_status_osd #(
- parameter integer WIDTH=640,HEIGHT=480,
+ parameter integer WIDTH=640,HEIGHT=480,FONT_LATENCY=1,
  parameter integer NOTICE_FRAMES=120,
+ parameter integer SPECTRUM_HINT=1,
  parameter integer FEATURE_HINTS=0
 )(input wire pixel_clk,rst_n,input wire [9:0] x,y,input wire de,
  input wire image_shown,input wire [3:0] load_status,
@@ -11,7 +12,8 @@ module image_status_osd #(
  output reg overlay_active,output reg [23:0] rgb,
  input wire [87:0] image_name,
  output wire [15:0] font_codepoint,output wire [3:0] font_row,input wire [15:0] font_pixels);
- reg [18:0] meta=0,sync=0,frame=0;
+ (* dont_touch="true" *) reg [18:0] meta=0,sync=0;
+ reg [18:0] frame=0;
  // Packed snapshot is stable long before a displayed frame begins.
  wire shown=frame[18]; wire [3:0] status=frame[17:14];
  wire [4:0] selected=frame[13:9];wire [5:0] total=frame[8:3];
@@ -19,7 +21,8 @@ module image_status_osd #(
  // Direction is held separately so the snapshot layout stays explicit below.
  reg dir_meta=0,dir_sync=0,dir_frame=0;
  reg video_meta=0,video_sync=0,video_frame=0;
- reg [87:0] name_meta={11{8'h20}},name_sync={11{8'h20}},name_frame={11{8'h20}};
+ (* dont_touch="true" *) reg [87:0] name_meta={11{8'h20}},name_sync={11{8'h20}};
+ reg [87:0] name_frame={11{8'h20}};
  reg [7:0] notice=NOTICE_FRAMES;
  always @(posedge pixel_clk or negedge rst_n)begin
   if(!rst_n)begin meta<=0;sync<=0;frame<=0;notice<=NOTICE_FRAMES;dir_meta<=0;dir_sync<=0;dir_frame<=0;video_meta<=0;video_sync<=0;video_frame<=0;name_meta<={11{8'h20}};name_sync<={11{8'h20}};name_frame<={11{8'h20}};end
@@ -89,24 +92,31 @@ module image_status_osd #(
  // Display a compact basename.ext, e.g. PIC01.BMP, without the padding.
  function [511:0] filename_line;
  input [87:0] short_name;
- integer j,k;
+ integer j;
+ reg [3:0] length;
  reg [7:0] value;
  begin
-  filename_line={32{16'h0020}};k=0;
-  for(j=0;j<8;j=j+1)begin
-   value=short_name[87-j*8 -: 8];
-   if(value!=8'h20 && value!=0)begin
-    filename_line[511-k*16 -: 16]={8'h00,value};k=k+1;
-   end
-  end
-  if(k!=0)begin
-   filename_line[511-k*16 -: 16]=16'h002e;k=k+1;
-   for(j=8;j<11;j=j+1)begin
-    value=short_name[87-j*8 -: 8];
-    if(value!=8'h20 && value!=0)begin
-     filename_line[511-k*16 -: 16]={8'h00,value};k=k+1;
-    end
-   end
+  // Trim only trailing FAT basename padding. Fixed output slices avoid an
+  // eight-step variable-position 512-bit update chain.
+  length=0;
+  for(j=0;j<8;j=j+1)
+   if(short_name[87-j*8 -: 8]!=8'h20 && short_name[87-j*8 -: 8]!=0)length=j+1;
+  filename_line={32{16'h0020}};
+  for(j=0;j<12;j=j+1)begin
+   value=8'h20;
+   if(j<length)case(j)
+    0:value=short_name[87:80];1:value=short_name[79:72];
+    2:value=short_name[71:64];3:value=short_name[63:56];
+    4:value=short_name[55:48];5:value=short_name[47:40];
+    6:value=short_name[39:32];7:value=short_name[31:24];
+    default:value=8'h20;
+   endcase
+   else if(length!=0 && j==length)value=8'h2e;
+   else if(length!=0)case(j-length)
+    1:value=short_name[23:16];2:value=short_name[15:8];3:value=short_name[7:0];
+    default:value=8'h20;
+   endcase
+   filename_line[511-j*16 -: 16]={8'h00,value};
   end
  end
  endfunction
@@ -138,10 +148,20 @@ module image_status_osd #(
   controls_text=video_frame ?
     512'h004b003298918c310020004b00335b575e550020004b003464ad653e002f6682505c0020957f63098fd456de83dc535500200020002000200020002000200020 :
     512'h004b0032002f0033520756fe002053cc952e7f29653e0020957f6309004b00335b575e550020004b003464ad653e002000200020002000200020002000200020;
+   if(video_frame && !SPECTRUM_HINT)controls_text=512'h004b00335b575e5500200020004b003464ad653e002f6682505c00200020957f63098fd456de83dc535500200020002000200020002000200020002000200020;
   end
+ end
+ // These words depend only on frame-latched state. Register their
+ // construction separately; the first text row starts at y=16, long after
+ // frame-state updates at (0,0), so this adds no visible content delay.
+ reg [511:0] line0_ready,line1_ready,filename_ready,counter_ready,auto_ready,controls_ready;
+ always @(posedge pixel_clk)begin
+  line0_ready<=line0;line1_ready<=line1;filename_ready<=filename_text;
+  counter_ready<=counter_text;auto_ready<=auto_text;controls_ready<=controls_text;
  end
  reg [9:0] tx,ty;
  reg [4:0] column,column_pixel;
+ integer glyph_cell;
  reg [3:0] row_pixel;
  reg [15:0] character;
  reg in_panel,in_text;
@@ -152,41 +172,56 @@ module image_status_osd #(
   if(de)begin
    if(shown)begin
     if(y>=16 && y<32 && x>=16 && x<232)begin
-     in_text=1;tx=x-16;ty=y-16;selected_line=filename_text;
+     in_text=1;tx=x-16;ty=y-16;selected_line=FONT_LATENCY==2 ? filename_ready : filename_text;
     end else if(y>=16 && y<32 && x>=WIDTH-106 && x<WIDTH-16)begin
-     in_text=1;tx=x-(WIDTH-106);ty=y-16;selected_line=counter_text;
+     in_text=1;tx=x-(WIDTH-106);ty=y-16;selected_line=FONT_LATENCY==2 ? counter_ready : counter_text;
     end else if(x>=16 && x<592)begin
      if(y>=HEIGHT-56 && y<HEIGHT-40)begin
-      in_text=1;tx=x-16;ty=y-(HEIGHT-56);selected_line=auto_text;
+      in_text=1;tx=x-16;ty=y-(HEIGHT-56);selected_line=FONT_LATENCY==2 ? auto_ready : auto_text;
      end else if(y>=HEIGHT-28 && y<HEIGHT-12)begin
-      in_text=1;tx=x-16;ty=y-(HEIGHT-28);selected_line=controls_text;
+      in_text=1;tx=x-16;ty=y-(HEIGHT-28);selected_line=FONT_LATENCY==2 ? controls_ready : controls_text;
      end
     end
    end else if(x>=16 && x<592)begin
-    if(y>=16 && y<32)begin in_text=1;tx=x-16;ty=y-16;selected_line=line0;end
-    else if(y>=HEIGHT-28 && y<HEIGHT-12)begin in_text=1;tx=x-16;ty=y-(HEIGHT-28);selected_line=line1;end
+    if(y>=16 && y<32)begin in_text=1;tx=x-16;ty=y-16;selected_line=FONT_LATENCY==2 ? line0_ready : line0;end
+    else if(y>=HEIGHT-28 && y<HEIGHT-12)begin in_text=1;tx=x-16;ty=y-(HEIGHT-28);selected_line=FONT_LATENCY==2 ? line1_ready : line1;end
    end
   end
   in_panel=in_text;
   if(in_text)begin
-   column=tx/18;column_pixel=tx%18;row_pixel=ty[3:0];
-   character=selected_line >> ((31-column)*16);
+   row_pixel=ty[3:0];
+   // Decode fixed 18-pixel cells in parallel, avoiding divide/modulo followed
+   // by a variable 512-bit text-word mux in the same pixel clock.
+   for(glyph_cell=0;glyph_cell<32;glyph_cell=glyph_cell+1)begin
+    if(tx>=glyph_cell*18 && tx<(glyph_cell+1)*18)begin
+     column=glyph_cell;column_pixel=tx-glyph_cell*18;
+     character=selected_line[511-glyph_cell*16 -: 16];
+    end
+   end
   end
  end
  assign font_codepoint=character;
  assign font_row=row_pixel;
  reg panel_delayed=0,text_delayed=0,error_delayed=0;
  reg [4:0] column_delayed=0;
+ reg panel_stage2=0,text_stage2=0,error_stage2=0;
+ reg [4:0] column_stage2=0;
+ wire glyph_panel=FONT_LATENCY==2 ? panel_stage2 : panel_delayed;
+ wire glyph_text=FONT_LATENCY==2 ? text_stage2 : text_delayed;
+ wire glyph_error=FONT_LATENCY==2 ? error_stage2 : error_delayed;
+ wire [4:0] glyph_column=FONT_LATENCY==2 ? column_stage2 : column_delayed;
  always @(posedge pixel_clk or negedge rst_n)begin
-  if(!rst_n)begin panel_delayed<=0;text_delayed<=0;error_delayed<=0;column_delayed<=0;end
+  if(!rst_n)begin panel_delayed<=0;text_delayed<=0;error_delayed<=0;column_delayed<=0;panel_stage2<=0;text_stage2<=0;error_stage2<=0;column_stage2<=0;end
   else begin
+   panel_stage2<=panel_delayed;text_stage2<=text_delayed;
+   error_stage2<=error_delayed;column_stage2<=column_delayed;
    panel_delayed<=in_panel;text_delayed<=in_text;
    error_delayed<=status>=10 && !shown;column_delayed<=column_pixel;
   end
  end
  always @* begin
   // Only illuminated glyph pixels replace the picture. Gaps/blank cells pass through.
-  overlay_active=panel_delayed && text_delayed && column_delayed<16 && font_pixels[15-column_delayed];
-  rgb=overlay_active ? (error_delayed ? 24'hff9090 : 24'he8f4ff) : 24'h000000;
+  overlay_active=glyph_panel && glyph_text && glyph_column<16 && font_pixels[15-glyph_column];
+  rgb=overlay_active ? (glyph_error ? 24'hff9090 : 24'he8f4ff) : 24'h000000;
  end
 endmodule

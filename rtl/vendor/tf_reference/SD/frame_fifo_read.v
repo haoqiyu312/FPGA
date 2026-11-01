@@ -50,16 +50,16 @@ localparam S_READ_BURST              = 3;                        //begin a burst
 localparam S_READ_BURST_END          = 4;                        //a burst read complete
 localparam S_END                     = 5;                        //a frame of data is read to complete
 
-reg                                  read_req_d0;                //asynchronous read request, synchronize to 'mem_clk' clock domain,first beat
-reg                                  read_req_d1;                //second
+(* dont_touch="true" *) reg                                  read_req_d0;                //asynchronous read request, synchronize to 'mem_clk' clock domain,first beat
+(* dont_touch="true" *) reg                                  read_req_d1;                //second
 reg                                  read_req_d2;                //third,Why do you need 3 ? Here's the design habit
 reg[ADDR_BITS - 1:0]                 read_len_d0;                //asynchronous read_len(read data length), synchronize to 'mem_clk' clock domain first
 reg[ADDR_BITS - 1:0]                 read_len_d1;                //second
 reg[ADDR_BITS - 1:0]                 read_len_latch;             //lock read data length
 reg[ADDR_BITS - 1:0]                 read_cnt;                   //read data counter
 reg[3:0]                             state;                      //state machine
-reg[1:0]                             read_addr_index_d0;         //synchronize to 'mem_clk' clock domain first
-reg[1:0]                             read_addr_index_d1;         //synchronize to 'mem_clk' clock domain second
+(* dont_touch="true" *) reg[1:0]                             read_addr_index_d0;         //synchronize to 'mem_clk' clock domain first
+(* dont_touch="true" *) reg[1:0]                             read_addr_index_d1;         //synchronize to 'mem_clk' clock domain second
 reg [ADDR_BITS - 1:0]	 App_rd_addr_r;
 
 reg [BURST_BITS - 1:0]				burst_cnt;

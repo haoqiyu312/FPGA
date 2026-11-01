@@ -8,6 +8,7 @@ module frame_read_write
 	parameter ADDR_BITS              = 21,
 	parameter BURST_BITS             = 9,//
 	parameter BURST_SIZE             = 256,
+    parameter SAFE_WRITE_BURSTS      = 0,
 	parameter RUNTIME_V_FLIP         = 0,
 	parameter WRITE_V_FLIP           = 1,      // 1: vertical flip when writing TF/BMP frame into SDRAM
 	parameter FRAME_WIDTH            = 640,
@@ -114,6 +115,7 @@ frame_fifo_write
 	.BURST_BITS                 (BURST_BITS               ),
 	.BURST_SIZE                 (BURST_SIZE               ),
 	.WRITE_V_FLIP               (WRITE_V_FLIP             ),
+    .SAFE_BURSTS                 (SAFE_WRITE_BURSTS        ),
 	.RUNTIME_V_FLIP             (RUNTIME_V_FLIP           ),
 	.FRAME_WIDTH                (FRAME_WIDTH              ),
 	.FRAME_HEIGHT               (FRAME_HEIGHT             )

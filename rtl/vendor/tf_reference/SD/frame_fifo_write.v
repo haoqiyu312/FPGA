@@ -6,6 +6,7 @@ module frame_fifo_write
 	parameter ADDR_BITS              = 21,
 	parameter BURST_BITS             = 9,
 	parameter BURST_SIZE             = 128,
+    parameter SAFE_BURSTS            = 0,
 	parameter RUNTIME_V_FLIP         = 0,
 	parameter WRITE_V_FLIP           = 1,      // 1: write image rows upside-down to cancel BMP bottom-up storage
 	parameter FRAME_WIDTH            = 640,
@@ -73,7 +74,8 @@ reg[1:0]                            write_addr_index_d0;
 reg[1:0]                            write_addr_index_d1;
 reg[3:0]                            state;                       //state machine
 reg [ADDR_BITS - 1:0]	 App_wr_addr_r;
-reg [15:0]                            wr_x;                       // current x position in one input row
+localparam integer X_BITS=SAFE_BURSTS ? $clog2(FRAME_WIDTH) : 16;
+reg [X_BITS-1:0]                     wr_x;                       // current x position in one input row
 
 reg [BURST_BITS - 1:0]				burst_cnt;
 wire								wr_burst_finish;
@@ -81,13 +83,28 @@ wire								wr_burst_finish;
 reg App_wr_en_r;
 reg App_wr_en_d0;
 
+reg [BURST_BITS-1:0] next_burst,burst_length;
+wire [ADDR_BITS-1:0] words_remaining=write_len_latch-write_cnt;
+wire [8:0] page_remaining=9'd256-{1'b0,App_wr_addr_r[7:0]};
+wire [X_BITS:0] row_remaining=FRAME_WIDTH-wr_x;
+always @* begin
+    next_burst=BURST_SIZE;
+    if(SAFE_BURSTS)begin
+        if(page_remaining<next_burst)next_burst=page_remaining;
+        if(flip_rows && row_remaining<next_burst)next_burst=row_remaining;
+        if(words_remaining<next_burst)next_burst=words_remaining;
+    end
+end
+always @(posedge mem_clk or posedge rst)
+    if(rst)burst_length<=BURST_SIZE;
+    else if(state==S_CHECK_FIFO && into_burst)burst_length<=next_burst;
 wire into_burst;
-assign into_burst = (((write_len_latch <= (rdusedw + write_cnt))||rdusedw > BURST_SIZE) && ~App_rd_busy);//当rd在突发时不会进入burst
+assign into_burst = (SAFE_BURSTS ? (next_burst!=0 && rdusedw>=next_burst && ~App_rd_busy) : (((write_len_latch <= (rdusedw + write_cnt))||rdusedw > BURST_SIZE) && ~App_rd_busy));//当rd在突发时不会进入burst
 
 assign App_wr_addr = {App_wr_addr_r[ADDR_BITS - 1:0]};
 //assign O_wr_busy = (state != S_IDLE || (S_IDLE && write_req_d2));
 assign O_wr_busy = (state == S_WRITE_BURST || (state == S_CHECK_FIFO && into_burst));//在突发，或者将要突发，则显示busy
-assign wr_burst_finish = (burst_cnt >= BURST_SIZE);
+assign wr_burst_finish = (burst_cnt >= burst_length);
 assign write_finish = (state == S_END) ? 1'b1 : 1'b0;            //write finish at state 'S_END'
 assign App_wr_en = App_wr_en_d0;
 
@@ -166,7 +183,7 @@ begin
 		else
 			App_wr_addr_r <= App_wr_addr_r;
 		//
-		if(App_wr_en_r && burst_cnt + App_wr_en < BURST_SIZE && (burst_cnt + write_cnt + App_wr_en < write_len_latch))begin
+		if(App_wr_en_r && burst_cnt + App_wr_en < burst_length && (burst_cnt + write_cnt + App_wr_en < write_len_latch))begin
             App_wr_en_d0 <= 1'b1;
         end
 		else
@@ -261,7 +278,7 @@ begin
 					App_wr_en_r <= 1'b0;
 					state <= S_WRITE_BURST_END;
 					//write counter + burst length
-					write_cnt <= write_cnt + BURST_SIZE[ADDR_BITS - 1:0];
+					write_cnt <= write_cnt + burst_length;
 					//the next burst write address is generated
 					//wr_burst_addr <= wr_burst_addr + BURST_SIZE[ADDR_BITS - 1:0];
 				end     

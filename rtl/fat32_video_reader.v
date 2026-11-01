@@ -60,7 +60,7 @@ module fat32_video_reader #(
         audio_samples==expected_samples && audio_bytes==expected_audio_bytes && audio_format==1;
     wire [31:0] frame_stride=FRAME_STORAGE_BYTES+(audio_enabled ? audio_bytes : 0);
     reg [7:0] version,format_code,header_fps;
-    reg [2:0] finish_sync,consumed_sync;
+    (* dont_touch="true" *) reg [2:0] finish_sync,consumed_sync;
     reg memory_done;
     reg [WATCHDOG_BITS-1:0] watchdog;
     wire [8:0] fat_offset={current_cluster[6:0],2'b00};

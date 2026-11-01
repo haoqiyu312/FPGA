@@ -1,5 +1,5 @@
 // Single-column file list with an eight-row scrolling window and scrollbar.
-module file_browser_overlay #(parameter integer WIDTH=640,HEIGHT=480) (
+module file_browser_overlay #(parameter integer WIDTH=640,HEIGHT=480,FONT_LATENCY=1,PIPE_COORDS=0) (
  input wire clk,rst_n,input wire[9:0] x,y,input wire de,
  input wire visible,ready,input wire[5:0] count,input wire[3:0] status,
  input wire[7:0] debug_root_byte,input wire[15:0] debug_root_lba,
@@ -8,7 +8,24 @@ module file_browser_overlay #(parameter integer WIDTH=640,HEIGHT=480) (
  output reg overlay_active,output wire[23:0] rgb,
  output wire[15:0] cn_codepoint,output wire[3:0] cn_font_row,input wire[15:0] cn_pixels
 );
- wire [9:0] view_x=x-(WIDTH-640)/2,view_y=y-(HEIGHT-480)/2;
+ wire [9:0] raw_view_x=x-(WIDTH-640)/2,raw_view_y=y-(HEIGHT-480)/2;
+ wire [2:0] raw_row=raw_view_y<104 ? 0 : raw_view_y<144 ? 1 : raw_view_y<184 ? 2 : raw_view_y<224 ? 3 :
+     raw_view_y<264 ? 4 : raw_view_y<304 ? 5 : raw_view_y<344 ? 6 : 7;
+ reg [9:0] view_x_pipe,view_y_pipe,x_pipe,y_pipe,row_top_pipe;
+ reg [2:0] row_pipe;reg de_pipe;
+ always @(posedge clk or negedge rst_n)begin
+  if(!rst_n)begin view_x_pipe<=0;view_y_pipe<=0;x_pipe<=0;y_pipe<=0;row_top_pipe<=0;row_pipe<=0;de_pipe<=0;end
+  else begin
+   view_x_pipe<=raw_view_x;view_y_pipe<=raw_view_y;x_pipe<=x;y_pipe<=y;de_pipe<=de;row_pipe<=raw_row;
+   case(raw_row)
+    0:row_top_pipe<=64;1:row_top_pipe<=104;2:row_top_pipe<=144;3:row_top_pipe<=184;
+    4:row_top_pipe<=224;5:row_top_pipe<=264;6:row_top_pipe<=304;7:row_top_pipe<=344;
+   endcase
+  end
+ end
+ wire [9:0] view_x=PIPE_COORDS ? view_x_pipe : raw_view_x,view_y=PIPE_COORDS ? view_y_pipe : raw_view_y;
+ wire draw_de=PIPE_COORDS ? de_pipe : de;
+ wire [9:0] draw_x=PIPE_COORDS ? x_pipe : x,draw_y=PIPE_COORDS ? y_pipe : y;
  reg[23:0] color,next_color;reg[6:0] character;reg[2:0] font_row,font_column,latched_column;
  reg[511:0] cn_label;reg[15:0] cn_character;reg cn_text_area;
  reg[3:0] cn_row,cn_column,latched_cn_column;
@@ -35,17 +52,17 @@ module file_browser_overlay #(parameter integer WIDTH=640,HEIGHT=480) (
  always @*begin
   next_color=24'h101820;character=32;font_row=0;font_column=0;
   text_area=0;cn_text_area=0;cn_character=16'h0020;cn_label=0;cn_row=0;cn_column=0;
-  active=visible && de && x<WIDTH && y<HEIGHT;text_color=24'hf0f4ff;display_index=0;ascii=32;
+  active=visible && draw_de && draw_x<WIDTH && draw_y<HEIGHT;text_color=24'hf0f4ff;display_index=0;ascii=32;
   label={24{8'h20}};row=0;list_index=0;tx=0;ty=0;row_top=0;icon_ink=0;
   thumb_height=64;thumb_top=64+scroll_first*8+scroll_first*2+(scroll_first>>1);item_number=0;
-  if(de && view_x<640 && view_y<480)begin
+  if(draw_de && view_x<640 && view_y<480)begin
    if(visible)begin
     active=1;
     if(view_y<56)next_color=24'h203848;
     if(view_y>=64 && view_y<384)begin
-     row=view_y<104 ? 0 : view_y<144 ? 1 : view_y<184 ? 2 : view_y<224 ? 3 :
-         view_y<264 ? 4 : view_y<304 ? 5 : view_y<344 ? 6 : 7;
-     row_top=64+row*40;
+     row=PIPE_COORDS ? row_pipe : (view_y<104 ? 0 : view_y<144 ? 1 : view_y<184 ? 2 : view_y<224 ? 3 :
+         view_y<264 ? 4 : view_y<304 ? 5 : view_y<344 ? 6 : 7);
+     row_top=PIPE_COORDS ? row_top_pipe : 64+row*40;
      list_index={1'b0,scroll_first}+row;
      display_index=list_index[4:0];
      if(view_x>=16 && view_x<600 && view_x<592 && view_y<row_top+36 && list_index<count && ready)begin
@@ -60,7 +77,7 @@ module file_browser_overlay #(parameter integer WIDTH=640,HEIGHT=480) (
         if(view_x>=33 && view_x<47 && view_y>=row_top+13 && view_y<row_top+25)next_color=24'h64c8ed;
         if(view_x>=35 && view_x<46 && view_y>=row_top+16 && view_y<row_top+25 && view_y>=row_top+24-(view_x-35)/2)next_color=24'h2e9c73;
         if(view_x>=38 && view_x<48 && view_y>=row_top+18 && view_y<row_top+25 && view_y>=row_top+24-(view_x-38)/2)next_color=24'h65b96b;
-        if((view_x-43)*(view_x-43)+(view_y-row_top-15)*(view_y-row_top-15)<=4)next_color=24'hffd46a;
+        if(((view_x>=42 && view_x<=44 && view_y>=row_top+14 && view_y<=row_top+16) || (view_x==43 && (view_y==row_top+13 || view_y==row_top+17)) || ((view_x==41 || view_x==45) && view_y==row_top+15)))next_color=24'hffd46a;
        end else if(file_type==2)begin
         if(view_x>=32 && view_x<48 && view_y>=row_top+12 && view_y<row_top+25)next_color=24'h28547a;
         if(view_x>=37 && view_x<44 && view_y>=row_top+14+(view_x>40 ? 43-view_x : view_x-37) && view_y<row_top+23-(view_x>40 ? 43-view_x : view_x-37))next_color=24'hf4fbff;
@@ -68,8 +85,8 @@ module file_browser_overlay #(parameter integer WIDTH=640,HEIGHT=480) (
         if((view_x>=38 && view_x<40 && view_y>=row_top+12 && view_y<row_top+24) ||
            (view_x>=39 && view_x<45 && view_y>=row_top+12 && view_y<row_top+15) ||
            (view_x>=40 && view_x<46 && view_y>=row_top+14 && view_y<row_top+17))next_color=24'hd99932;
-        if((view_x>=35 && view_x<40 && view_y>=row_top+21 && view_y<row_top+25 && (view_x-37)*(view_x-37)+(view_y-row_top-23)*(view_y-row_top-23)<=5) ||
-           (view_x>=42 && view_x<47 && view_y>=row_top+17 && view_y<row_top+21 && (view_x-44)*(view_x-44)+(view_y-row_top-19)*(view_y-row_top-19)<=5))next_color=24'hd99932;
+        if((view_x>=35 && view_x<40 && view_y>=row_top+21 && view_y<row_top+25 && ((view_x>=35 && view_x<=39 && view_y>=row_top+22 && view_y<=row_top+24) || (view_x>=36 && view_x<=38 && view_y>=row_top+21 && view_y<=row_top+25))) ||
+           (view_x>=42 && view_x<47 && view_y>=row_top+17 && view_y<row_top+21 && ((view_x>=42 && view_x<=46 && view_y>=row_top+18 && view_y<=row_top+20) || (view_x>=43 && view_x<=45 && view_y>=row_top+17 && view_y<=row_top+21))))next_color=24'hd99932;
        end else begin
         if(view_x>=34 && view_x<46 && view_y>=row_top+15 && view_y<row_top+17)next_color=24'h8799a3;
         if(view_x>=34 && view_x<44 && view_y>=row_top+20 && view_y<row_top+22)next_color=24'h8799a3;
@@ -128,10 +145,21 @@ module file_browser_overlay #(parameter integer WIDTH=640,HEIGHT=480) (
   end
  end
  reg latched_text,latched_cn;
+ reg active_stage1,text_stage2,cn_stage2;
+ reg[23:0] color_stage2,text_color_stage2;
+ reg[2:0] column_stage2;reg[3:0] cn_column_stage2;reg[7:0] ascii_stage2;
  always @(posedge clk or negedge rst_n)begin
-  if(!rst_n)begin overlay_active<=0;color<=0;latched_text<=0;latched_cn<=0;latched_column<=0;latched_cn_column<=0;latched_text_color<=0;end
-  else begin overlay_active<=active;color<=next_color;latched_text<=text_area;latched_cn<=cn_text_area;latched_column<=font_column;latched_cn_column<=cn_column;latched_text_color<=text_color;end
+  if(!rst_n)begin overlay_active<=0;color<=0;latched_text<=0;latched_cn<=0;latched_column<=0;latched_cn_column<=0;latched_text_color<=0;active_stage1<=0;text_stage2<=0;cn_stage2<=0;color_stage2<=0;text_color_stage2<=0;column_stage2<=0;cn_column_stage2<=0;ascii_stage2<=0;end
+  else begin
+   active_stage1<=active;overlay_active<=FONT_LATENCY==2 ? active_stage1 : active;
+   text_stage2<=latched_text;cn_stage2<=latched_cn;color_stage2<=color;
+   text_color_stage2<=latched_text_color;column_stage2<=latched_column;
+   cn_column_stage2<=latched_cn_column;ascii_stage2<=font_pixels;
+   color<=next_color;latched_text<=text_area;latched_cn<=cn_text_area;latched_column<=font_column;latched_cn_column<=cn_column;latched_text_color<=text_color;end
  end
- assign rgb=latched_cn && cn_pixels[15-latched_cn_column] ? latched_text_color :
-            latched_text && font_pixels[7-latched_column] ? latched_text_color : color;
+ assign rgb=FONT_LATENCY==2 ?
+            (cn_stage2 && cn_pixels[15-cn_column_stage2] ? text_color_stage2 :
+             text_stage2 && ascii_stage2[7-column_stage2] ? text_color_stage2 : color_stage2) :
+            (latched_cn && cn_pixels[15-latched_cn_column] ? latched_text_color :
+             latched_text && font_pixels[7-latched_column] ? latched_text_color : color);
 endmodule

@@ -1,26 +1,28 @@
 // One outstanding frame. Toggle handshake holds the completed bank stable until
 // the display has selected it in vertical blanking. The writer then owns the old bank.
 module video_frame_presenter #(
-    parameter integer PIXEL_HZ=25000000,AUDIO_SYNC=0
+    parameter integer PIXEL_HZ=25000000,AUDIO_SYNC=0,
+    TIMER_HZ=PIXEL_HZ,EXTERNAL_TICK=0
 )(
     input wire clk,rst,vblank,frame_start,paused,
     input wire frame_toggle, input wire [7:0] fps,
     output reg consumed_toggle,output reg read_bank,
     output reg read_req,input wire read_ack,
     output reg show_frame,
-    input wire audio_busy,output reg frame_started
+    input wire audio_busy,output reg frame_started,input wire timebase_tick
 );
     reg [2:0] frame_sync,ack_sync;
     reg [7:0] fps_meta,fps_sync;
-    reg [24:0] elapsed;
+    localparam integer TIMER_BITS=$clog2(TIMER_HZ+TIMER_HZ/10+1);
+    reg [TIMER_BITS-1:0] elapsed;
     reg primed,waiting_ack;
     reg pending_start;
     reg [2:0] guard;
     // Only five constant divisors are synthesized; no run-time divider.
-    reg [24:0] period;
+    reg [TIMER_BITS-1:0] period;
     always @* case(fps_sync)
-      1:period=PIXEL_HZ;2:period=PIXEL_HZ/2;3:period=PIXEL_HZ/3;
-      4:period=PIXEL_HZ/4;default:period=PIXEL_HZ/5;
+      1:period=TIMER_HZ;2:period=TIMER_HZ/2;3:period=TIMER_HZ/3;
+      4:period=TIMER_HZ/4;default:period=TIMER_HZ/5;
     endcase
     always @(posedge clk or posedge rst)begin
         if(rst)begin
@@ -33,7 +35,7 @@ module video_frame_presenter #(
             frame_sync<={frame_sync[1:0],frame_toggle};ack_sync<={ack_sync[1:0],read_ack};
             fps_meta<=fps;fps_sync<=fps_meta;
             // Saturation deliberately slows playback on a slow card; never skip frames.
-            if(!paused && elapsed<period+PIXEL_HZ/10)elapsed<=elapsed+1'b1;
+            if(!paused && (!EXTERNAL_TICK || timebase_tick) && elapsed<period+TIMER_HZ/10)elapsed<=elapsed+1'b1;
             if(waiting_ack)begin
                 if(ack_sync[2])begin read_req<=0;waiting_ack<=0;guard<=7;end
             end else if(guard!=0)begin

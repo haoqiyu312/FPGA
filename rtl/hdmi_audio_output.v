@@ -1,5 +1,5 @@
 // Use Anlogic protocol/PHY IP; video framing and PCM/ACR are project logic.
-module hdmi_audio_output #(parameter integer TEST_AUDIO=1,EXTERNAL_AUDIO=0,
+module hdmi_audio_output #(parameter integer PIXEL_HZ=25000000,TEST_AUDIO=1,EXTERNAL_AUDIO=0,
  FRAME_WIDTH=640,FRAME_HEIGHT=480,HTOTAL=800,HSA=96,HFP=16,HBP=48,
  VTOTAL=525,VSA=2,VFP=10,VBP=33,VIDEO_VIC=1) (
  input wire pixel_clk,serial_clk,rst,vs,de,input wire [23:0] rgb,
@@ -12,26 +12,27 @@ module hdmi_audio_output #(parameter integer TEST_AUDIO=1,EXTERNAL_AUDIO=0,
  wire [19:0] acr_n,acr_cts;
  assign audio_tick=sample_valid;
  wire [9:0] ch0,ch1,ch2,chclk;
- reg [21:0] edid_wait;
+ localparam integer EDID_CYCLES=PIXEL_HZ/10;
+ reg [$clog2(EDID_CYCLES+1)-1:0] edid_wait;
  reg edid_trigger;
  // Read EDID once, 100 ms after the video-domain reset releases.
  always @(posedge pixel_clk or posedge rst) begin
   if(rst)begin edid_wait<=0;edid_trigger<=0;end
   else begin
-   edid_trigger<=edid_wait==22'd2499999;
-   if(edid_wait<22'd2500000)edid_wait<=edid_wait+1'b1;
+   edid_trigger<=edid_wait==EDID_CYCLES-1;
+   if(edid_wait<EDID_CYCLES)edid_wait<=edid_wait+1'b1;
   end
  end
  hdmi_video_stream #(.FRAME_WIDTH(FRAME_WIDTH)) u_stream(.clk(pixel_clk),.rst(rst),.vs(vs),.de(de),.rgb(rgb),
   .valid(valid),.sof(sof),.last(last),.data(data));
- hdmi_test_audio u_pcm(.clk(pixel_clk),.rst(rst),.sample_valid(sample_valid),
+ hdmi_test_audio #(.PIXEL_HZ(PIXEL_HZ)) u_pcm(.clk(pixel_clk),.rst(rst),.sample_valid(sample_valid),
   .left_sample(left_sample),.right_sample(right_sample),.acr_valid(acr_valid),
   .acr_n(acr_n),.acr_cts(acr_cts));
  hdmi_1_4b_transmitter_core_wrapper #(
   .DEVICE("EG"),.HTOTAL(HTOTAL),.HSA(HSA),.HFP(HFP),.HBP(HBP),.HACTIVE(FRAME_WIDTH),
   .VTOTAL(VTOTAL),.VSA(VSA),.VFP(VFP),.VBP(VBP),.VACTIVE(FRAME_HEIGHT),
   .VIDEO_VIC(VIDEO_VIC),.VIDEO_TPG("Disable"),.VIDEO_FORMAT("RGB"),
-  .AUDIO_SAMPLE_RATE("48K"),.IIC_SCL_DIV(125)
+  .AUDIO_SAMPLE_RATE("48K"),.IIC_SCL_DIV(PIXEL_HZ/200000)
  ) u_core(.I_pixel_clk(pixel_clk),.I_rst(rst),.I_edid_read_trig(edid_trigger),
   .O_edid_read_valid(),.O_edid_read_data(),.I_axis_s_user(sof),
   .I_axis_s_valid(valid),.I_axis_s_last(last),.I_axis_s_data(data),.O_axis_s_ready(),

@@ -1,18 +1,23 @@
 // Pixel-clock-domain PCM: exact average 48 kHz from the 25 MHz video clock.
 // N=6144, CTS=25000: Fs = Fpixel*N/(128*CTS) = 48000 Hz.
-module hdmi_test_audio (
+module hdmi_test_audio #(parameter integer PIXEL_HZ=25000000) (
  input wire clk, input wire rst,
  output reg sample_valid,
  output reg signed [23:0] left_sample,right_sample,
  output reg acr_valid, output wire [19:0] acr_n,acr_cts
 );
- reg [24:0] sample_phase;
- wire [25:0] phase_sum={1'b0,sample_phase}+26'd48000;
+ localparam integer PHASE_BITS=$clog2(PIXEL_HZ);
+ reg [PHASE_BITS-1:0] sample_phase;
+ wire [PHASE_BITS:0] phase_sum={1'b0,sample_phase}+48000;
+ localparam integer EXACT_DIV=PIXEL_HZ/48000;
+ localparam integer EXACT_BITS=EXACT_DIV<=1 ? 1 : $clog2(EXACT_DIV);
+ reg [EXACT_BITS-1:0] exact_count;
+ wire tick_due=PIXEL_HZ%48000==0 ? exact_count==EXACT_DIV-1 : phase_sum>=PIXEL_HZ;
  reg [5:0] tone_phase,acr_count;
  reg [15:0] gate_count;
  reg signed [23:0] tone_sample;
  assign acr_n=20'd6144;
- assign acr_cts=20'd25000;
+ assign acr_cts=PIXEL_HZ/1000;
  always @* begin
   case(tone_phase)
             6'd0: tone_sample = 24'sd0;
@@ -68,12 +73,17 @@ module hdmi_test_audio (
  end
  always @(posedge clk or posedge rst) begin
   if(rst) begin
-   sample_phase<=0;tone_phase<=0;acr_count<=0;gate_count<=0;
+   sample_phase<=0;exact_count<=0;tone_phase<=0;acr_count<=0;gate_count<=0;
    sample_valid<=0;acr_valid<=0;left_sample<=0;right_sample<=0;
   end else begin
    sample_valid<=0;acr_valid<=0;
-   if(phase_sum>=26'd25000000) begin
-    sample_phase<=phase_sum-26'd25000000;
+   if(PIXEL_HZ%48000==0)begin
+    if(tick_due)exact_count<=0;else exact_count<=exact_count+1'b1;
+   end else begin
+    if(tick_due)sample_phase<=phase_sum-PIXEL_HZ;
+    else sample_phase<=phase_sum[PHASE_BITS-1:0];
+   end
+   if(tick_due) begin
     sample_valid<=1;
     left_sample<=gate_count<16'd24000 ? tone_sample : 24'sd0;
     right_sample<=gate_count<16'd24000 ? tone_sample : 24'sd0;
@@ -81,7 +91,7 @@ module hdmi_test_audio (
     gate_count<=gate_count==47999 ? 0 : gate_count+1'b1;
     if(acr_count==47) begin acr_count<=0;acr_valid<=1;end
     else acr_count<=acr_count+1'b1;
-   end else sample_phase<=phase_sum[24:0];
+   end
   end
  end
 endmodule

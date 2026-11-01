@@ -260,9 +260,9 @@ module fifo_cross_domain_addr_process_al_rfifo_32_32_512 #(parameter ADDR_WIDTH 
     //-------------localparam definition
     //-------------signals definition
     wire [(ADDR_WIDTH - 1):0] primary_addr_gray ; 
-    reg [(ADDR_WIDTH - 1):0] primary_addr_gray_reg ;  /* fehdl keep="true" */ 
-    reg [(ADDR_WIDTH - 1):0] sync_r1 ;  /* fehdl keep="true" */ 
-    reg [(ADDR_WIDTH - 1):0] primary_addr_gray_sync ; 
+    (* dont_touch="true" *) reg [(ADDR_WIDTH - 1):0] primary_addr_gray_reg ;  /* fehdl keep="true" */
+    (* dont_touch="true" *) reg [(ADDR_WIDTH - 1):0] sync_r1 ;  /* fehdl keep="true" */
+    (* dont_touch="true" *) reg [(ADDR_WIDTH - 1):0] primary_addr_gray_sync ;
     //--------------------------------------------------------------------------------------------
     //--------------------fuctional codes below---------------------------------
     //-------------------------------------------------------------------------------------------- 
