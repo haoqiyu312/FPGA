@@ -459,6 +459,15 @@
                     <Attr Name="CompileOrder" Val="56"/>
                 </FileInfo>
             </File>
+            <File Path="../rtl/srt_subtitles.v">
+                <FileInfo>
+                    <Attr Name="UsedInSyn" Val="true"/>
+                    <Attr Name="UsedInP&R" Val="true"/>
+                    <Attr Name="BelongTo" Val="design_1"/>
+                    <Attr Name="CompileOrder" Val="56"/>
+                </FileInfo>
+            </File>
+
         </Verilog>
         <ADC_FILE>
             <File Path="../constraints/tf_media.adc">

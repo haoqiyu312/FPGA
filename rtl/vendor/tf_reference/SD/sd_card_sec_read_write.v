@@ -8,6 +8,7 @@ module sd_card_sec_read_write
 	input            clk,
 	input            rst,
 	output reg       sd_init_done,
+	output reg[2:0]  sd_init_stage,
 	input            sd_sec_read,
 	input[31:0]      sd_sec_read_addr,
 	output[7:0]      sd_sec_read_data,
@@ -51,7 +52,6 @@ localparam S_ERR                = 14;
 localparam S_WRITE_END          = 15;
 localparam S_READ_END           = 16;
 localparam S_WAIT_READ_WRITE    = 17;
-localparam S_CMD16              = 18;
 
 reg[4:0]                       state;
 reg[31:0]                      sec_addr;
@@ -76,6 +76,7 @@ begin
 		block_read_req <= 1'b0;
 		sec_addr <= 32'd0;
 		sd_init_done <= 1'b0;
+		sd_init_stage <= 3'd0;
 	end
 	else
 		case(state)
@@ -83,6 +84,7 @@ begin
 			begin
 				state <= S_CMD0;
 				sd_init_done <= 1'b0;
+				sd_init_stage <= 3'd1;
 				spi_clk_div <= SPI_LOW_SPEED_DIV[15:0];
 			end
 			S_CMD0:
@@ -90,6 +92,7 @@ begin
 				if(cmd_req_ack & ~cmd_req_error)
 				begin
 					state <= S_CMD8;
+					sd_init_stage <= 3'd2;
 					cmd_req <= 1'b0;
 				end
 				else
@@ -105,6 +108,7 @@ begin
 				if(cmd_req_ack & ~cmd_req_error)
 				begin
 					state <= S_CMD55;
+					sd_init_stage <= 3'd3;
 					cmd_req <= 1'b0;
 				end
 				else
@@ -120,6 +124,7 @@ begin
 				if(cmd_req_ack & ~cmd_req_error)
 				begin
 					state <= S_CMD41;
+					sd_init_stage <= 3'd4;
 					cmd_req <= 1'b0;
 				end
 				else
@@ -134,10 +139,13 @@ begin
 			begin
 				if(cmd_req_ack & ~cmd_req_error)
 				begin
-					state <= S_CMD16;
+					// SDHC uses fixed 512-byte blocks; CMD16 is irrelevant and
+					// some SDHC cards reject it. This design addresses sectors,
+					// so enter the read/write state directly after ACMD41.
+					state <= S_WAIT_READ_WRITE;
 					cmd_req <= 1'b0;
-				// CMD16 must finish before a one-cycle sector request can be accepted.
-				// Advertising readiness here loses that first request in S_CMD16.
+					sd_init_done <= 1'b1;
+					sd_init_stage <= 3'd6;
 					spi_clk_div <= SPI_HIGH_SPEED_DIV[15:0];
 				end
 				else if(cmd_req_ack)
@@ -152,27 +160,6 @@ begin
 					cmd <= {8'd41,8'h40,8'h00,8'h00,8'h00,8'hff};
 				end
 			end
-			S_CMD16:
-			begin
-				if(cmd_req_ack & ~cmd_req_error)
-				begin
-					state <= S_WAIT_READ_WRITE;
-					cmd_req <= 1'b0;
-					sd_init_done <= 1'b1;
-					spi_clk_div <= SPI_HIGH_SPEED_DIV[15:0];
-				end
-				else if(cmd_req_ack)
-				begin
-					state <= S_CMD55;
-				end
-				else
-				begin
-					cmd_req <= 1'b1;
-					cmd_data_len <= 16'd0;
-					cmd_r1 <= 8'h00;
-					cmd <= {8'd16,32'd512,8'hff};
-				end
-			end			
 			S_WAIT_READ_WRITE:
 			begin
 				if(sd_sec_write ==  1'b1)

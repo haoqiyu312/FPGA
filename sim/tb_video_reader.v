@@ -2,6 +2,8 @@
 module tb_video_reader;
  parameter integer AUDIO_SUPPORT=0;
  parameter integer EXTERNAL_NAME=0;
+ parameter integer SUBTITLE_SUPPORT=0;
+ wire sub_valid,sub_done,sub_error;integer subtitle_bytes=0,srt_missing=0,srt_oversize=0,srt_broken=0;
  localparam [87:0] CUSTOM_NAME="MOVIE1  RV ";
  reg clk=0;always #5 clk=~clk;
  reg rst=1;wire req,wrreq,pvalid,bank,toggle;wire [31:0] lba,pdata;wire [3:0] status;wire [7:0] fps;
@@ -9,12 +11,12 @@ module tb_video_reader;
  integer scenario=0,active=0,index=0,address=0,delay_count=0;
  integer count=0,frames=0,hold_count=0,base,fb,db;
  reg pending=0,last_toggle=0;
- fat32_video_reader #(.WATCHDOG_BITS(22),.AUDIO_SUPPORT(AUDIO_SUPPORT),.EXTERNAL_NAME(EXTERNAL_NAME)) dut(
+ fat32_video_reader #(.WATCHDOG_BITS(22),.AUDIO_SUPPORT(AUDIO_SUPPORT),.EXTERNAL_NAME(EXTERNAL_NAME),.EXTERNAL_SUBTITLES(SUBTITLE_SUPPORT)) dut(
   .clk(clk),.rst(rst),.sd_ready(scenario!=6),.memory_ready(1'b1),
   .sector_req(req),.sector_lba(lba),.sector_byte(data),.sector_valid(valid),.sector_end(last),
   .write_req(wrreq),.write_ack(ack),.pixel_valid(pvalid),.pixel_data(pdata),
   .write_finish_toggle(finish),.frame_toggle(toggle),.consumed_toggle(consumed),
-  .write_bank(bank),.status(status),.fps(fps),.selected_name(CUSTOM_NAME));
+  .write_bank(bank),.status(status),.fps(fps),.selected_name(CUSTOM_NAME),.subtitle_byte_valid(sub_valid),.subtitle_done(sub_done),.subtitle_error(sub_error));
  function [7:0] cardbyte;
   input integer sec,pos;
   integer cluster,ordinal,offset,nxt,ent,value;
@@ -60,9 +62,25 @@ module tb_video_reader;
      end
     end
    end
+   if(SUBTITLE_SUPPORT && !srt_missing && sec==db+8 && pos>=32 && pos<64)begin
+    if(pos<40)cardbyte=(EXTERNAL_NAME ? CUSTOM_NAME : "VIDEO   RV ") >> (87-(pos-32)*8-7);
+    else case(pos)
+     40:cardbyte="S";41:cardbyte="R";42:cardbyte="T";43:cardbyte=32;58:cardbyte=5;
+     60,61,62,63:cardbyte=(srt_oversize ? 32769 : 5000) >> ((pos-60)*8);
+     default:cardbyte=0;
+    endcase
+   end
+   if(SUBTITLE_SUPPORT && sec>=fb && sec<fb+512 && (sec-fb)*128+pos/4==5)
+    cardbyte=(srt_broken ? 32'h0fffffff : 8) >> (8*(pos%4));
+   if(SUBTITLE_SUPPORT && sec>=db+24 && sec<db+32)cardbyte=((sec-db-24)*512+pos)%251;
+   if(SUBTITLE_SUPPORT && sec>=db+48 && sec<db+56)cardbyte=(4096+(sec-db-48)*512+pos)%251;
    if(EXTERNAL_NAME && sec==db+8 && scenario!=2 && pos<11)cardbyte=CUSTOM_NAME[87-pos*8-:8];
   end
  endfunction
+ always @(posedge clk)if(sub_valid)begin
+  if(data!==subtitle_bytes%251)$fatal(1,"subtitle byte order %d data %d",subtitle_bytes,data);
+  subtitle_bytes=subtitle_bytes+1;
+ end
  always @(negedge clk)begin
   valid=0;last=0;ack=wrreq;
   if(req)begin
@@ -92,11 +110,18 @@ module tb_video_reader;
  end
  initial begin
   if(!$value$plusargs("scenario=%d",scenario))scenario=0;
+  if($value$plusargs("srt_missing=%d",srt_missing))begin end
+  if($value$plusargs("srt_oversize=%d",srt_oversize))begin end
+  if($value$plusargs("srt_broken=%d",srt_broken))begin end
   base=scenario==1 ? 0 : 2048;fb=base+32;db=fb+512;
   #40;rst=0;
   if(scenario<=1)begin
    wait(frames==3);#20;
    if(fps!=5)$fatal(1,"fps");
+   if(SUBTITLE_SUPPORT)begin
+    if(!sub_done || sub_error!=(srt_oversize || srt_broken))$fatal(1,"subtitle result flags");
+    if(subtitle_bytes!=(srt_missing || srt_oversize ? 0 : srt_broken ? 4096 : 5000))$fatal(1,"subtitle size/reloaded during loop: %d",subtitle_bytes);
+   end
    $display("PASS video scenario=%0d: 3 complete frames, fragmented directory/file, loop, banks and commit",scenario);
   end else begin
    wait(status>=10);#20;

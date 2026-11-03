@@ -4,10 +4,10 @@ module tb_media_catalog;
  reg rst=1,sd_ready=1,valid=0,last=0;reg[7:0] data=0;
  wire[5:0] image_count;wire req,done;wire[31:0]lba;wire[5:0]count;wire[3:0]status;
  reg[4:0]query=0;wire[87:0]name,dname;wire[1:0]item_type,dtype;wire[4:0]ordinal;
- wire[7:0]debug_root_byte;wire[15:0]debug_root_lba;
+ wire[7:0]debug_root_byte;wire[15:0]debug_root_lba;wire default_image_valid;wire[4:0]default_image_index;
  integer scenario=0,active=0,pos=0,requests=0;reg[31:0] address;
  fat32_media_catalog #(.WATCHDOG_BITS(12),.READY_WATCHDOG_BITS(13)) dut(clk,rst,sd_ready,req,lba,data,valid,last,done,image_count,count,status,
-  query,query,name,dname,item_type,dtype,ordinal,clk,debug_root_byte,debug_root_lba);
+  query,query,name,dname,item_type,dtype,ordinal,clk,debug_root_byte,debug_root_lba,default_image_valid,default_image_index);
  function[7:0] byte_at;
  input integer sec,p;integer item,k,sz,c,next,typ,local_sec;reg[31:0]value;
  begin
@@ -34,10 +34,14 @@ module tb_media_catalog;
     typ=(item==6 || item==8 || item==16) ? 2 : item==5 ? 3 : 1;
     c=100+item;sz=typ==2 ? 645632 : typ==3 ? 256 : 921654;
     case(k)
-     0:byte_at="F";1:byte_at="A"+item;2,3,4,5,6,7:byte_at=" ";
-     8:byte_at=typ==1 ? (item==9 ? "b" : "B") : typ==2 ? "R" : typ==3 ? "W" : "T";
-     9:byte_at=typ==1 ? (item==9 ? "m" : "M") : typ==2 ? "V" : typ==3 ? "A" : "X";
-     10:byte_at=typ==1 ? (item==9 ? "p" : "P") : typ==2 ? " " : typ==3 ? "V" : "T";
+     0:byte_at=scenario==13 && item==0 ? "D" : "F";
+     1:byte_at=scenario==13 && item==0 ? "E" : "A"+item;
+     2:byte_at=scenario==13 && item==0 ? "F" : " ";3:byte_at=scenario==13 && item==0 ? "A" : " ";
+     4:byte_at=scenario==13 && item==0 ? "U" : " ";5:byte_at=scenario==13 && item==0 ? "L" : " ";
+     6:byte_at=scenario==13 && item==0 ? "T" : " ";7:byte_at=" ";
+     8:byte_at=scenario==12 && item==5 ? "S" : typ==1 ? (item==9 ? "b" : "B") : typ==2 ? "R" : typ==3 ? "W" : "T";
+     9:byte_at=scenario==12 && item==5 ? "R" : typ==1 ? (item==9 ? "m" : "M") : typ==2 ? "V" : typ==3 ? "A" : "X";
+     10:byte_at=scenario==12 && item==5 ? "T" : typ==1 ? (item==9 ? "p" : "P") : typ==2 ? " " : typ==3 ? "V" : "T";
      11:byte_at=scenario!=0 ? 8'h20 : item==1 ? 8'h0f : item==2 ? 8'h10 : item==3 ? 8'h08 : 8'h20;
      26:byte_at=c&255;27:byte_at=(c>>8)&255;
      28,29,30,31:byte_at=(sz>>(8*(k-28)))&255;
@@ -78,7 +82,7 @@ module tb_media_catalog;
  end
  integer i;reg[1:0]expected_type;
  initial begin
-  for(scenario=0;scenario<12;scenario=scenario+1)begin
+  for(scenario=0;scenario<14;scenario=scenario+1)begin
    rst=1;sd_ready=scenario!=7 && scenario!=9;repeat(32)@(negedge clk);#1;rst=0;
    if(scenario==9)begin repeat(5000)@(negedge clk);sd_ready=1;end
    wait(done);repeat(2)@(negedge clk);
@@ -102,6 +106,11 @@ module tb_media_catalog;
    else if(scenario==11)begin
     if(status!=3 || count!=1 || image_count!=1 || requests!=5 || debug_root_byte!="F" || debug_root_lba!=8194)
      $fatal(1,"partitioned FAT32 scan status=%0d count=%0d requests=%0d root=%02x lba=%0d",status,count,requests,debug_root_byte,debug_root_lba);
+   end else if(scenario==12)begin
+    if(count!=31 || status!=3)$fatal(1,"SRT consumes menu slot count=%d",count);
+    for(i=0;i<31;i=i+1)begin query=i;repeat(32)@(negedge clk);if(name[23:0]==24'h535254)$fatal(1,"SRT leaked into menu");end
+   end else if(scenario==13)begin
+    if(status!=3 || !default_image_valid || default_image_index!=0)$fatal(1,"DEFAULT.BMP selector failed valid=%b index=%0d",default_image_valid,default_image_index);
    end
   end
   $display("PASS mixed FAT32 catalog, BMP/RV/audio classification, unsupported files, fragmented root, EOF, errors, no-card timeout, late readiness, sector timeout, reset");$finish;

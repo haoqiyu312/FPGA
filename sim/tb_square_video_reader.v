@@ -1,5 +1,6 @@
 `timescale 1ns/1ps
 module tb_square_video_reader;
+ parameter SUBTITLES=0;
  reg clk=0;always #5 clk=~clk;
  reg rst=1;wire req,wrreq,pvalid,bank,toggle,aenabled,avalid;
  wire [31:0] lba,pdata;wire [3:0] status;wire [7:0] fps,adata;wire [13:0] aaddress;
@@ -7,7 +8,7 @@ module tb_square_video_reader;
  integer scenario=0,active=0,index=0,address=0,delay_count=0;
  integer pixels=0,audio_bytes=0,frames=0,hold_count=0;
  reg pending=0,last_toggle=0;
- fat32_video_reader #(.WATCHDOG_BITS(20),.FRAME_WIDTH(720),.FRAME_HEIGHT(720),.FRAME_PIXELS(768),.AUDIO_SUPPORT(1),.AUDIO_RATE(12000)) dut(
+ fat32_video_reader #(.WATCHDOG_BITS(20),.FRAME_WIDTH(720),.FRAME_HEIGHT(720),.FRAME_PIXELS(768),.AUDIO_SUPPORT(1),.AUDIO_RATE(12000),.EXTERNAL_SUBTITLES(SUBTITLES)) dut(
   .clk(clk),.rst(rst),.sd_ready(1'b1),.memory_ready(1'b1),
   .sector_req(req),.sector_lba(lba),.sector_byte(data),.sector_valid(valid),.sector_end(last),
   .write_req(wrreq),.write_ack(ack),.pixel_valid(pvalid),.pixel_data(pdata),

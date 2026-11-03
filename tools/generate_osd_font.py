@@ -59,6 +59,34 @@ def glyphs(font_path, font_index):
     return chars, bitmaps
 
 
+def lookup_lines(chars):
+    lines = [' function [7:0] glyph_lookup;', ' input [15:0] code;',
+             ' begin', ' glyph_lookup=0;', ' case(code[15:8])']
+    groups = {}
+    for idx, ch in enumerate(chars):
+        groups.setdefault(ord(ch) >> 8, []).append((ord(ch) & 255, idx))
+        lines.insert(0, f" // 16'h{ord(ch):04x}:glyph_index=8'd{idx};")
+    for high, entries in sorted(groups.items()):
+        lines.append(f" 8'h{high:02x}:begin")
+        if high == 0:
+            assert all(idx == low-32 for low, idx in entries if 32 <= low <= 126)
+            lines.append(" if(code[7:0]>=32 && code[7:0]<=126)glyph_lookup=code[7:0]-32;")
+            entries = [(low, idx) for low, idx in entries if not 32 <= low <= 126]
+            if entries:
+                lines.append(' else begin')
+        if entries:
+            lines.append(' case(code[7:0])')
+            lines += [f" 8'h{low:02x}:glyph_lookup=8'd{idx};" for low, idx in entries]
+            lines += [' default:begin end', ' endcase']
+            if high == 0:
+                lines.append(' end')
+        lines.append(' end')
+    lines += [' default:begin end', ' endcase', ' end', ' endfunction',
+              ' always @* begin', ' glyph_index=glyph_lookup(codepoint);',
+              ' glyph_index_b=glyph_lookup(codepoint_b);', ' end']
+    return lines
+
+
 def generate(font_path, font_index, output, preview=None):
     chars, bitmaps = glyphs(font_path, font_index)
     lines = [
@@ -70,19 +98,9 @@ def generate(font_path, font_index, output, preview=None):
         ' input wire [3:0] row,output reg [15:0] pixels,',
         ' input wire [15:0] codepoint_b,input wire [3:0] row_b,output reg [15:0] pixels_b);',
         ' reg [7:0] glyph_index,glyph_index_b;',
-        ' always @* begin',
-        '  case(codepoint)',
     ]
-    for idx, ch in enumerate(chars):
-        comment = 'SPACE' if ch == ' ' else ch
-        lines.append(f"   16'h{ord(ch):04x}:glyph_index=8'd{idx}; // {comment}")
-    lines += ['   default:glyph_index=0;', '  endcase', '  case(codepoint_b)']
-    for idx, ch in enumerate(chars):
-        comment = 'SPACE' if ch == ' ' else ch
-        lines.append(f"   16'h{ord(ch):04x}:glyph_index_b=8'd{idx}; // {comment}")
-    lines += ['   default:glyph_index_b=0;', '  endcase', ' end',
-              ' (* ram_style="bram" *) reg [15:0] font_rom[0:4095];',
-              ' initial begin']
+    lines += lookup_lines(chars)
+    lines += [' (* ram_style="bram" *) reg [15:0] font_rom[0:4095];', ' initial begin']
     for idx in range(256):
         if idx < len(chars):
             lines.append(f'  // Glyph {idx}: {chars[idx]}')

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Project Version="3" Minor="2" Path="/home/regiz/projects/FPGA/prj">
+<Project Version="3" Minor="2" Path="/home/hqy/github/FPGA/prj">
     <Project_Created_Time></Project_Created_Time>
-    <TD_Version>6.2.178840</TD_Version>
+    <TD_Version>6.2.175876</TD_Version>
     <Name>TF_MEDIA_720_R2</Name>
     <HardWare>
         <Family>EG4</Family>
@@ -447,7 +447,7 @@
                     <Attr Name="UsedInSyn" Val="true"/>
                     <Attr Name="UsedInP&R" Val="true"/>
                     <Attr Name="BelongTo" Val="design_1"/>
-                    <Attr Name="CompileOrder" Val="55"/>
+                    <Attr Name="CompileOrder" Val="56"/>
                 </FileInfo>
             </File>
             <File Path="../rtl/media_subtitles.v">
@@ -455,7 +455,15 @@
                     <Attr Name="UsedInSyn" Val="true"/>
                     <Attr Name="UsedInP&R" Val="true"/>
                     <Attr Name="BelongTo" Val="design_1"/>
-                    <Attr Name="CompileOrder" Val="56"/>
+                    <Attr Name="CompileOrder" Val="58"/>
+                </FileInfo>
+            </File>
+            <File Path="../rtl/srt_subtitles.v">
+                <FileInfo>
+                    <Attr Name="UsedInSyn" Val="true"/>
+                    <Attr Name="UsedInP&R" Val="true"/>
+                    <Attr Name="BelongTo" Val="design_1"/>
+                    <Attr Name="CompileOrder" Val="57"/>
                 </FileInfo>
             </File>
             <File Path="../rtl/video_pll_48.v">

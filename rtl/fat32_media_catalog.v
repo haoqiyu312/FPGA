@@ -4,7 +4,7 @@
 module fat32_media_catalog #(
  parameter FRAME_WIDTH=640, FRAME_HEIGHT=480,AUDIO_RATE=48000,
  parameter WATCHDOG_BITS=28,
- parameter READY_WATCHDOG_BITS=30
+ parameter READY_WATCHDOG_BITS=32
 )(
  input wire clk,rst,sd_ready,
  output reg sector_req,output reg[31:0] sector_lba,
@@ -14,7 +14,8 @@ module fat32_media_catalog #(
  output wire[87:0] query_name,display_name,
  output wire[1:0] query_type,display_type,
  output wire[4:0] query_image_index,input wire display_clk,
- output reg[7:0] debug_root_byte,output reg[15:0] debug_root_lba
+ output reg[7:0] debug_root_byte,output reg[15:0] debug_root_lba,
+ output reg default_image_valid,output reg[4:0] default_image_index
 );
  localparam WAIT=0,REQ=1,RX=2,DECIDE=3,STORE=4,RESUME=5,ADVANCE=6,FINISH=7,FAIL=8,DRAIN=9;
  localparam BOOT=0,BPB=1,DIR=2,HEADER=3,FAT=4;
@@ -80,7 +81,9 @@ module fat32_media_catalog #(
  wire[8:0] fat_offset={cluster[6:0],2'b00};
  wire after_resume=!resumed || offset>resume_offset;
  function[7:0] upper;input[7:0] a;begin upper=a>=97 && a<=122 ? a-32 : a;end endfunction
+ wire srt_ext=entry_name[23:0]==24'h535254;
  wire bmp_ext=upper(entry_name[23:16])=="B" && upper(entry_name[15:8])=="M" && upper(entry_name[7:0])=="P";
+ wire default_bmp_name=entry_name[87:24]==64'h44454641554c5420 && bmp_ext;
  wire rv_ext=upper(entry_name[23:16])=="R" && upper(entry_name[15:8])=="V" && entry_name[7:0]==" ";
  wire wav_ext=upper(entry_name[23:16])=="W" && upper(entry_name[15:8])=="A" && upper(entry_name[7:0])=="V";
  wire mp3_ext=upper(entry_name[23:16])=="M" && upper(entry_name[15:8])=="P" && upper(entry_name[7:0])=="3";
@@ -119,7 +122,7 @@ module fat32_media_catalog #(
    magic<=0;dib<=0;width<=0;height<=0;pixel_offset<=0;compression<=0;frame_count<=0;frame_bytes<=0;
    bmp_planes<=0;bmp_bits<=0;rv_width<=0;rv_height<=0;rv_version<=0;rv_format<=0;rv_fps<=0;
    rate<=0;samples<=0;audio_bytes<=0;audio_format<=0;bmp_index<=0;image_count<=0;watchdog<=0;ready_watchdog<=0;
-   debug_root_byte<=0;debug_root_lba<=0;
+   debug_root_byte<=0;debug_root_lba<=0;default_image_valid<=0;default_image_index<=0;
   end else begin
    sector_req<=0;if(state!=STORE)store_byte<=0;
    // The transport is held in reset during the power-on settling period.
@@ -157,7 +160,7 @@ module fat32_media_catalog #(
         21:entry_cluster[31:24]<={4'd0,sector_byte[3:0]};
         26,27:entry_cluster[(offset[4:0]-26)*8+:8]<=sector_byte;
         28,29,30:entry_size[(offset[4:0]-28)*8+:8]<=sector_byte;
-        31:if(after_resume && !ended && live && (attr&8'h18)==0 && attr!=8'h0f)begin
+        31:if(after_resume && !ended && live && (attr&8'h18)==0 && attr!=8'h0f && !srt_ext)begin
          entry_size[31:24]<=sector_byte;resume_offset<=offset;resumed<=1;dir_lba<=sector_lba;
          candidate_type<=bmp_ext ? 1 : rv_ext ? 2 : audio_ext ? 3 : 0;
          // Ignore remaining bytes of this directory sector and reread it later.
@@ -219,7 +222,10 @@ module fat32_media_catalog #(
       else begin cluster<={4'd0,next_cluster[27:0]};dir_sector<=0;hops<=hops+1'b1;kind<=DIR;state<=RESUME;end
     endcase
     STORE:if(store_byte!=11)store_byte<=store_byte+1'b1;else begin
-     count<=count+1'b1;if(checked_type==1)begin bmp_index<=bmp_index+1'b1;image_count<=image_count+1'b1;end
+     count<=count+1'b1;if(checked_type==1)begin
+      if(default_bmp_name)begin default_image_valid<=1;default_image_index<=bmp_index;end
+      bmp_index<=bmp_index+1'b1;image_count<=image_count+1'b1;
+     end
      if(count==31)state<=FINISH;else begin sector_lba<=dir_lba;kind<=DIR;state<=REQ;end
     end
     RESUME:begin
@@ -233,7 +239,15 @@ module fat32_media_catalog #(
      else begin sector_lba<=fat_base+(cluster>>7);kind<=FAT;state<=REQ;end
     end
     FINISH:begin done<=1;status<=3;end
-    FAIL:begin done<=1;end
+    FAIL:begin
+     // The SD transport can finish its slow SPI initialization after the
+     // UI watchdog expires. Retry the directory scan once the card is ready.
+     if(status==14 && sd_ready)begin
+      done<=0;status<=0;state<=WAIT;kind<=BOOT;sector_lba<=0;offset<=0;count<=0;
+      image_count<=0;bmp_index<=0;hops<=0;dir_sector<=0;resumed<=0;ended<=0;
+      candidate_found<=0;default_image_valid<=0;default_image_index<=0;
+     end else done<=1;
+    end
    endcase
    if(state==WAIT && &ready_watchdog)begin status<=14;state<=FAIL;end
    else if(state!=WAIT && &watchdog && !done)begin status<=15;state<=FAIL;end

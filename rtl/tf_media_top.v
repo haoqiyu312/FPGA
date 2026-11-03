@@ -15,8 +15,8 @@ module tf_media_top (
     localparam WIDTH=720, HEIGHT=720, FRAME_PIXELS=WIDTH*HEIGHT;
     // Waveshare 4inch HDMI LCD (C) published timing: 48 MHz, 940x768 total.
     localparam PIXEL_HZ=48000000;
-    // Recovery candidate: reserve timing/packing margin for native video and audio.
-    localparam ENABLE_SPECTRUM=0;
+    // Spectrum remains user-toggleable with KEY2 during video playback.
+    localparam ENABLE_SPECTRUM=1;
     localparam HTOTAL=940, VTOTAL=768, HSA=20,HBP=100,HFP=100,VSA=8,VBP=20,VFP=20;
     // The board buzzer is active low; keep it disabled for all key presses.
     assign buzzer_n = 1'b1;
@@ -176,6 +176,9 @@ module tf_media_top (
     wire [3:0] image_status,movie_status;
     assign load_status=video_sd ? movie_status : image_status;
     wire [7:0] video_fps;
+    wire [31:0] movie_frame_count;
+    reg [31:0] movie_count_meta,movie_count_pixel;
+    always @(posedge pixel_clk)begin movie_count_meta<=movie_frame_count;movie_count_pixel<=movie_count_meta;end
     wire audio_enabled,audio_write_valid;
     wire [13:0] audio_write_address;
     wire [7:0] audio_write_data;
@@ -223,6 +226,10 @@ module tf_media_top (
         .query_name(query_name),.query_type(query_type),.query_image_index(query_bmp_index),
         .display_clk(pixel_clk),.display_index(catalog_display_index),.display_name(catalog_display_name),.display_type(catalog_display_type),
         .debug_root_byte(debug_root_byte_sd),.debug_root_lba(debug_root_lba_sd));
+    wire subtitle_done,subtitle_error,subtitle_byte_valid;
+    wire [15:0] external_subtitle_codepoint;
+    wire [9:0] subtitle_prefetch_x=x+1-(WIDTH-512)/2;
+    wire external_subtitle_visible;
     assign sector_req=!catalog_done_sd ? cat_sector_req : video_sd ? mov_sector_req : img_sector_req;
     assign sector_lba=!catalog_done_sd ? cat_sector_lba : video_sd ? mov_sector_lba : img_sector_lba;
     assign write_req=video_sd ? mov_write_req : img_write_req;
@@ -237,7 +244,7 @@ module tf_media_top (
         .image_ready(image_ready),.status(image_status),.image_index(image_index),
         .image_total(catalog_total),.catalog_valid(catalog_valid),.image_name(image_name));
 
-    fat32_video_reader #(.FRAME_WIDTH(WIDTH),.FRAME_HEIGHT(HEIGHT),.AUDIO_SUPPORT(1),.AUDIO_RATE(12000),.EXTERNAL_NAME(1)) u_movie_loader (
+    fat32_video_reader #(.FRAME_WIDTH(WIDTH),.FRAME_HEIGHT(HEIGHT),.AUDIO_SUPPORT(1),.AUDIO_RATE(12000),.EXTERNAL_NAME(1),.EXTERNAL_SUBTITLES(1)) u_movie_loader (
         .clk(sd_clk),.rst(movie_rst),.sd_ready(sd_ready),.memory_ready(memory_init_sync[1]),
         .sector_req(mov_sector_req),.sector_lba(mov_sector_lba),.sector_byte(sector_byte),
         .sector_valid(sector_valid),.sector_end(sector_end),
@@ -246,7 +253,8 @@ module tf_media_top (
         .frame_toggle(frame_toggle),.consumed_toggle(consumed_toggle),
         .write_bank(write_bank),.status(movie_status),.fps(video_fps),
         .audio_enabled(audio_enabled),.audio_valid(audio_write_valid),
-        .audio_address(audio_write_address),.audio_data(audio_write_data),.selected_name(requested_video));
+        .audio_address(audio_write_address),.audio_data(audio_write_data),.selected_name(requested_video),.total_frames(movie_frame_count),.subtitle_byte_valid(subtitle_byte_valid),
+        .subtitle_done(subtitle_done),.subtitle_error(subtitle_error));
     wire [9:0] x,y;
     wire de,hs,vs;
     video_timing_640x480 #(.WIDTH(WIDTH),.HEIGHT(HEIGHT),.HTOTAL(HTOTAL),.VTOTAL(VTOTAL),.HSA(HSA),.HBP(HBP),.VSA(VSA),.VBP(VBP)) u_timing (.pixel_clk(pixel_clk),.rst_n(~video_rst),
@@ -376,12 +384,17 @@ module tf_media_top (
     wire subtitle_request,subtitle_panel,subtitle_ink;
     wire [15:0] subtitle_font_code;
     wire [3:0] subtitle_font_row;
-    media_subtitles #(.WIDTH(WIDTH),.HEIGHT(HEIGHT),.FONT_LATENCY(2)) u_subtitles (.clk(pixel_clk),.rst_n(~video_rst),
+    srt_subtitles u_srt_cache (.load_clk(sd_clk),.load_rst(movie_rst),.byte_data(sector_byte),
+        .byte_valid(subtitle_byte_valid),.load_done(subtitle_done),.load_error(subtitle_error),
+        .clk(pixel_clk),.rst(video_rst),.frame_start(x==0 && y==0),.frame_started(frame_started),
+        .video_mode(video_pixel),.shown(show_image),.fps(audio_fps_sync),.movie_frames(movie_count_pixel),
+        .read_index(subtitle_prefetch_x[8:4]),.codepoint(external_subtitle_codepoint),.visible(external_subtitle_visible));
+    media_subtitles #(.WIDTH(WIDTH),.HEIGHT(HEIGHT),.FONT_LATENCY(2),.EXTERNAL_SRT(1)) u_subtitles (.clk(pixel_clk),.rst_n(~video_rst),
         .frame_start(x==0 && y==0),.frame_started(frame_started),.shown(show_image),
         .video_mode(video_pixel),.enabled(feature_frame[1]),.fps(audio_fps_sync),.zoom(zoom_frame),
         .x(x),.y(y),.de(de),.font_request(subtitle_request),
         .font_codepoint(subtitle_font_code),.font_row(subtitle_font_row),.font_pixels(status_font_pixels),
-        .panel(subtitle_panel),.ink(subtitle_ink));
+        .panel(subtitle_panel),.ink(subtitle_ink),.external_codepoint(external_subtitle_codepoint),.external_visible(external_subtitle_visible));
     wire osd_cover;
     wire [23:0] osd_rgb;
     wire [87:0] playing_file_name=video_pixel ? requested_video : image_name;
@@ -417,15 +430,17 @@ module tf_media_top (
                       browser_scroll_first,selected_valid,selected_file}),
         .destination_clk(pixel_clk),.destination_reset_n(~video_rst),.destination_data(browser_snapshot));
     wire browser_cover;wire [23:0] browser_rgb;
+    wire [4:0] browser_color_index;
+    wire [23:0] browser_decoded_rgb;reg [23:0] browser_delayed_rgb;
     file_browser_overlay #(.WIDTH(WIDTH),.HEIGHT(HEIGHT),.FONT_LATENCY(2),.PIPE_COORDS(1)) u_file_overlay (.clk(pixel_clk),.rst_n(~video_rst),.x(x),.y(y),.de(de),
         .visible(browser_frame[22]),.ready(browser_frame[21]),.count(browser_frame[20:15]),
         .debug_root_byte(browser_frame[46:39]),.debug_root_lba(browser_frame[38:23]),
         .status(browser_frame[14:11]),.scroll_first(browser_frame[10:6]),.selection_valid(browser_frame[5]),
         .selected(browser_frame[4:0]),.display_index(catalog_display_index),
         .file_name(catalog_display_name),.file_type(catalog_display_type),.overlay_active(browser_cover),.rgb(browser_rgb),
-        .cn_codepoint(browser_font_code),.cn_font_row(browser_font_row),.cn_pixels(browser_font_pixels));
+        .cn_codepoint(browser_font_code),.cn_font_row(browser_font_row),.cn_pixels(browser_font_pixels),.color_index(browser_color_index));
     reg [19:0] browser_cover_delay;
-    reg [23:0] browser_delay[0:19];
+    reg [4:0] browser_delay[0:19];
     integer i;
     always @(posedge pixel_clk or posedge video_rst) begin
         if(video_rst) begin
@@ -440,7 +455,7 @@ module tf_media_top (
             subtitle_panel_delay<={subtitle_panel_delay[18:0],subtitle_panel};
             subtitle_ink_delay<={subtitle_ink_delay[18:0],subtitle_ink};
             browser_cover_delay<={browser_cover_delay[18:0],browser_cover};
-            browser_delay[0]<=browser_rgb;
+            browser_delay[0]<=browser_color_index;
             for(i=1;i<20;i=i+1)browser_delay[i]<=browser_delay[i-1];
             loading_delay[0]<=status_frame>=10 ? 24'h000000 : loading_rgb;
             // The Chinese font contributes one clock; add twenty to total twenty-one.
@@ -463,12 +478,12 @@ module tf_media_top (
     wire [23:0] subtitle_base=subtitle_ink_delay[18] ? 24'hfff3b0 :
         subtitle_panel_delay[18] ? {1'b0,media_base[23:17],1'b0,media_base[15:9],1'b0,media_base[7:1]} : media_base;
     wire spectrum_cover;
-    wire [23:0] spectrum_rgb;
+    wire [23:0] spectrum_rgb;wire [4:0] spectrum_color_index;wire [23:0] spectrum_decoded_rgb;reg [23:0] spectrum_delayed_rgb;
     audio_spectrum_overlay u_spectrum_overlay (.clk(pixel_clk),.rst_n(~video_rst),
         .x(x),.y(y),.de(de),.visible(ENABLE_SPECTRUM && feature_frame[0] && video_pixel && show_image && audio_enable_sync[1]),
-        .levels(spectrum_frame),.active(spectrum_cover),.rgb(spectrum_rgb));
+        .levels(spectrum_frame),.active(spectrum_cover),.rgb(spectrum_rgb),.color_index(spectrum_color_index));
     reg [19:0] spectrum_cover_delay;
-    reg [23:0] spectrum_delay[0:19];
+    reg [4:0] spectrum_delay[0:19];
     integer spectrum_i;
     always @(posedge pixel_clk or posedge video_rst)begin
         if(video_rst)begin
@@ -476,11 +491,16 @@ module tf_media_top (
             for(spectrum_i=0;spectrum_i<20;spectrum_i=spectrum_i+1)spectrum_delay[spectrum_i]<=0;
         end else begin
             spectrum_cover_delay<={spectrum_cover_delay[18:0],spectrum_cover};
-            spectrum_delay[0]<=spectrum_rgb;
+            spectrum_delay[0]<=spectrum_color_index;
             for(spectrum_i=1;spectrum_i<20;spectrum_i=spectrum_i+1)spectrum_delay[spectrum_i]<=spectrum_delay[spectrum_i-1];
         end
     end
-    wire [23:0] visualized_rgb=spectrum_cover_delay[19] ? spectrum_delay[19] : subtitle_base;
+    audio_spectrum_palette u_spectrum_delayed_palette(.index(spectrum_delay[18]),.rgb(spectrum_decoded_rgb));
+    file_browser_palette u_browser_delayed_palette(.index(browser_delay[16]),.rgb(browser_decoded_rgb));
+    always @(posedge pixel_clk or posedge video_rst)
+        if(video_rst)begin spectrum_delayed_rgb<=0;browser_delayed_rgb<=0;end
+        else begin spectrum_delayed_rgb<=spectrum_decoded_rgb;browser_delayed_rgb<=browser_decoded_rgb;end
+    wire [23:0] visualized_rgb=spectrum_cover_delay[19] ? spectrum_delayed_rgb : subtitle_base;
     // SW4 only masks the final status layer. Feature mailbox, framebuffer
     // addressing, pixel consumption and HDMI timing retain the coffee baseline.
     wire playback_osd_visible;
@@ -488,7 +508,7 @@ module tf_media_top (
         .clk(pixel_clk),.rst(video_rst),.hide_switch(menu_hide_switch),
         .vblank(x==0 && y==HEIGHT),.visible(playback_osd_visible));
     wire [23:0] base_rgb=(osd_cover_delay[18] && playback_osd_visible) ? osd_delay[18] : visualized_rgb;
-    wire [23:0] output_rgb=browser_cover_delay[17] ? browser_delay[17] : base_rgb;
+    wire [23:0] output_rgb=browser_cover_delay[17] ? browser_delayed_rgb : base_rgb;
     wire [23:0] volume_pcm;
     media_volume_apply u_volume_apply (.pcm_in(audio_pcm),.level(4'd8),.pcm_out(volume_pcm));
     hdmi_audio_output #(.PIXEL_HZ(PIXEL_HZ),.TEST_AUDIO(0),.EXTERNAL_AUDIO(1),.FRAME_WIDTH(WIDTH),.FRAME_HEIGHT(HEIGHT),.HTOTAL(HTOTAL),.HSA(HSA),.HFP(HFP),.HBP(HBP),.VTOTAL(VTOTAL),.VSA(VSA),.VFP(VFP),.VBP(VBP),.VIDEO_VIC(0)) u_hdmi (.pixel_clk(pixel_clk),.serial_clk(serial_clk),

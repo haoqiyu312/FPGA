@@ -106,7 +106,7 @@ module tb_media_subtitles;
  reg [7:0] fps=3;reg [1:0] zoom=0;
  reg [9:0] x=64,y=380;
  wire req,panel,ink;wire [15:0] code,pixels;wire [3:0] row;
- media_subtitles dut(clk,rst_n,frame,started,shown,video,enabled,fps,zoom,x,y,de,req,code,row,pixels,panel,ink);
+ media_subtitles dut(clk,rst_n,frame,started,shown,video,enabled,fps,zoom,x,y,de,req,code,row,pixels,panel,ink,16'd0,1'b0);
  osd_font16 font(.clk(clk),.codepoint(code),.row(row),.pixels(pixels),.codepoint_b(16'd32),.row_b(4'd0),.pixels_b());
  task tick_frame;begin frame=1;@(negedge clk);frame=0;@(negedge clk);end endtask
  task present;begin started=1;@(negedge clk);started=0;@(negedge clk);end endtask

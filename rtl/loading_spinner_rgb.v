@@ -59,7 +59,9 @@ module loading_spinner_rgb #(parameter integer WIDTH=640,HEIGHT=480) (
    if(dx<=3 && dy<=3 && dx+dy<=5)shade=brightness;
    else if(dx<=4 && dy<=4 && dx+dy<=6)shade=brightness>>1;
    else if(dx<=5 && dy<=5 && dx+dy<=8)shade=brightness>>3;
-   if(shade!=0)rgb={shade,shade,shade};
+   // Dot footprints are disjoint (centres are more than ten pixels apart).
+   // Combine them in parallel instead of a twelve-deep priority mux chain.
+   rgb=rgb | {shade,shade,shade};
   end
   if(!de)rgb=0;
  end

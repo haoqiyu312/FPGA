@@ -64,3 +64,8 @@ set_false_path -from [get_clocks {u_video_pll/pll_inst.clkc[1]}] -to [get_regs {
 set_max_delay 20 -through [get_nets {u_browser_bridge/mailbox* u_ui_bridge/mailbox* u_feature_bridge/mailbox*}] -to [get_clocks {u_video_pll/pll_inst.clkc[1]}]
 set_false_path -from [get_clocks {sys_clk}] -to [get_regs {u_status_osd/dir_meta* u_status_osd/video_meta* mode_pixel* pause_sync*}]
 set_false_path -from [get_clocks {u_memory_pll/pll_inst.clkc[0]}] -to [get_regs {status_meta* image_sync* u_catalog/display_done* u_movie_presenter/fps_meta* audio_fps_meta* audio_enable_sync* u_movie_presenter/frame_sync*}]
+
+# SRT count freezes before finished is raised, then enters a two-flop pixel
+# snapshot. Ready crosses three flops; scan logic consumes the count only after
+# ready. Cut source-to-first-stage inputs, keeping pixel pipeline timing active.
+set_false_path -from [get_clocks {u_memory_pll/pll_inst.clkc[0]}] -to [get_regs {u_srt_cache/count_meta* u_srt_cache/ready_sync* movie_count_meta*}]

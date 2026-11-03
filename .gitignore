@@ -76,3 +76,15 @@ Thumbs.db
 # Native-panel recovery candidate
 /release/TF_MEDIA_720_R2.zip
 !/release/TF_MEDIA_720_R2.bit
+
+# Local spectrum/subtitle candidates and TD scratch files
+!/release/TF_MEDIA_720_SRT.bit
+/prj/*_inst.bid
+/prj/.tmp_*
+/release/TF_MEDIA_720_SPECTRUM.json
+
+# SSD1306 + matrix keypad candidate
+!/release/TF_MEDIA_OLED.bit
+
+# Obsolete local logo asset (automatic menu background was removed)
+/media/DEFAULT.BMP

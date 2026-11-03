@@ -6,509 +6,687 @@ module osd_font16(input wire clk,input wire [15:0] codepoint,
  input wire [3:0] row,output reg [15:0] pixels,
  input wire [15:0] codepoint_b,input wire [3:0] row_b,output reg [15:0] pixels_b);
  reg [7:0] glyph_index,glyph_index_b;
+ // 16'hff1a:glyph_index=8'd247;
+ // 16'hff0c:glyph_index=8'd246;
+ // 16'h9999:glyph_index=8'd245;
+ // 16'h9891:glyph_index=8'd244;
+ // 16'h9879:glyph_index=8'd243;
+ // 16'h97f3:glyph_index=8'd242;
+ // 16'h9762:glyph_index=8'd241;
+ // 16'h9700:glyph_index=8'd240;
+ // 16'h9694:glyph_index=8'd239;
+ // 16'h968f:glyph_index=8'd238;
+ // 16'h95f4:glyph_index=8'd237;
+ // 16'h95ed:glyph_index=8'd236;
+ // 16'h957f:glyph_index=8'd235;
+ // 16'h952e:glyph_index=8'd234;
+ // 16'h9519:glyph_index=8'd233;
+ // 16'h94fe:glyph_index=8'd232;
+ // 16'h91cd:glyph_index=8'd231;
+ // 16'h9187:glyph_index=8'd230;
+ // 16'h90fd:glyph_index=8'd229;
+ // 16'h8fd4:glyph_index=8'd228;
+ // 16'h8fce:glyph_index=8'd227;
+ // 16'h8f7d:glyph_index=8'd226;
+ // 16'h8f6e:glyph_index=8'd225;
+ // 16'h8d85:glyph_index=8'd224;
+ // 16'h8c31:glyph_index=8'd223;
+ // 16'h8bfb:glyph_index=8'd222;
+ // 16'h8bf7:glyph_index=8'd221;
+ // 16'h8bef:glyph_index=8'd220;
+ // 16'h8bd5:glyph_index=8'd219;
+ // 16'h89c6:glyph_index=8'd218;
+ // 16'h8981:glyph_index=8'd217;
+ // 16'h8403:glyph_index=8'd216;
+ // 16'h83dc:glyph_index=8'd215;
+ // 16'h8350:glyph_index=8'd214;
+ // 16'h8282:glyph_index=8'd213;
+ // 16'h81ea:glyph_index=8'd212;
+ // 16'h7f29:glyph_index=8'd211;
+ // 16'h7f13:glyph_index=8'd210;
+ // 16'h7c07:glyph_index=8'd209;
+ // 16'h7b26:glyph_index=8'd208;
+ // 16'h7acb:glyph_index=8'd207;
+ // 16'h7a7a:glyph_index=8'd206;
+ // 16'h79fb:glyph_index=8'd205;
+ // 16'h79d2:glyph_index=8'd204;
+ // 16'h793a:glyph_index=8'd203;
+ // 16'h78e8:glyph_index=8'd202;
+ // 16'h76ee:glyph_index=8'd201;
+ // 16'h7684:glyph_index=8'd200;
+ // 16'h753b:glyph_index=8'd199;
+ // 16'h7528:glyph_index=8'd198;
+ // 16'h73b0:glyph_index=8'd197;
+ // 16'h72ec:glyph_index=8'd196;
+ // 16'h72b6:glyph_index=8'd195;
+ // 16'h7247:glyph_index=8'd194;
+ // 16'h6bcf:glyph_index=8'd193;
+ // 16'h6b63:glyph_index=8'd192;
+ // 16'h6b22:glyph_index=8'd191;
+ // 16'h68c0:glyph_index=8'd190;
+ // 16'h683c:glyph_index=8'd189;
+ // 16'h6839:glyph_index=8'd188;
+ // 16'h67e5:glyph_index=8'd187;
+ // 16'h672a:glyph_index=8'd186;
+ // 16'h6682:glyph_index=8'd185;
+ // 16'h663e:glyph_index=8'd184;
+ // 16'h662f:glyph_index=8'd183;
+ // 16'h65f6:glyph_index=8'd182;
+ // 16'h65e5:glyph_index=8'd181;
+ // 16'h65b9:glyph_index=8'd180;
+ // 16'h65b0:glyph_index=8'd179;
+ // 16'h6587:glyph_index=8'd178;
+ // 16'h6570:glyph_index=8'd177;
+ // 16'h653e:glyph_index=8'd176;
+ // 16'h64ad:glyph_index=8'd175;
+ // 16'h63cf:glyph_index=8'd174;
+ // 16'h63a8:glyph_index=8'd173;
+ // 16'h636e:glyph_index=8'd172;
+ // 16'h635f:glyph_index=8'd171;
+ // 16'h6309:glyph_index=8'd170;
+ // 16'h627e:glyph_index=8'd169;
+ // 16'h626b:glyph_index=8'd168;
+ // 16'h6253:glyph_index=8'd167;
+ // 16'h6216:glyph_index=8'd166;
+ // 16'h6001:glyph_index=8'd165;
+ // 16'h5fc3:glyph_index=8'd164;
+ // 16'h5f55:glyph_index=8'd163;
+ // 16'h5f20:glyph_index=8'd162;
+ // 16'h5f0f:glyph_index=8'd161;
+ // 16'h5f02:glyph_index=8'd160;
+ // 16'h5f00:glyph_index=8'd159;
+ // 16'h5e97:glyph_index=8'd158;
+ // 16'h5e8f:glyph_index=8'd157;
+ // 16'h5e55:glyph_index=8'd156;
+ // 16'h5e38:glyph_index=8'd155;
+ // 16'h5e02:glyph_index=8'd154;
+ // 16'h5c45:glyph_index=8'd153;
+ // 16'h5c42:glyph_index=8'd152;
+ // 16'h5c1d:glyph_index=8'd151;
+ // 16'h5c0f:glyph_index=8'd150;
+ // 16'h5b58:glyph_index=8'd149;
+ // 16'h5b57:glyph_index=8'd148;
+ // 16'h5a92:glyph_index=8'd147;
+ // 16'h59cb:glyph_index=8'd146;
+ // 16'h597d:glyph_index=8'd145;
+ // 16'h594f:glyph_index=8'd144;
+ // 16'h5927:glyph_index=8'd143;
+ // 16'h591a:glyph_index=8'd142;
+ // 16'h5907:glyph_index=8'd141;
+ // 16'h574f:glyph_index=8'd140;
+ // 16'h5728:glyph_index=8'd139;
+ // 16'h56fe:glyph_index=8'd138;
+ // 16'h56de:glyph_index=8'd137;
+ // 16'h5668:glyph_index=8'd136;
+ // 16'h5561:glyph_index=8'd135;
+ // 16'h54c1:glyph_index=8'd134;
+ // 16'h5496:glyph_index=8'd133;
+ // 16'h542f:glyph_index=8'd132;
+ // 16'h5411:glyph_index=8'd131;
+ // 16'h5408:glyph_index=8'd130;
+ // 16'h53ef:glyph_index=8'd129;
+ // 16'h53e3:glyph_index=8'd128;
+ // 16'h53e0:glyph_index=8'd127;
+ // 16'h53d8:glyph_index=8'd126;
+ // 16'h53d6:glyph_index=8'd125;
+ // 16'h53cc:glyph_index=8'd124;
+ // 16'h539f:glyph_index=8'd123;
+ // 16'h5361:glyph_index=8'd122;
+ // 16'h5355:glyph_index=8'd121;
+ // 16'h533a:glyph_index=8'd120;
+ // 16'h5316:glyph_index=8'd119;
+ // 16'h52a8:glyph_index=8'd118;
+ // 16'h52a0:glyph_index=8'd117;
+ // 16'h5230:glyph_index=8'd116;
+ // 16'h521d:glyph_index=8'd115;
+ // 16'h5207:glyph_index=8'd114;
+ // 16'h5206:glyph_index=8'd113;
+ // 16'h51c6:glyph_index=8'd112;
+ // 16'h5173:glyph_index=8'd111;
+ // 16'h5149:glyph_index=8'd110;
+ // 16'h50a8:glyph_index=8'd109;
+ // 16'h505c:glyph_index=8'd108;
+ // 16'h5012:glyph_index=8'd107;
+ // 16'h4f7f:glyph_index=8'd106;
+ // 16'h4f53:glyph_index=8'd105;
+ // 16'h4f4d:glyph_index=8'd104;
+ // 16'h4ef6:glyph_index=8'd103;
+ // 16'h4eca:glyph_index=8'd102;
+ // 16'h4e50:glyph_index=8'd101;
+ // 16'h4e3a:glyph_index=8'd100;
+ // 16'h4e2d:glyph_index=8'd99;
+ // 16'h4e0e:glyph_index=8'd98;
+ // 16'h4e0b:glyph_index=8'd97;
+ // 16'h4e0a:glyph_index=8'd96;
+ // 16'h4e00:glyph_index=8'd95;
+ // 16'h007e:glyph_index=8'd94;
+ // 16'h007d:glyph_index=8'd93;
+ // 16'h007c:glyph_index=8'd92;
+ // 16'h007b:glyph_index=8'd91;
+ // 16'h007a:glyph_index=8'd90;
+ // 16'h0079:glyph_index=8'd89;
+ // 16'h0078:glyph_index=8'd88;
+ // 16'h0077:glyph_index=8'd87;
+ // 16'h0076:glyph_index=8'd86;
+ // 16'h0075:glyph_index=8'd85;
+ // 16'h0074:glyph_index=8'd84;
+ // 16'h0073:glyph_index=8'd83;
+ // 16'h0072:glyph_index=8'd82;
+ // 16'h0071:glyph_index=8'd81;
+ // 16'h0070:glyph_index=8'd80;
+ // 16'h006f:glyph_index=8'd79;
+ // 16'h006e:glyph_index=8'd78;
+ // 16'h006d:glyph_index=8'd77;
+ // 16'h006c:glyph_index=8'd76;
+ // 16'h006b:glyph_index=8'd75;
+ // 16'h006a:glyph_index=8'd74;
+ // 16'h0069:glyph_index=8'd73;
+ // 16'h0068:glyph_index=8'd72;
+ // 16'h0067:glyph_index=8'd71;
+ // 16'h0066:glyph_index=8'd70;
+ // 16'h0065:glyph_index=8'd69;
+ // 16'h0064:glyph_index=8'd68;
+ // 16'h0063:glyph_index=8'd67;
+ // 16'h0062:glyph_index=8'd66;
+ // 16'h0061:glyph_index=8'd65;
+ // 16'h0060:glyph_index=8'd64;
+ // 16'h005f:glyph_index=8'd63;
+ // 16'h005e:glyph_index=8'd62;
+ // 16'h005d:glyph_index=8'd61;
+ // 16'h005c:glyph_index=8'd60;
+ // 16'h005b:glyph_index=8'd59;
+ // 16'h005a:glyph_index=8'd58;
+ // 16'h0059:glyph_index=8'd57;
+ // 16'h0058:glyph_index=8'd56;
+ // 16'h0057:glyph_index=8'd55;
+ // 16'h0056:glyph_index=8'd54;
+ // 16'h0055:glyph_index=8'd53;
+ // 16'h0054:glyph_index=8'd52;
+ // 16'h0053:glyph_index=8'd51;
+ // 16'h0052:glyph_index=8'd50;
+ // 16'h0051:glyph_index=8'd49;
+ // 16'h0050:glyph_index=8'd48;
+ // 16'h004f:glyph_index=8'd47;
+ // 16'h004e:glyph_index=8'd46;
+ // 16'h004d:glyph_index=8'd45;
+ // 16'h004c:glyph_index=8'd44;
+ // 16'h004b:glyph_index=8'd43;
+ // 16'h004a:glyph_index=8'd42;
+ // 16'h0049:glyph_index=8'd41;
+ // 16'h0048:glyph_index=8'd40;
+ // 16'h0047:glyph_index=8'd39;
+ // 16'h0046:glyph_index=8'd38;
+ // 16'h0045:glyph_index=8'd37;
+ // 16'h0044:glyph_index=8'd36;
+ // 16'h0043:glyph_index=8'd35;
+ // 16'h0042:glyph_index=8'd34;
+ // 16'h0041:glyph_index=8'd33;
+ // 16'h0040:glyph_index=8'd32;
+ // 16'h003f:glyph_index=8'd31;
+ // 16'h003e:glyph_index=8'd30;
+ // 16'h003d:glyph_index=8'd29;
+ // 16'h003c:glyph_index=8'd28;
+ // 16'h003b:glyph_index=8'd27;
+ // 16'h003a:glyph_index=8'd26;
+ // 16'h0039:glyph_index=8'd25;
+ // 16'h0038:glyph_index=8'd24;
+ // 16'h0037:glyph_index=8'd23;
+ // 16'h0036:glyph_index=8'd22;
+ // 16'h0035:glyph_index=8'd21;
+ // 16'h0034:glyph_index=8'd20;
+ // 16'h0033:glyph_index=8'd19;
+ // 16'h0032:glyph_index=8'd18;
+ // 16'h0031:glyph_index=8'd17;
+ // 16'h0030:glyph_index=8'd16;
+ // 16'h002f:glyph_index=8'd15;
+ // 16'h002e:glyph_index=8'd14;
+ // 16'h002d:glyph_index=8'd13;
+ // 16'h002c:glyph_index=8'd12;
+ // 16'h002b:glyph_index=8'd11;
+ // 16'h002a:glyph_index=8'd10;
+ // 16'h0029:glyph_index=8'd9;
+ // 16'h0028:glyph_index=8'd8;
+ // 16'h0027:glyph_index=8'd7;
+ // 16'h0026:glyph_index=8'd6;
+ // 16'h0025:glyph_index=8'd5;
+ // 16'h0024:glyph_index=8'd4;
+ // 16'h0023:glyph_index=8'd3;
+ // 16'h0022:glyph_index=8'd2;
+ // 16'h0021:glyph_index=8'd1;
+ // 16'h0020:glyph_index=8'd0;
+ function [7:0] glyph_lookup;
+ input [15:0] code;
+ begin
+ glyph_lookup=0;
+ case(code[15:8])
+ 8'h00:begin
+ if(code[7:0]>=32 && code[7:0]<=126)glyph_lookup=code[7:0]-32;
+ end
+ 8'h4e:begin
+ case(code[7:0])
+ 8'h00:glyph_lookup=8'd95;
+ 8'h0a:glyph_lookup=8'd96;
+ 8'h0b:glyph_lookup=8'd97;
+ 8'h0e:glyph_lookup=8'd98;
+ 8'h2d:glyph_lookup=8'd99;
+ 8'h3a:glyph_lookup=8'd100;
+ 8'h50:glyph_lookup=8'd101;
+ 8'hca:glyph_lookup=8'd102;
+ 8'hf6:glyph_lookup=8'd103;
+ default:begin end
+ endcase
+ end
+ 8'h4f:begin
+ case(code[7:0])
+ 8'h4d:glyph_lookup=8'd104;
+ 8'h53:glyph_lookup=8'd105;
+ 8'h7f:glyph_lookup=8'd106;
+ default:begin end
+ endcase
+ end
+ 8'h50:begin
+ case(code[7:0])
+ 8'h12:glyph_lookup=8'd107;
+ 8'h5c:glyph_lookup=8'd108;
+ 8'ha8:glyph_lookup=8'd109;
+ default:begin end
+ endcase
+ end
+ 8'h51:begin
+ case(code[7:0])
+ 8'h49:glyph_lookup=8'd110;
+ 8'h73:glyph_lookup=8'd111;
+ 8'hc6:glyph_lookup=8'd112;
+ default:begin end
+ endcase
+ end
+ 8'h52:begin
+ case(code[7:0])
+ 8'h06:glyph_lookup=8'd113;
+ 8'h07:glyph_lookup=8'd114;
+ 8'h1d:glyph_lookup=8'd115;
+ 8'h30:glyph_lookup=8'd116;
+ 8'ha0:glyph_lookup=8'd117;
+ 8'ha8:glyph_lookup=8'd118;
+ default:begin end
+ endcase
+ end
+ 8'h53:begin
+ case(code[7:0])
+ 8'h16:glyph_lookup=8'd119;
+ 8'h3a:glyph_lookup=8'd120;
+ 8'h55:glyph_lookup=8'd121;
+ 8'h61:glyph_lookup=8'd122;
+ 8'h9f:glyph_lookup=8'd123;
+ 8'hcc:glyph_lookup=8'd124;
+ 8'hd6:glyph_lookup=8'd125;
+ 8'hd8:glyph_lookup=8'd126;
+ 8'he0:glyph_lookup=8'd127;
+ 8'he3:glyph_lookup=8'd128;
+ 8'hef:glyph_lookup=8'd129;
+ default:begin end
+ endcase
+ end
+ 8'h54:begin
+ case(code[7:0])
+ 8'h08:glyph_lookup=8'd130;
+ 8'h11:glyph_lookup=8'd131;
+ 8'h2f:glyph_lookup=8'd132;
+ 8'h96:glyph_lookup=8'd133;
+ 8'hc1:glyph_lookup=8'd134;
+ default:begin end
+ endcase
+ end
+ 8'h55:begin
+ case(code[7:0])
+ 8'h61:glyph_lookup=8'd135;
+ default:begin end
+ endcase
+ end
+ 8'h56:begin
+ case(code[7:0])
+ 8'h68:glyph_lookup=8'd136;
+ 8'hde:glyph_lookup=8'd137;
+ 8'hfe:glyph_lookup=8'd138;
+ default:begin end
+ endcase
+ end
+ 8'h57:begin
+ case(code[7:0])
+ 8'h28:glyph_lookup=8'd139;
+ 8'h4f:glyph_lookup=8'd140;
+ default:begin end
+ endcase
+ end
+ 8'h59:begin
+ case(code[7:0])
+ 8'h07:glyph_lookup=8'd141;
+ 8'h1a:glyph_lookup=8'd142;
+ 8'h27:glyph_lookup=8'd143;
+ 8'h4f:glyph_lookup=8'd144;
+ 8'h7d:glyph_lookup=8'd145;
+ 8'hcb:glyph_lookup=8'd146;
+ default:begin end
+ endcase
+ end
+ 8'h5a:begin
+ case(code[7:0])
+ 8'h92:glyph_lookup=8'd147;
+ default:begin end
+ endcase
+ end
+ 8'h5b:begin
+ case(code[7:0])
+ 8'h57:glyph_lookup=8'd148;
+ 8'h58:glyph_lookup=8'd149;
+ default:begin end
+ endcase
+ end
+ 8'h5c:begin
+ case(code[7:0])
+ 8'h0f:glyph_lookup=8'd150;
+ 8'h1d:glyph_lookup=8'd151;
+ 8'h42:glyph_lookup=8'd152;
+ 8'h45:glyph_lookup=8'd153;
+ default:begin end
+ endcase
+ end
+ 8'h5e:begin
+ case(code[7:0])
+ 8'h02:glyph_lookup=8'd154;
+ 8'h38:glyph_lookup=8'd155;
+ 8'h55:glyph_lookup=8'd156;
+ 8'h8f:glyph_lookup=8'd157;
+ 8'h97:glyph_lookup=8'd158;
+ default:begin end
+ endcase
+ end
+ 8'h5f:begin
+ case(code[7:0])
+ 8'h00:glyph_lookup=8'd159;
+ 8'h02:glyph_lookup=8'd160;
+ 8'h0f:glyph_lookup=8'd161;
+ 8'h20:glyph_lookup=8'd162;
+ 8'h55:glyph_lookup=8'd163;
+ 8'hc3:glyph_lookup=8'd164;
+ default:begin end
+ endcase
+ end
+ 8'h60:begin
+ case(code[7:0])
+ 8'h01:glyph_lookup=8'd165;
+ default:begin end
+ endcase
+ end
+ 8'h62:begin
+ case(code[7:0])
+ 8'h16:glyph_lookup=8'd166;
+ 8'h53:glyph_lookup=8'd167;
+ 8'h6b:glyph_lookup=8'd168;
+ 8'h7e:glyph_lookup=8'd169;
+ default:begin end
+ endcase
+ end
+ 8'h63:begin
+ case(code[7:0])
+ 8'h09:glyph_lookup=8'd170;
+ 8'h5f:glyph_lookup=8'd171;
+ 8'h6e:glyph_lookup=8'd172;
+ 8'ha8:glyph_lookup=8'd173;
+ 8'hcf:glyph_lookup=8'd174;
+ default:begin end
+ endcase
+ end
+ 8'h64:begin
+ case(code[7:0])
+ 8'had:glyph_lookup=8'd175;
+ default:begin end
+ endcase
+ end
+ 8'h65:begin
+ case(code[7:0])
+ 8'h3e:glyph_lookup=8'd176;
+ 8'h70:glyph_lookup=8'd177;
+ 8'h87:glyph_lookup=8'd178;
+ 8'hb0:glyph_lookup=8'd179;
+ 8'hb9:glyph_lookup=8'd180;
+ 8'he5:glyph_lookup=8'd181;
+ 8'hf6:glyph_lookup=8'd182;
+ default:begin end
+ endcase
+ end
+ 8'h66:begin
+ case(code[7:0])
+ 8'h2f:glyph_lookup=8'd183;
+ 8'h3e:glyph_lookup=8'd184;
+ 8'h82:glyph_lookup=8'd185;
+ default:begin end
+ endcase
+ end
+ 8'h67:begin
+ case(code[7:0])
+ 8'h2a:glyph_lookup=8'd186;
+ 8'he5:glyph_lookup=8'd187;
+ default:begin end
+ endcase
+ end
+ 8'h68:begin
+ case(code[7:0])
+ 8'h39:glyph_lookup=8'd188;
+ 8'h3c:glyph_lookup=8'd189;
+ 8'hc0:glyph_lookup=8'd190;
+ default:begin end
+ endcase
+ end
+ 8'h6b:begin
+ case(code[7:0])
+ 8'h22:glyph_lookup=8'd191;
+ 8'h63:glyph_lookup=8'd192;
+ 8'hcf:glyph_lookup=8'd193;
+ default:begin end
+ endcase
+ end
+ 8'h72:begin
+ case(code[7:0])
+ 8'h47:glyph_lookup=8'd194;
+ 8'hb6:glyph_lookup=8'd195;
+ 8'hec:glyph_lookup=8'd196;
+ default:begin end
+ endcase
+ end
+ 8'h73:begin
+ case(code[7:0])
+ 8'hb0:glyph_lookup=8'd197;
+ default:begin end
+ endcase
+ end
+ 8'h75:begin
+ case(code[7:0])
+ 8'h28:glyph_lookup=8'd198;
+ 8'h3b:glyph_lookup=8'd199;
+ default:begin end
+ endcase
+ end
+ 8'h76:begin
+ case(code[7:0])
+ 8'h84:glyph_lookup=8'd200;
+ 8'hee:glyph_lookup=8'd201;
+ default:begin end
+ endcase
+ end
+ 8'h78:begin
+ case(code[7:0])
+ 8'he8:glyph_lookup=8'd202;
+ default:begin end
+ endcase
+ end
+ 8'h79:begin
+ case(code[7:0])
+ 8'h3a:glyph_lookup=8'd203;
+ 8'hd2:glyph_lookup=8'd204;
+ 8'hfb:glyph_lookup=8'd205;
+ default:begin end
+ endcase
+ end
+ 8'h7a:begin
+ case(code[7:0])
+ 8'h7a:glyph_lookup=8'd206;
+ 8'hcb:glyph_lookup=8'd207;
+ default:begin end
+ endcase
+ end
+ 8'h7b:begin
+ case(code[7:0])
+ 8'h26:glyph_lookup=8'd208;
+ default:begin end
+ endcase
+ end
+ 8'h7c:begin
+ case(code[7:0])
+ 8'h07:glyph_lookup=8'd209;
+ default:begin end
+ endcase
+ end
+ 8'h7f:begin
+ case(code[7:0])
+ 8'h13:glyph_lookup=8'd210;
+ 8'h29:glyph_lookup=8'd211;
+ default:begin end
+ endcase
+ end
+ 8'h81:begin
+ case(code[7:0])
+ 8'hea:glyph_lookup=8'd212;
+ default:begin end
+ endcase
+ end
+ 8'h82:begin
+ case(code[7:0])
+ 8'h82:glyph_lookup=8'd213;
+ default:begin end
+ endcase
+ end
+ 8'h83:begin
+ case(code[7:0])
+ 8'h50:glyph_lookup=8'd214;
+ 8'hdc:glyph_lookup=8'd215;
+ default:begin end
+ endcase
+ end
+ 8'h84:begin
+ case(code[7:0])
+ 8'h03:glyph_lookup=8'd216;
+ default:begin end
+ endcase
+ end
+ 8'h89:begin
+ case(code[7:0])
+ 8'h81:glyph_lookup=8'd217;
+ 8'hc6:glyph_lookup=8'd218;
+ default:begin end
+ endcase
+ end
+ 8'h8b:begin
+ case(code[7:0])
+ 8'hd5:glyph_lookup=8'd219;
+ 8'hef:glyph_lookup=8'd220;
+ 8'hf7:glyph_lookup=8'd221;
+ 8'hfb:glyph_lookup=8'd222;
+ default:begin end
+ endcase
+ end
+ 8'h8c:begin
+ case(code[7:0])
+ 8'h31:glyph_lookup=8'd223;
+ default:begin end
+ endcase
+ end
+ 8'h8d:begin
+ case(code[7:0])
+ 8'h85:glyph_lookup=8'd224;
+ default:begin end
+ endcase
+ end
+ 8'h8f:begin
+ case(code[7:0])
+ 8'h6e:glyph_lookup=8'd225;
+ 8'h7d:glyph_lookup=8'd226;
+ 8'hce:glyph_lookup=8'd227;
+ 8'hd4:glyph_lookup=8'd228;
+ default:begin end
+ endcase
+ end
+ 8'h90:begin
+ case(code[7:0])
+ 8'hfd:glyph_lookup=8'd229;
+ default:begin end
+ endcase
+ end
+ 8'h91:begin
+ case(code[7:0])
+ 8'h87:glyph_lookup=8'd230;
+ 8'hcd:glyph_lookup=8'd231;
+ default:begin end
+ endcase
+ end
+ 8'h94:begin
+ case(code[7:0])
+ 8'hfe:glyph_lookup=8'd232;
+ default:begin end
+ endcase
+ end
+ 8'h95:begin
+ case(code[7:0])
+ 8'h19:glyph_lookup=8'd233;
+ 8'h2e:glyph_lookup=8'd234;
+ 8'h7f:glyph_lookup=8'd235;
+ 8'hed:glyph_lookup=8'd236;
+ 8'hf4:glyph_lookup=8'd237;
+ default:begin end
+ endcase
+ end
+ 8'h96:begin
+ case(code[7:0])
+ 8'h8f:glyph_lookup=8'd238;
+ 8'h94:glyph_lookup=8'd239;
+ default:begin end
+ endcase
+ end
+ 8'h97:begin
+ case(code[7:0])
+ 8'h00:glyph_lookup=8'd240;
+ 8'h62:glyph_lookup=8'd241;
+ 8'hf3:glyph_lookup=8'd242;
+ default:begin end
+ endcase
+ end
+ 8'h98:begin
+ case(code[7:0])
+ 8'h79:glyph_lookup=8'd243;
+ 8'h91:glyph_lookup=8'd244;
+ default:begin end
+ endcase
+ end
+ 8'h99:begin
+ case(code[7:0])
+ 8'h99:glyph_lookup=8'd245;
+ default:begin end
+ endcase
+ end
+ 8'hff:begin
+ case(code[7:0])
+ 8'h0c:glyph_lookup=8'd246;
+ 8'h1a:glyph_lookup=8'd247;
+ default:begin end
+ endcase
+ end
+ default:begin end
+ endcase
+ end
+ endfunction
  always @* begin
-  case(codepoint)
-   16'h0020:glyph_index=8'd0; // SPACE
-   16'h0021:glyph_index=8'd1; // !
-   16'h0022:glyph_index=8'd2; // "
-   16'h0023:glyph_index=8'd3; // #
-   16'h0024:glyph_index=8'd4; // $
-   16'h0025:glyph_index=8'd5; // %
-   16'h0026:glyph_index=8'd6; // &
-   16'h0027:glyph_index=8'd7; // '
-   16'h0028:glyph_index=8'd8; // (
-   16'h0029:glyph_index=8'd9; // )
-   16'h002a:glyph_index=8'd10; // *
-   16'h002b:glyph_index=8'd11; // +
-   16'h002c:glyph_index=8'd12; // ,
-   16'h002d:glyph_index=8'd13; // -
-   16'h002e:glyph_index=8'd14; // .
-   16'h002f:glyph_index=8'd15; // /
-   16'h0030:glyph_index=8'd16; // 0
-   16'h0031:glyph_index=8'd17; // 1
-   16'h0032:glyph_index=8'd18; // 2
-   16'h0033:glyph_index=8'd19; // 3
-   16'h0034:glyph_index=8'd20; // 4
-   16'h0035:glyph_index=8'd21; // 5
-   16'h0036:glyph_index=8'd22; // 6
-   16'h0037:glyph_index=8'd23; // 7
-   16'h0038:glyph_index=8'd24; // 8
-   16'h0039:glyph_index=8'd25; // 9
-   16'h003a:glyph_index=8'd26; // :
-   16'h003b:glyph_index=8'd27; // ;
-   16'h003c:glyph_index=8'd28; // <
-   16'h003d:glyph_index=8'd29; // =
-   16'h003e:glyph_index=8'd30; // >
-   16'h003f:glyph_index=8'd31; // ?
-   16'h0040:glyph_index=8'd32; // @
-   16'h0041:glyph_index=8'd33; // A
-   16'h0042:glyph_index=8'd34; // B
-   16'h0043:glyph_index=8'd35; // C
-   16'h0044:glyph_index=8'd36; // D
-   16'h0045:glyph_index=8'd37; // E
-   16'h0046:glyph_index=8'd38; // F
-   16'h0047:glyph_index=8'd39; // G
-   16'h0048:glyph_index=8'd40; // H
-   16'h0049:glyph_index=8'd41; // I
-   16'h004a:glyph_index=8'd42; // J
-   16'h004b:glyph_index=8'd43; // K
-   16'h004c:glyph_index=8'd44; // L
-   16'h004d:glyph_index=8'd45; // M
-   16'h004e:glyph_index=8'd46; // N
-   16'h004f:glyph_index=8'd47; // O
-   16'h0050:glyph_index=8'd48; // P
-   16'h0051:glyph_index=8'd49; // Q
-   16'h0052:glyph_index=8'd50; // R
-   16'h0053:glyph_index=8'd51; // S
-   16'h0054:glyph_index=8'd52; // T
-   16'h0055:glyph_index=8'd53; // U
-   16'h0056:glyph_index=8'd54; // V
-   16'h0057:glyph_index=8'd55; // W
-   16'h0058:glyph_index=8'd56; // X
-   16'h0059:glyph_index=8'd57; // Y
-   16'h005a:glyph_index=8'd58; // Z
-   16'h005b:glyph_index=8'd59; // [
-   16'h005c:glyph_index=8'd60; // \
-   16'h005d:glyph_index=8'd61; // ]
-   16'h005e:glyph_index=8'd62; // ^
-   16'h005f:glyph_index=8'd63; // _
-   16'h0060:glyph_index=8'd64; // `
-   16'h0061:glyph_index=8'd65; // a
-   16'h0062:glyph_index=8'd66; // b
-   16'h0063:glyph_index=8'd67; // c
-   16'h0064:glyph_index=8'd68; // d
-   16'h0065:glyph_index=8'd69; // e
-   16'h0066:glyph_index=8'd70; // f
-   16'h0067:glyph_index=8'd71; // g
-   16'h0068:glyph_index=8'd72; // h
-   16'h0069:glyph_index=8'd73; // i
-   16'h006a:glyph_index=8'd74; // j
-   16'h006b:glyph_index=8'd75; // k
-   16'h006c:glyph_index=8'd76; // l
-   16'h006d:glyph_index=8'd77; // m
-   16'h006e:glyph_index=8'd78; // n
-   16'h006f:glyph_index=8'd79; // o
-   16'h0070:glyph_index=8'd80; // p
-   16'h0071:glyph_index=8'd81; // q
-   16'h0072:glyph_index=8'd82; // r
-   16'h0073:glyph_index=8'd83; // s
-   16'h0074:glyph_index=8'd84; // t
-   16'h0075:glyph_index=8'd85; // u
-   16'h0076:glyph_index=8'd86; // v
-   16'h0077:glyph_index=8'd87; // w
-   16'h0078:glyph_index=8'd88; // x
-   16'h0079:glyph_index=8'd89; // y
-   16'h007a:glyph_index=8'd90; // z
-   16'h007b:glyph_index=8'd91; // {
-   16'h007c:glyph_index=8'd92; // |
-   16'h007d:glyph_index=8'd93; // }
-   16'h007e:glyph_index=8'd94; // ~
-   16'h4e00:glyph_index=8'd95; // 一
-   16'h4e0a:glyph_index=8'd96; // 上
-   16'h4e0b:glyph_index=8'd97; // 下
-   16'h4e0e:glyph_index=8'd98; // 与
-   16'h4e2d:glyph_index=8'd99; // 中
-   16'h4e3a:glyph_index=8'd100; // 为
-   16'h4e50:glyph_index=8'd101; // 乐
-   16'h4eca:glyph_index=8'd102; // 今
-   16'h4ef6:glyph_index=8'd103; // 件
-   16'h4f4d:glyph_index=8'd104; // 位
-   16'h4f53:glyph_index=8'd105; // 体
-   16'h4f7f:glyph_index=8'd106; // 使
-   16'h5012:glyph_index=8'd107; // 倒
-   16'h505c:glyph_index=8'd108; // 停
-   16'h50a8:glyph_index=8'd109; // 储
-   16'h5149:glyph_index=8'd110; // 光
-   16'h5173:glyph_index=8'd111; // 关
-   16'h51c6:glyph_index=8'd112; // 准
-   16'h5206:glyph_index=8'd113; // 分
-   16'h5207:glyph_index=8'd114; // 切
-   16'h521d:glyph_index=8'd115; // 初
-   16'h5230:glyph_index=8'd116; // 到
-   16'h52a0:glyph_index=8'd117; // 加
-   16'h52a8:glyph_index=8'd118; // 动
-   16'h5316:glyph_index=8'd119; // 化
-   16'h533a:glyph_index=8'd120; // 区
-   16'h5355:glyph_index=8'd121; // 单
-   16'h5361:glyph_index=8'd122; // 卡
-   16'h539f:glyph_index=8'd123; // 原
-   16'h53cc:glyph_index=8'd124; // 双
-   16'h53d6:glyph_index=8'd125; // 取
-   16'h53d8:glyph_index=8'd126; // 变
-   16'h53e0:glyph_index=8'd127; // 叠
-   16'h53e3:glyph_index=8'd128; // 口
-   16'h53ef:glyph_index=8'd129; // 可
-   16'h5408:glyph_index=8'd130; // 合
-   16'h5411:glyph_index=8'd131; // 向
-   16'h542f:glyph_index=8'd132; // 启
-   16'h5496:glyph_index=8'd133; // 咖
-   16'h54c1:glyph_index=8'd134; // 品
-   16'h5561:glyph_index=8'd135; // 啡
-   16'h5668:glyph_index=8'd136; // 器
-   16'h56de:glyph_index=8'd137; // 回
-   16'h56fe:glyph_index=8'd138; // 图
-   16'h5728:glyph_index=8'd139; // 在
-   16'h574f:glyph_index=8'd140; // 坏
-   16'h5907:glyph_index=8'd141; // 备
-   16'h591a:glyph_index=8'd142; // 多
-   16'h5927:glyph_index=8'd143; // 大
-   16'h594f:glyph_index=8'd144; // 奏
-   16'h597d:glyph_index=8'd145; // 好
-   16'h59cb:glyph_index=8'd146; // 始
-   16'h5a92:glyph_index=8'd147; // 媒
-   16'h5b57:glyph_index=8'd148; // 字
-   16'h5b58:glyph_index=8'd149; // 存
-   16'h5c0f:glyph_index=8'd150; // 小
-   16'h5c1d:glyph_index=8'd151; // 尝
-   16'h5c42:glyph_index=8'd152; // 层
-   16'h5c45:glyph_index=8'd153; // 居
-   16'h5e02:glyph_index=8'd154; // 市
-   16'h5e38:glyph_index=8'd155; // 常
-   16'h5e55:glyph_index=8'd156; // 幕
-   16'h5e8f:glyph_index=8'd157; // 序
-   16'h5e97:glyph_index=8'd158; // 店
-   16'h5f00:glyph_index=8'd159; // 开
-   16'h5f02:glyph_index=8'd160; // 异
-   16'h5f0f:glyph_index=8'd161; // 式
-   16'h5f20:glyph_index=8'd162; // 张
-   16'h5f55:glyph_index=8'd163; // 录
-   16'h5fc3:glyph_index=8'd164; // 心
-   16'h6001:glyph_index=8'd165; // 态
-   16'h6216:glyph_index=8'd166; // 或
-   16'h6253:glyph_index=8'd167; // 打
-   16'h626b:glyph_index=8'd168; // 扫
-   16'h627e:glyph_index=8'd169; // 找
-   16'h6309:glyph_index=8'd170; // 按
-   16'h635f:glyph_index=8'd171; // 损
-   16'h636e:glyph_index=8'd172; // 据
-   16'h63a8:glyph_index=8'd173; // 推
-   16'h63cf:glyph_index=8'd174; // 描
-   16'h64ad:glyph_index=8'd175; // 播
-   16'h653e:glyph_index=8'd176; // 放
-   16'h6570:glyph_index=8'd177; // 数
-   16'h6587:glyph_index=8'd178; // 文
-   16'h65b0:glyph_index=8'd179; // 新
-   16'h65b9:glyph_index=8'd180; // 方
-   16'h65e5:glyph_index=8'd181; // 日
-   16'h65f6:glyph_index=8'd182; // 时
-   16'h662f:glyph_index=8'd183; // 是
-   16'h663e:glyph_index=8'd184; // 显
-   16'h6682:glyph_index=8'd185; // 暂
-   16'h672a:glyph_index=8'd186; // 未
-   16'h67e5:glyph_index=8'd187; // 查
-   16'h6839:glyph_index=8'd188; // 根
-   16'h683c:glyph_index=8'd189; // 格
-   16'h68c0:glyph_index=8'd190; // 检
-   16'h6b22:glyph_index=8'd191; // 欢
-   16'h6b63:glyph_index=8'd192; // 正
-   16'h6bcf:glyph_index=8'd193; // 每
-   16'h7247:glyph_index=8'd194; // 片
-   16'h72b6:glyph_index=8'd195; // 状
-   16'h72ec:glyph_index=8'd196; // 独
-   16'h73b0:glyph_index=8'd197; // 现
-   16'h7528:glyph_index=8'd198; // 用
-   16'h753b:glyph_index=8'd199; // 画
-   16'h7684:glyph_index=8'd200; // 的
-   16'h76ee:glyph_index=8'd201; // 目
-   16'h78e8:glyph_index=8'd202; // 磨
-   16'h793a:glyph_index=8'd203; // 示
-   16'h79d2:glyph_index=8'd204; // 秒
-   16'h79fb:glyph_index=8'd205; // 移
-   16'h7a7a:glyph_index=8'd206; // 空
-   16'h7acb:glyph_index=8'd207; // 立
-   16'h7b26:glyph_index=8'd208; // 符
-   16'h7c07:glyph_index=8'd209; // 簇
-   16'h7f13:glyph_index=8'd210; // 缓
-   16'h7f29:glyph_index=8'd211; // 缩
-   16'h81ea:glyph_index=8'd212; // 自
-   16'h8282:glyph_index=8'd213; // 节
-   16'h8350:glyph_index=8'd214; // 荐
-   16'h83dc:glyph_index=8'd215; // 菜
-   16'h8403:glyph_index=8'd216; // 萃
-   16'h8981:glyph_index=8'd217; // 要
-   16'h89c6:glyph_index=8'd218; // 视
-   16'h8bd5:glyph_index=8'd219; // 试
-   16'h8bef:glyph_index=8'd220; // 误
-   16'h8bf7:glyph_index=8'd221; // 请
-   16'h8bfb:glyph_index=8'd222; // 读
-   16'h8c31:glyph_index=8'd223; // 谱
-   16'h8d85:glyph_index=8'd224; // 超
-   16'h8f6e:glyph_index=8'd225; // 轮
-   16'h8f7d:glyph_index=8'd226; // 载
-   16'h8fce:glyph_index=8'd227; // 迎
-   16'h8fd4:glyph_index=8'd228; // 返
-   16'h90fd:glyph_index=8'd229; // 都
-   16'h9187:glyph_index=8'd230; // 醇
-   16'h91cd:glyph_index=8'd231; // 重
-   16'h94fe:glyph_index=8'd232; // 链
-   16'h9519:glyph_index=8'd233; // 错
-   16'h952e:glyph_index=8'd234; // 键
-   16'h957f:glyph_index=8'd235; // 长
-   16'h95ed:glyph_index=8'd236; // 闭
-   16'h95f4:glyph_index=8'd237; // 间
-   16'h968f:glyph_index=8'd238; // 随
-   16'h9694:glyph_index=8'd239; // 隔
-   16'h9700:glyph_index=8'd240; // 需
-   16'h9762:glyph_index=8'd241; // 面
-   16'h97f3:glyph_index=8'd242; // 音
-   16'h9879:glyph_index=8'd243; // 项
-   16'h9891:glyph_index=8'd244; // 频
-   16'h9999:glyph_index=8'd245; // 香
-   16'hff0c:glyph_index=8'd246; // ，
-   16'hff1a:glyph_index=8'd247; // ：
-   default:glyph_index=0;
-  endcase
-  case(codepoint_b)
-   16'h0020:glyph_index_b=8'd0; // SPACE
-   16'h0021:glyph_index_b=8'd1; // !
-   16'h0022:glyph_index_b=8'd2; // "
-   16'h0023:glyph_index_b=8'd3; // #
-   16'h0024:glyph_index_b=8'd4; // $
-   16'h0025:glyph_index_b=8'd5; // %
-   16'h0026:glyph_index_b=8'd6; // &
-   16'h0027:glyph_index_b=8'd7; // '
-   16'h0028:glyph_index_b=8'd8; // (
-   16'h0029:glyph_index_b=8'd9; // )
-   16'h002a:glyph_index_b=8'd10; // *
-   16'h002b:glyph_index_b=8'd11; // +
-   16'h002c:glyph_index_b=8'd12; // ,
-   16'h002d:glyph_index_b=8'd13; // -
-   16'h002e:glyph_index_b=8'd14; // .
-   16'h002f:glyph_index_b=8'd15; // /
-   16'h0030:glyph_index_b=8'd16; // 0
-   16'h0031:glyph_index_b=8'd17; // 1
-   16'h0032:glyph_index_b=8'd18; // 2
-   16'h0033:glyph_index_b=8'd19; // 3
-   16'h0034:glyph_index_b=8'd20; // 4
-   16'h0035:glyph_index_b=8'd21; // 5
-   16'h0036:glyph_index_b=8'd22; // 6
-   16'h0037:glyph_index_b=8'd23; // 7
-   16'h0038:glyph_index_b=8'd24; // 8
-   16'h0039:glyph_index_b=8'd25; // 9
-   16'h003a:glyph_index_b=8'd26; // :
-   16'h003b:glyph_index_b=8'd27; // ;
-   16'h003c:glyph_index_b=8'd28; // <
-   16'h003d:glyph_index_b=8'd29; // =
-   16'h003e:glyph_index_b=8'd30; // >
-   16'h003f:glyph_index_b=8'd31; // ?
-   16'h0040:glyph_index_b=8'd32; // @
-   16'h0041:glyph_index_b=8'd33; // A
-   16'h0042:glyph_index_b=8'd34; // B
-   16'h0043:glyph_index_b=8'd35; // C
-   16'h0044:glyph_index_b=8'd36; // D
-   16'h0045:glyph_index_b=8'd37; // E
-   16'h0046:glyph_index_b=8'd38; // F
-   16'h0047:glyph_index_b=8'd39; // G
-   16'h0048:glyph_index_b=8'd40; // H
-   16'h0049:glyph_index_b=8'd41; // I
-   16'h004a:glyph_index_b=8'd42; // J
-   16'h004b:glyph_index_b=8'd43; // K
-   16'h004c:glyph_index_b=8'd44; // L
-   16'h004d:glyph_index_b=8'd45; // M
-   16'h004e:glyph_index_b=8'd46; // N
-   16'h004f:glyph_index_b=8'd47; // O
-   16'h0050:glyph_index_b=8'd48; // P
-   16'h0051:glyph_index_b=8'd49; // Q
-   16'h0052:glyph_index_b=8'd50; // R
-   16'h0053:glyph_index_b=8'd51; // S
-   16'h0054:glyph_index_b=8'd52; // T
-   16'h0055:glyph_index_b=8'd53; // U
-   16'h0056:glyph_index_b=8'd54; // V
-   16'h0057:glyph_index_b=8'd55; // W
-   16'h0058:glyph_index_b=8'd56; // X
-   16'h0059:glyph_index_b=8'd57; // Y
-   16'h005a:glyph_index_b=8'd58; // Z
-   16'h005b:glyph_index_b=8'd59; // [
-   16'h005c:glyph_index_b=8'd60; // \
-   16'h005d:glyph_index_b=8'd61; // ]
-   16'h005e:glyph_index_b=8'd62; // ^
-   16'h005f:glyph_index_b=8'd63; // _
-   16'h0060:glyph_index_b=8'd64; // `
-   16'h0061:glyph_index_b=8'd65; // a
-   16'h0062:glyph_index_b=8'd66; // b
-   16'h0063:glyph_index_b=8'd67; // c
-   16'h0064:glyph_index_b=8'd68; // d
-   16'h0065:glyph_index_b=8'd69; // e
-   16'h0066:glyph_index_b=8'd70; // f
-   16'h0067:glyph_index_b=8'd71; // g
-   16'h0068:glyph_index_b=8'd72; // h
-   16'h0069:glyph_index_b=8'd73; // i
-   16'h006a:glyph_index_b=8'd74; // j
-   16'h006b:glyph_index_b=8'd75; // k
-   16'h006c:glyph_index_b=8'd76; // l
-   16'h006d:glyph_index_b=8'd77; // m
-   16'h006e:glyph_index_b=8'd78; // n
-   16'h006f:glyph_index_b=8'd79; // o
-   16'h0070:glyph_index_b=8'd80; // p
-   16'h0071:glyph_index_b=8'd81; // q
-   16'h0072:glyph_index_b=8'd82; // r
-   16'h0073:glyph_index_b=8'd83; // s
-   16'h0074:glyph_index_b=8'd84; // t
-   16'h0075:glyph_index_b=8'd85; // u
-   16'h0076:glyph_index_b=8'd86; // v
-   16'h0077:glyph_index_b=8'd87; // w
-   16'h0078:glyph_index_b=8'd88; // x
-   16'h0079:glyph_index_b=8'd89; // y
-   16'h007a:glyph_index_b=8'd90; // z
-   16'h007b:glyph_index_b=8'd91; // {
-   16'h007c:glyph_index_b=8'd92; // |
-   16'h007d:glyph_index_b=8'd93; // }
-   16'h007e:glyph_index_b=8'd94; // ~
-   16'h4e00:glyph_index_b=8'd95; // 一
-   16'h4e0a:glyph_index_b=8'd96; // 上
-   16'h4e0b:glyph_index_b=8'd97; // 下
-   16'h4e0e:glyph_index_b=8'd98; // 与
-   16'h4e2d:glyph_index_b=8'd99; // 中
-   16'h4e3a:glyph_index_b=8'd100; // 为
-   16'h4e50:glyph_index_b=8'd101; // 乐
-   16'h4eca:glyph_index_b=8'd102; // 今
-   16'h4ef6:glyph_index_b=8'd103; // 件
-   16'h4f4d:glyph_index_b=8'd104; // 位
-   16'h4f53:glyph_index_b=8'd105; // 体
-   16'h4f7f:glyph_index_b=8'd106; // 使
-   16'h5012:glyph_index_b=8'd107; // 倒
-   16'h505c:glyph_index_b=8'd108; // 停
-   16'h50a8:glyph_index_b=8'd109; // 储
-   16'h5149:glyph_index_b=8'd110; // 光
-   16'h5173:glyph_index_b=8'd111; // 关
-   16'h51c6:glyph_index_b=8'd112; // 准
-   16'h5206:glyph_index_b=8'd113; // 分
-   16'h5207:glyph_index_b=8'd114; // 切
-   16'h521d:glyph_index_b=8'd115; // 初
-   16'h5230:glyph_index_b=8'd116; // 到
-   16'h52a0:glyph_index_b=8'd117; // 加
-   16'h52a8:glyph_index_b=8'd118; // 动
-   16'h5316:glyph_index_b=8'd119; // 化
-   16'h533a:glyph_index_b=8'd120; // 区
-   16'h5355:glyph_index_b=8'd121; // 单
-   16'h5361:glyph_index_b=8'd122; // 卡
-   16'h539f:glyph_index_b=8'd123; // 原
-   16'h53cc:glyph_index_b=8'd124; // 双
-   16'h53d6:glyph_index_b=8'd125; // 取
-   16'h53d8:glyph_index_b=8'd126; // 变
-   16'h53e0:glyph_index_b=8'd127; // 叠
-   16'h53e3:glyph_index_b=8'd128; // 口
-   16'h53ef:glyph_index_b=8'd129; // 可
-   16'h5408:glyph_index_b=8'd130; // 合
-   16'h5411:glyph_index_b=8'd131; // 向
-   16'h542f:glyph_index_b=8'd132; // 启
-   16'h5496:glyph_index_b=8'd133; // 咖
-   16'h54c1:glyph_index_b=8'd134; // 品
-   16'h5561:glyph_index_b=8'd135; // 啡
-   16'h5668:glyph_index_b=8'd136; // 器
-   16'h56de:glyph_index_b=8'd137; // 回
-   16'h56fe:glyph_index_b=8'd138; // 图
-   16'h5728:glyph_index_b=8'd139; // 在
-   16'h574f:glyph_index_b=8'd140; // 坏
-   16'h5907:glyph_index_b=8'd141; // 备
-   16'h591a:glyph_index_b=8'd142; // 多
-   16'h5927:glyph_index_b=8'd143; // 大
-   16'h594f:glyph_index_b=8'd144; // 奏
-   16'h597d:glyph_index_b=8'd145; // 好
-   16'h59cb:glyph_index_b=8'd146; // 始
-   16'h5a92:glyph_index_b=8'd147; // 媒
-   16'h5b57:glyph_index_b=8'd148; // 字
-   16'h5b58:glyph_index_b=8'd149; // 存
-   16'h5c0f:glyph_index_b=8'd150; // 小
-   16'h5c1d:glyph_index_b=8'd151; // 尝
-   16'h5c42:glyph_index_b=8'd152; // 层
-   16'h5c45:glyph_index_b=8'd153; // 居
-   16'h5e02:glyph_index_b=8'd154; // 市
-   16'h5e38:glyph_index_b=8'd155; // 常
-   16'h5e55:glyph_index_b=8'd156; // 幕
-   16'h5e8f:glyph_index_b=8'd157; // 序
-   16'h5e97:glyph_index_b=8'd158; // 店
-   16'h5f00:glyph_index_b=8'd159; // 开
-   16'h5f02:glyph_index_b=8'd160; // 异
-   16'h5f0f:glyph_index_b=8'd161; // 式
-   16'h5f20:glyph_index_b=8'd162; // 张
-   16'h5f55:glyph_index_b=8'd163; // 录
-   16'h5fc3:glyph_index_b=8'd164; // 心
-   16'h6001:glyph_index_b=8'd165; // 态
-   16'h6216:glyph_index_b=8'd166; // 或
-   16'h6253:glyph_index_b=8'd167; // 打
-   16'h626b:glyph_index_b=8'd168; // 扫
-   16'h627e:glyph_index_b=8'd169; // 找
-   16'h6309:glyph_index_b=8'd170; // 按
-   16'h635f:glyph_index_b=8'd171; // 损
-   16'h636e:glyph_index_b=8'd172; // 据
-   16'h63a8:glyph_index_b=8'd173; // 推
-   16'h63cf:glyph_index_b=8'd174; // 描
-   16'h64ad:glyph_index_b=8'd175; // 播
-   16'h653e:glyph_index_b=8'd176; // 放
-   16'h6570:glyph_index_b=8'd177; // 数
-   16'h6587:glyph_index_b=8'd178; // 文
-   16'h65b0:glyph_index_b=8'd179; // 新
-   16'h65b9:glyph_index_b=8'd180; // 方
-   16'h65e5:glyph_index_b=8'd181; // 日
-   16'h65f6:glyph_index_b=8'd182; // 时
-   16'h662f:glyph_index_b=8'd183; // 是
-   16'h663e:glyph_index_b=8'd184; // 显
-   16'h6682:glyph_index_b=8'd185; // 暂
-   16'h672a:glyph_index_b=8'd186; // 未
-   16'h67e5:glyph_index_b=8'd187; // 查
-   16'h6839:glyph_index_b=8'd188; // 根
-   16'h683c:glyph_index_b=8'd189; // 格
-   16'h68c0:glyph_index_b=8'd190; // 检
-   16'h6b22:glyph_index_b=8'd191; // 欢
-   16'h6b63:glyph_index_b=8'd192; // 正
-   16'h6bcf:glyph_index_b=8'd193; // 每
-   16'h7247:glyph_index_b=8'd194; // 片
-   16'h72b6:glyph_index_b=8'd195; // 状
-   16'h72ec:glyph_index_b=8'd196; // 独
-   16'h73b0:glyph_index_b=8'd197; // 现
-   16'h7528:glyph_index_b=8'd198; // 用
-   16'h753b:glyph_index_b=8'd199; // 画
-   16'h7684:glyph_index_b=8'd200; // 的
-   16'h76ee:glyph_index_b=8'd201; // 目
-   16'h78e8:glyph_index_b=8'd202; // 磨
-   16'h793a:glyph_index_b=8'd203; // 示
-   16'h79d2:glyph_index_b=8'd204; // 秒
-   16'h79fb:glyph_index_b=8'd205; // 移
-   16'h7a7a:glyph_index_b=8'd206; // 空
-   16'h7acb:glyph_index_b=8'd207; // 立
-   16'h7b26:glyph_index_b=8'd208; // 符
-   16'h7c07:glyph_index_b=8'd209; // 簇
-   16'h7f13:glyph_index_b=8'd210; // 缓
-   16'h7f29:glyph_index_b=8'd211; // 缩
-   16'h81ea:glyph_index_b=8'd212; // 自
-   16'h8282:glyph_index_b=8'd213; // 节
-   16'h8350:glyph_index_b=8'd214; // 荐
-   16'h83dc:glyph_index_b=8'd215; // 菜
-   16'h8403:glyph_index_b=8'd216; // 萃
-   16'h8981:glyph_index_b=8'd217; // 要
-   16'h89c6:glyph_index_b=8'd218; // 视
-   16'h8bd5:glyph_index_b=8'd219; // 试
-   16'h8bef:glyph_index_b=8'd220; // 误
-   16'h8bf7:glyph_index_b=8'd221; // 请
-   16'h8bfb:glyph_index_b=8'd222; // 读
-   16'h8c31:glyph_index_b=8'd223; // 谱
-   16'h8d85:glyph_index_b=8'd224; // 超
-   16'h8f6e:glyph_index_b=8'd225; // 轮
-   16'h8f7d:glyph_index_b=8'd226; // 载
-   16'h8fce:glyph_index_b=8'd227; // 迎
-   16'h8fd4:glyph_index_b=8'd228; // 返
-   16'h90fd:glyph_index_b=8'd229; // 都
-   16'h9187:glyph_index_b=8'd230; // 醇
-   16'h91cd:glyph_index_b=8'd231; // 重
-   16'h94fe:glyph_index_b=8'd232; // 链
-   16'h9519:glyph_index_b=8'd233; // 错
-   16'h952e:glyph_index_b=8'd234; // 键
-   16'h957f:glyph_index_b=8'd235; // 长
-   16'h95ed:glyph_index_b=8'd236; // 闭
-   16'h95f4:glyph_index_b=8'd237; // 间
-   16'h968f:glyph_index_b=8'd238; // 随
-   16'h9694:glyph_index_b=8'd239; // 隔
-   16'h9700:glyph_index_b=8'd240; // 需
-   16'h9762:glyph_index_b=8'd241; // 面
-   16'h97f3:glyph_index_b=8'd242; // 音
-   16'h9879:glyph_index_b=8'd243; // 项
-   16'h9891:glyph_index_b=8'd244; // 频
-   16'h9999:glyph_index_b=8'd245; // 香
-   16'hff0c:glyph_index_b=8'd246; // ，
-   16'hff1a:glyph_index_b=8'd247; // ：
-   default:glyph_index_b=0;
-  endcase
+ glyph_index=glyph_lookup(codepoint);
+ glyph_index_b=glyph_lookup(codepoint_b);
  end
  (* ram_style="bram" *) reg [15:0] font_rom[0:4095];
  initial begin

@@ -7,7 +7,8 @@ module image_key_control #(
  parameter integer EXTERNAL_AUTO=0,
  parameter integer EXTERNAL_STEP=0,
  parameter integer EXTERNAL_SELECTION=0,
- parameter integer EXTERNAL_AUTO_LEVEL=0
+ parameter integer EXTERNAL_AUTO_LEVEL=0,
+ parameter integer EXTERNAL_INTERVAL=0
 )(input wire clk,reset_n,image_ready,key_next_n,key_prev_n,
  output reg [4:0] image_index=0,output wire run_reset_n,
  input wire key_auto_n,input wire [1:0] interval_switch,
@@ -15,7 +16,7 @@ module image_key_control #(
  input wire [5:0] image_total,
  output wire [1:0] stable_interval, output wire stable_direction,
  input wire next_event,prev_event,input wire [4:0] initial_index,
- input wire auto_pause);
+ input wire auto_pause,input wire [4:0] external_interval_seconds);
  reg [2:0] ready_sync=0;
  reg initialize=1;
  wire next_press,prev_press,auto_press,debounced_auto,physical_next,physical_prev;
@@ -28,7 +29,8 @@ module image_key_control #(
  reg [SW_COUNT_BITS-1:0] sw_count=0;
  reg [25:0] second_count=0;
  reg [4:0] elapsed_seconds=0;
- wire [4:0] interval_seconds=EXTERNAL_AUTO_LEVEL ? (sw_stable[1] ? 5'd10 : 5'd5) :
+ reg [4:0] interval_previous=5'd5;
+ wire [4:0] interval_seconds=EXTERNAL_INTERVAL ? external_interval_seconds : EXTERNAL_AUTO_LEVEL ? (sw_stable[1] ? 5'd10 : 5'd5) :
   sw_stable[1:0]==0 ? 5'd2 : sw_stable[1:0]==1 ? 5'd5 : sw_stable[1:0]==2 ? 5'd10 : 5'd20;
  assign stable_interval=EXTERNAL_AUTO_LEVEL ? (sw_stable[1] ? 2'd2 : 2'd1) : sw_stable[1:0];
  assign stable_direction=sw_stable[2];
@@ -44,7 +46,7 @@ module image_key_control #(
   if(!reset_n) begin
    initialize<=1;ready_sync<=0;image_index<=0;reset_count<=0;auto_mode<=0;
    sw_meta<=0;sw_sync<=0;sw_stable<=0;sw_previous<=0;sw_candidate<=0;sw_count<=0;
-   second_count<=0;elapsed_seconds<=0;
+   second_count<=0;elapsed_seconds<=0;interval_previous<=interval_seconds;
   end else begin
    ready_sync<={ready_sync[1:0],image_ready};
    sw_meta<={direction_switch,interval_switch};sw_sync<=sw_meta;sw_previous<=sw_stable;
@@ -60,8 +62,9 @@ module image_key_control #(
    else sw_count<=sw_count+1'b1;
    if(EXTERNAL_AUTO_LEVEL)auto_mode<=sw_stable[0] && !auto_pause;
    else if(auto_press) auto_mode<=~auto_mode;
+   interval_previous<=interval_seconds;
    if(!auto_mode || auto_press || !ready_sync[2] || reset_count!=0 ||
-      manual_step || auto_step || sw_stable!=sw_previous) begin
+      manual_step || auto_step || sw_stable!=sw_previous || interval_seconds!=interval_previous) begin
     second_count<=0;elapsed_seconds<=0;
    end else if(second_count==CLOCK_HZ-1)begin
     second_count<=0;elapsed_seconds<=elapsed_seconds+1'b1;

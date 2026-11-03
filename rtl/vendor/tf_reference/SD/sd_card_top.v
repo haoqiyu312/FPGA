@@ -12,6 +12,7 @@ module sd_card_top
 	output           SD_MOSI,                   //SD card controller data output
 	input            SD_MISO,                   //SD card controller data input
 	output           sd_init_done,              //SD card initialization is complete
+	output[2:0]       sd_init_stage,             //diagnostic initialization stage
 	input            sd_sec_read,               //SD card sector read
 	input[31:0]      sd_sec_read_addr,          //SD card sector read address
 	output[7:0]      sd_sec_read_data,          //SD card sector read data
@@ -44,6 +45,7 @@ wire                 spi_wr_req;                //SPI module data sending reques
 wire                 spi_wr_ack;                //SPI module data request response
 wire[7:0]            spi_data_in;               //SPI module send data
 wire[7:0]            spi_data_out;              //SPI module data returned
+wire[2:0]            init_stage;
 wire[15:0]           clk_div;
 sd_card_sec_read_write
 #(
@@ -54,6 +56,7 @@ sd_card_sec_read_write_m0(
 	.clk                            (clk                    ),
 	.rst                            (rst                    ),
 	.sd_init_done                   (sd_init_done           ),
+	.sd_init_stage                  (init_stage             ),
 	.sd_sec_read                    (sd_sec_read            ),
 	.sd_sec_read_addr               (sd_sec_read_addr       ),
 	.sd_sec_read_data               (sd_sec_read_data       ),
@@ -80,6 +83,8 @@ sd_card_sec_read_write_m0(
 	.block_write_data_rd            (block_write_data_rd    ),
 	.block_write_req_ack            (block_write_req_ack    )
 );
+
+assign sd_init_stage = init_stage;
 
 sd_card_cmd sd_card_cmd_m0(
 	.sys_clk                        (clk                    ),

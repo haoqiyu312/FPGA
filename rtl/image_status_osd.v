@@ -189,13 +189,13 @@ module image_status_osd #(
   end
   in_panel=in_text;
   if(in_text)begin
-   row_pixel=ty[3:0];
+   row_pixel=ty[3:0];character=0;
    // Decode fixed 18-pixel cells in parallel, avoiding divide/modulo followed
    // by a variable 512-bit text-word mux in the same pixel clock.
    for(glyph_cell=0;glyph_cell<32;glyph_cell=glyph_cell+1)begin
     if(tx>=glyph_cell*18 && tx<(glyph_cell+1)*18)begin
-     column=glyph_cell;column_pixel=tx-glyph_cell*18;
-     character=selected_line[511-glyph_cell*16 -: 16];
+     column=column | glyph_cell;column_pixel=column_pixel | (tx-glyph_cell*18);
+     character=character | selected_line[511-glyph_cell*16 -: 16];
     end
    end
   end
