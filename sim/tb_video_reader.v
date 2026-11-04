@@ -11,7 +11,7 @@ module tb_video_reader;
  integer scenario=0,active=0,index=0,address=0,delay_count=0;
  integer count=0,frames=0,hold_count=0,base,fb,db;
  reg pending=0,last_toggle=0;
- fat32_video_reader #(.WATCHDOG_BITS(22),.AUDIO_SUPPORT(AUDIO_SUPPORT),.EXTERNAL_NAME(EXTERNAL_NAME),.EXTERNAL_SUBTITLES(SUBTITLE_SUPPORT)) dut(
+ fat32_video_reader #(.WATCHDOG_BITS(22),.FRAME_WIDTH(640),.FRAME_HEIGHT(480),.AUDIO_RATE(48000),.AUDIO_SUPPORT(AUDIO_SUPPORT),.EXTERNAL_NAME(EXTERNAL_NAME),.EXTERNAL_SUBTITLES(SUBTITLE_SUPPORT)) dut(
   .clk(clk),.rst(rst),.sd_ready(scenario!=6),.memory_ready(1'b1),
   .sector_req(req),.sector_lba(lba),.sector_byte(data),.sector_valid(valid),.sector_end(last),
   .write_req(wrreq),.write_ack(ack),.pixel_valid(pvalid),.pixel_data(pdata),

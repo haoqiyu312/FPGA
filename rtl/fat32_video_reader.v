@@ -3,11 +3,11 @@
 // mu-law audio block after each frame; publish only after both are committed.
 module fat32_video_reader #(
     parameter integer WATCHDOG_BITS=28,
-    parameter integer FRAME_WIDTH=640, FRAME_HEIGHT=480,
+    parameter integer FRAME_WIDTH=720, FRAME_HEIGHT=720,
     parameter integer FRAME_PIXELS=FRAME_WIDTH*FRAME_HEIGHT,
     parameter integer FRAME_STORAGE_BYTES=((FRAME_PIXELS+511)/512)*512,
     parameter integer AUDIO_SUPPORT=0,
-    parameter integer AUDIO_RATE=48000,
+    parameter integer AUDIO_RATE=12000,
     parameter integer EXTERNAL_NAME=0,
     parameter integer EXTERNAL_SUBTITLES=0
 )(
@@ -78,7 +78,7 @@ module fat32_video_reader #(
     wire header_ok=((magic==32'h31465652 && version==1) || (is_audio && audio_header_ok)) && format_code==1 &&
         width==FRAME_WIDTH && height==FRAME_HEIGHT && header_fps>=1 && header_fps<=5 &&
         frame_bytes==FRAME_STORAGE_BYTES && frame_count!=0 && file_size>=512 &&
-        frame_count<=(32'hffffffff-512)/FRAME_STORAGE_BYTES; // maximum number of 640x480 frames in a FAT32 file
+        frame_count<=(32'hffffffff-512)/FRAME_STORAGE_BYTES; // maximum number of configured-size frames in a FAT32 file
     function [31:0] cluster_address;
         input [31:0] cluster;
         begin cluster_address=data_lba+((cluster-2)<<cluster_shift); end

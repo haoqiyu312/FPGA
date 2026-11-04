@@ -1,4 +1,4 @@
-// Eight-bin Goertzel analyzer for the 48 kHz mono RVF2 soundtrack.
+// Eight-bin Goertzel analyzer for the 12 kHz mono RVF2 soundtrack.
 // One shared constant-coefficient multiplier processes the bins between samples.
 // The multiply, recurrence, and magnitude/level update are separate phases so
 // the 48 MHz pixel clock does not have to traverse the whole Goertzel path.

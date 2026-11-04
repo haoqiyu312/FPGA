@@ -1,8 +1,8 @@
 // Read-only FAT32 root-directory BMP loader. Supports fragmented cluster chains.
-// Supported images: 640x480, positive height (bottom-up), RGB24, BI_RGB.
+// Supported dimensions are parameterized; the OLED build uses 720x720, RGB24, BI_RGB.
 // Sector interface is independent of the board-specific SD SPI transport.
 module fat32_bmp_loader #(
-    parameter integer FRAME_WIDTH=640, FRAME_HEIGHT=480,
+    parameter integer FRAME_WIDTH=720, FRAME_HEIGHT=720,
     parameter integer WATCHDOG_BITS = 28,
     parameter integer SELECT_BY_NAME = 0,
     parameter integer AUTO_SCAN = 0,
@@ -160,7 +160,7 @@ module fat32_bmp_loader #(
                                      extension_b && extension_m && extension_p &&
                                      (AUTO_SCAN || !SELECT_BY_NAME || name_matches) &&
                                      (entry_attr&8'h18)==0 && entry_cluster>=2 &&
-                                     {sector_byte,entry_size[23:0]}>=921654) begin
+                                     {sector_byte,entry_size[23:0]}>=54+FRAME_WIDTH*FRAME_HEIGHT*3) begin
                                     found_file<=1; first_cluster<=entry_cluster;candidate_name<=entry_name;
                                     file_size<={sector_byte,entry_size[23:0]};
                                     if(AUTO_SCAN) begin resume_byte<=byte_index;resume_valid<=1;directory_lba<=sector_lba;end

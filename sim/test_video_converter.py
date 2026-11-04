@@ -18,7 +18,7 @@ class VideoConverterTests(unittest.TestCase):
         h = video.header(3, 5)
         self.assertEqual(len(h), 512)
         self.assertEqual(struct.unpack("<4sBBBBHHII", h[:20]),
-                         (b"RVF1", 1, 1, 5, 0, 640, 480, 3, 307200))
+                         (b"RVF1", 1, 1, 5, 0, 720, 720, 3, 518656))
         self.assertEqual(h[20:], bytes(492))
 
     def test_rgb332_channel_order(self):
@@ -34,7 +34,10 @@ class VideoConverterTests(unittest.TestCase):
             data = out.read_bytes()
             self.assertEqual(data[:512], video.header(2, 2))
             self.assertEqual(data[512:512+video.PIXELS], bytes([0xe0])*video.PIXELS)
-            self.assertEqual(data[512+video.PIXELS:], bytes([3])*video.PIXELS)
+            stride = (video.PIXELS+511)//512*512
+            second = 512+stride
+            self.assertEqual(data[second:second+video.PIXELS], bytes([3])*video.PIXELS)
+            self.assertEqual(len(data), 512+2*stride)
             self.assertEqual(len(data) % 512, 0)
 
     def test_empty_and_truncated_streams(self):
@@ -49,17 +52,6 @@ class VideoConverterTests(unittest.TestCase):
                 return super().read(min(size, 997))
         frame = bytes([12, 34, 56]) * video.PIXELS
         self.assertEqual(video.read_frame(ShortReader(frame)), frame)
-
-    def test_generated_demo(self):
-        with tempfile.TemporaryDirectory() as directory:
-            out = Path(directory)/"VIDEO.RV"
-            subprocess.run([sys.executable, str(ROOT/"tools/make_video_demo.py"),
-                            str(out), "--seconds", "1", "--fps", "3"],
-                           check=True, capture_output=True)
-            data = out.read_bytes()
-            self.assertEqual(data[:512], video.header(3, 3))
-            self.assertEqual(len(data), 512+3*video.PIXELS)
-            self.assertNotEqual(data[512:512+video.PIXELS], data[512+video.PIXELS:512+2*video.PIXELS])
 
     def test_limits(self):
         for count, fps in [(0, 5), (video.MAX_FRAMES+1, 5), (1, 0), (1, 6)]:

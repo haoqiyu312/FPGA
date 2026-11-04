@@ -12,23 +12,24 @@ import struct
 import subprocess
 import tempfile
 
-WIDTH, HEIGHT = 640, 480
+WIDTH, HEIGHT = 720, 720
 PIXELS = WIDTH * HEIGHT
-MAX_FRAMES = (0xFFFFFFFF - 512) // PIXELS
+FRAME_BYTES = (PIXELS + 511) // 512 * 512
+MAX_FRAMES = (0xFFFFFFFF - 512) // FRAME_BYTES
 
 
-def audio_layout(fps, audio_rate=48000):
-    if audio_rate not in (12000,48000) or fps not in ((1,2,3,4,5) if audio_rate==12000 else (3,4,5)):
-        raise ValueError("RVF2 audio requires 1–5 fps at 12 kHz, or 3–5 fps at 48 kHz")
+def audio_layout(fps, audio_rate=12000):
+    if audio_rate != 12000 or fps not in (1,2,3,4,5):
+        raise ValueError("OLED RVF2 audio requires 1–5 fps at 12 kHz")
     samples = audio_rate // fps
     return samples, (samples + 511) // 512 * 512
 
 
-def header(frame_count, fps, with_audio=False, width=WIDTH, height=HEIGHT, audio_rate=48000):
+def header(frame_count, fps, with_audio=False, width=WIDTH, height=HEIGHT, audio_rate=12000):
     pixels=width*height
     storage_bytes=(pixels+511)//512*512
-    if (width,height) not in ((640,480),(720,720)):
-        raise ValueError("supported sizes: 640x480, 720x720")
+    if (width,height) != (WIDTH,HEIGHT):
+        raise ValueError("OLED player requires 720x720 video")
     samples, audio_bytes = audio_layout(fps,audio_rate) if with_audio else (0, 0)
     limit = (0xFFFFFFFF - 512) // (storage_bytes + audio_bytes)
     if not 1 <= frame_count <= limit or not 1 <= fps <= 5:
@@ -76,7 +77,7 @@ def read_frame(stream, width=WIDTH, height=HEIGHT):
     return read_bytes(stream, width*height * 3)
 
 
-def write_stream(stream, destination, fps, pcm_stream=None, width=WIDTH, height=HEIGHT, audio_rate=48000):
+def write_stream(stream, destination, fps, pcm_stream=None, width=WIDTH, height=HEIGHT, audio_rate=12000):
     pixels=width*height
     storage_bytes=(pixels+511)//512*512
     with_audio = pcm_stream is not None
@@ -109,8 +110,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("input", type=Path)
     parser.add_argument("output", type=Path, help="copy to FAT32 card root as VIDEO.RV")
-    parser.add_argument("--size", choices=("640x480","720x720"), default="640x480")
-    parser.add_argument("--audio-rate", type=int, choices=(12000,48000), default=48000)
+    parser.add_argument("--size", choices=("720x720",), default="720x720")
+    parser.add_argument("--audio-rate", type=int, choices=(12000,), default=12000)
     parser.add_argument("--fit", choices=("contain","cover"), default="contain", help="preserve aspect ratio: pad or crop")
     parser.add_argument("--fps", type=int, choices=range(1, 6), default=3)
     parser.add_argument("--raw-rgb24", action="store_true", help="input is RGB24 frames at --size")
@@ -124,8 +125,8 @@ def main():
         parser.error("PCM input and output must differ")
     if args.audio and (args.raw_rgb24 or args.pcm16):
         parser.error("--audio requires a movie; use --pcm16 with raw input")
-    if (args.audio or args.pcm16) and args.fps not in ((1,2,3,4,5) if args.audio_rate==12000 else (3,4,5)):
-        parser.error("48 kHz audio requires --fps 3, 4 or 5; use --audio-rate 12000 for lower fps")
+    if args.fps not in (1,2,3,4,5):
+        parser.error("OLED player supports 1–5 fps")
     if not args.raw_rgb24 and not shutil.which("ffmpeg"):
         parser.error("ffmpeg is required for movie conversion")
     if args.audio and not shutil.which("ffprobe"):

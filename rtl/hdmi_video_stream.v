@@ -1,6 +1,6 @@
-// Frame marker on first active pixel; line marker on pixel 639 (not 640).
+// Frame marker on first active pixel; line marker on the final active pixel.
 // RGB, valid and markers share one registered pipeline stage.
-module hdmi_video_stream #(parameter integer FRAME_WIDTH=640) (
+module hdmi_video_stream #(parameter integer FRAME_WIDTH=720) (
  input wire clk,rst,vs,de,input wire [23:0] rgb,
  output reg valid,sof,last,output reg [23:0] data
 );

@@ -3,7 +3,7 @@ module tb_hdmi_video_stream;
  reg clk=0,rst=1,vs=0,de=0;reg [23:0] rgb=0;
  always #5 clk=~clk;
  wire valid,sof,last;wire [23:0] data;
- hdmi_video_stream dut(clk,rst,vs,de,rgb,valid,sof,last,data);
+ hdmi_video_stream #(.FRAME_WIDTH(640)) dut(clk,rst,vs,de,rgb,valid,sof,last,data);
  integer f,y,x,sofs=0,lasts=0,pixels=0;
  task send;
  input d,v;input[23:0] value;input expected_sof,expected_last;

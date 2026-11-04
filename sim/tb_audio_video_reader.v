@@ -7,7 +7,7 @@ module tb_audio_video_reader;
  integer scenario=0,active=0,index=0,address=0,delay_count=0;
  integer pixels=0,audio_bytes=0,frames=0,hold_count=0;
  reg pending=0,last_toggle=0;
- fat32_video_reader #(.WATCHDOG_BITS(20),.FRAME_PIXELS(512),.AUDIO_SUPPORT(1)) dut(
+ fat32_video_reader #(.WATCHDOG_BITS(20),.FRAME_WIDTH(32),.FRAME_HEIGHT(16),.FRAME_PIXELS(512),.AUDIO_RATE(48000),.AUDIO_SUPPORT(1)) dut(
   .clk(clk),.rst(rst),.sd_ready(1'b1),.memory_ready(1'b1),
   .sector_req(req),.sector_lba(lba),.sector_byte(data),.sector_valid(valid),.sector_end(last),
   .write_req(wrreq),.write_ack(ack),.pixel_valid(pvalid),.pixel_data(pdata),

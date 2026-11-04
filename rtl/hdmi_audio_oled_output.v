@@ -1,7 +1,7 @@
 // Use Anlogic protocol/PHY IP; video framing and PCM/ACR are project logic.
-module hdmi_audio_oled_output #(parameter integer PIXEL_HZ=25000000,TEST_AUDIO=1,EXTERNAL_AUDIO=0,
- FRAME_WIDTH=640,FRAME_HEIGHT=480,HTOTAL=800,HSA=96,HFP=16,HBP=48,
- VTOTAL=525,VSA=2,VFP=10,VBP=33,VIDEO_VIC=1) (
+module hdmi_audio_oled_output #(parameter integer PIXEL_HZ=48000000,TEST_AUDIO=0,EXTERNAL_AUDIO=1,
+ FRAME_WIDTH=720,FRAME_HEIGHT=720,HTOTAL=940,HSA=20,HFP=100,HBP=100,
+ VTOTAL=768,VSA=8,VFP=20,VBP=20,VIDEO_VIC=0) (
  input wire pixel_clk,serial_clk,rst,vs,de,input wire [23:0] rgb,
  output wire clk_p,d0_p,d1_p,d2_p,
  output wire ddc_scl,inout wire ddc_sda,

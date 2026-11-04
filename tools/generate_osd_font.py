@@ -5,13 +5,12 @@ Font pixels: SIL OFL 1.1; see docs/licenses/OSD_FONT_OFL.txt.
 """
 import argparse
 from pathlib import Path
+import re
 from PIL import Image, ImageDraw, ImageFont
 
 MESSAGES = {
-    'coffee_ad': '今日推荐：现磨咖啡香醇现萃，每一口都是好时光新品上市，欢迎到店品尝',
-    'feature_captions': '欢迎使用多媒体播放器图层字幕：文字与画面独立叠加音频可视化：随音乐节奏变化图片缩放：50% 100% 200%图片缩放：100% 原始画面图片缩放：50% 居中缩小图片缩放：200% 中心放大',
-    'normal0': '图片 00/00  自动轮播：关闭',
-    'normal1': '间隔：00秒  方向：正序',
+    'oled_menu': '文件图片视频暂停字幕频谱轮播间隔秒方向顺序正序倒序开启关闭返回打开上下一项存储卡目录为空',
+    'player_captions': '图片缩放：50% 100% 200% 当前画面 居中缩小 中心放大',
     'init': '正在初始化TF卡',
     'volume': '正在读取FAT32分区',
     'scan': '正在扫描BMP图片',
@@ -23,25 +22,23 @@ MESSAGES = {
     'error13': '错误13：文件簇链损坏',
     'error14': '错误14：读卡或缓存超时',
     'error15': '错误15：读取状态异常',
-    'format': '根目录BMP：640x480，24位',
-    'retry': '按KEY1重试，请检查TF卡',
-    'browser_title': '存储卡文件',
-    'browser_back': '返回',
-    'browser_help': 'K2/K3上下移动 K4打开',
-    'browser_scan': '正在扫描存储卡',
-    'browser_empty': '根目录为空',
-    'browser_items': '项目',
-    'image_keys': 'K2下一张 K3上一张 K4播放/暂停 长按返回菜单',
-    'feature_image_keys': 'K2/3切图 双键缩放 长按K3字幕 K4播放',
-    'video_keys': '视频 K4播放/暂停 长按返回菜单',
-    'feature_video_keys': 'K2频谱 K3字幕 K4播放/暂停 长按返回菜单',
+    'format': '根目录BMP：720x720，24位',
+    'retry': '按S16重试，请检查TF卡',
+    'sample': '字幕示例：画面播放进度',
 }
 EXTRA = '0123456789开启倒序轮播：' + ''.join(chr(i) for i in range(32,127))
 
 
 def glyphs(font_path, font_index):
     font = ImageFont.truetype(str(font_path), 16, index=font_index)
-    chars = [' '] + sorted(set(''.join(MESSAGES.values()) + EXTRA) - {' '})
+    rtl_chars = set()
+    root = Path(__file__).resolve().parents[1]
+    for source in (root/'rtl/oled_text_renderer.v', root/'rtl/media_subtitles.v'):
+        for code in re.findall(r"16'h([0-9a-fA-F]{4})", source.read_text()):
+            value = int(code, 16)
+            if value >= 128 and value not in (0xffff,):
+                rtl_chars.add(chr(value))
+    chars = [' '] + sorted((set(''.join(MESSAGES.values()) + EXTRA) | rtl_chars) - {' '})
     if len(chars) > 256:
         raise ValueError('glyph index exceeds eight bits')
     top = min(font.getbbox(ch)[1] for ch in chars if ch != ' ')
@@ -117,11 +114,11 @@ def generate(font_path, font_index, output, preview=None):
     if preview:
         # Preview exactly the generated monochrome pixels, not a separate text renderer.
         rows = [
-            '图片 01/04  自动轮播：开启',
-            '间隔：05秒  方向：正序',
+            '存储卡文件 01/04',
+            '图片  自动轮播：开启',
             '正在扫描BMP图片',
-            '错误14：读卡或缓存超时',
-            '按KEY1重试，请检查TF卡',
+            'SRT字幕示例：FPGA',
+            '按S16重试，请检查TF卡',
         ]
         image = Image.new('RGB', (608, 160), '#000000')
         by_char = dict(zip(chars, bitmaps))

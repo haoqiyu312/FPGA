@@ -6,7 +6,7 @@ module tb_fat32_bmp_loader;
  wire wrreq,pvalid,ready; wire [31:0] pdata; wire [3:0] status;
  integer which=0;
  integer scenario=0,active=0,index=0,delay_count=0,count=0;
- reg [31:0] address; reg [7:0] bmp[0:921653];
+ reg [31:0] address; reg [7:0] bmp[0:1555253];
  integer offset,pixel,c,k,fatc,chain;
  fat32_bmp_loader #(.WATCHDOG_BITS(24),.SELECT_BY_NAME(1)) dut(clk,rst,1'b1,1'b1,
   req,lba,data,valid,last,wrreq,ack,pvalid,pdata,finish,ready,status,which[4:0],,,);
@@ -35,8 +35,8 @@ module tb_fat32_bmp_loader;
       3:cardbyte="0";4:cardbyte="1"+entry_num;
       5,6,7:cardbyte=" ";8:cardbyte="B";9:cardbyte="M";10:cardbyte="P";
       11:cardbyte=8'h20;26:cardbyte=(5+entry_num*1024)&255;27:cardbyte=(5+entry_num*1024)>>8;
-      28:cardbyte=921654 & 255;29:cardbyte=(921654>>8)&255;
-      30:cardbyte=(921654>>16)&255;31:cardbyte=(921654>>24)&255;
+      28:cardbyte=1555254 & 255;29:cardbyte=(1555254>>8)&255;
+      30:cardbyte=(1555254>>16)&255;31:cardbyte=(1555254>>24)&255;
      endcase
     end
    end else if(sec>=fb && sec<fb+512) begin
@@ -50,7 +50,7 @@ module tb_fat32_bmp_loader;
     if(cluster>=start_cluster && ((cluster-start_cluster)%4)==0) begin
      num=(cluster-start_cluster)/4;
      fo=(num*8+((sec-db)%8))*512+pos;
-     if(fo<921654) cardbyte=bmp[fo];
+     if(fo<1555254) cardbyte=bmp[fo];
      if(scenario==3 && fo==30) cardbyte=1;
     end
    end
@@ -70,7 +70,7 @@ module tb_fat32_bmp_loader;
  end
  always @(posedge clk) begin
   if(pvalid) begin
-   if(count>=307200) $fatal(1,"too many pixels");
+   if(count>=518400) $fatal(1,"too many pixels");
    offset=54+count*3;
    if(pdata!=={bmp[offset+2],bmp[offset+1],bmp[offset],8'h00})
     $fatal(1,"RGB mismatch at pixel %0d",count);
@@ -83,12 +83,12 @@ module tb_fat32_bmp_loader;
   $readmemh("bmp_bytes.hex",bmp);
   #40;rst=0;
   if(scenario==0 || scenario==5) begin
-   wait(count==307200);
+   wait(count==518400);
    repeat(5) @(negedge clk);finish=1;
    wait(ready); #20;
    if(dut.first_cluster!=5+which*1024)$fatal(1,"wrong filename selected");
-   if(count!=307200 || status!=5) $fatal(1,"bad final state");
-   $display("PASS scenario=%0d selected PIC0%0d fragmented FAT chain, all 307200 RGB pixels, commit handshake",scenario,which+1);
+   if(count!=518400 || status!=5) $fatal(1,"bad final state");
+   $display("PASS scenario=%0d selected PIC0%0d fragmented FAT chain, all 518400 RGB pixels, commit handshake",scenario,which+1);
   end else begin
    wait(status>=10);#20;
    if(scenario==2 && status!=11) $fatal(1,"missing file status");

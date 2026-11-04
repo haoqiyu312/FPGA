@@ -1,0 +1,11 @@
+1
+00:00:00,000 --> 00:00:03,000
+FPGA media player
+
+2
+00:00:03,000 --> 00:00:06,000
+External SRT subtitle demo
+
+3
+00:00:06,000 --> 00:00:09,000
+720 x 720 video output

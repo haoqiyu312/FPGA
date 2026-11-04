@@ -3,7 +3,7 @@ module tb_video_timing;
 reg clk=0;always #20 clk=~clk;
 reg rst_n=1;wire[9:0] x,y;wire de,hs,vs;
 integer h=0,v=0,n=0,pixels=0;
-video_timing_640x480 dut(clk,rst_n,x,y,de,hs,vs);
+video_timing_registered #(.WIDTH(640),.HEIGHT(480),.HTOTAL(800),.VTOTAL(525),.HSA(96),.HBP(48),.VSA(2),.VBP(33)) dut(clk,rst_n,x,y,de,hs,vs);
 initial begin #1;rst_n=0;#12;rst_n=1;end
 always @(negedge clk) if(rst_n) begin
  if(hs !== !(h<96) || vs !== !(v<2)) $fatal(1,"sync mismatch %0d %0d",h,v);

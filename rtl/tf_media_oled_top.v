@@ -1,5 +1,5 @@
 // Native 720x720 media player with SSD1306 side menu and 4x4 keypad.
-// D or board KEY1 resets/rescans; HDMI carries media, subtitles and spectrum.
+// S16 or board KEY1 resets/rescans; HDMI carries media, subtitles and spectrum.
 module tf_media_oled_top (
     input wire sys_clk, input wire sys_rst_n,
     input wire [3:0] keypad_columns,output wire [3:0] keypad_rows,
@@ -36,15 +36,15 @@ module tf_media_oled_top (
         .extlock(memory_lock),.clk0_out(sd_clk),.clk1_out(mem_clk),.clk2_out(mem_clk_shift));
 
     // Configuration-time reset initializes control logic and HDMI audio level.
-    reg [2:0] touch_reset_pipe=0;
+    reg [2:0] control_reset_pipe=0;
     always @(posedge sys_clk or negedge core_reset_n)
-        if(!core_reset_n) touch_reset_pipe<=0;
-        else touch_reset_pipe<={touch_reset_pipe[1:0],1'b1};
-    wire touch_reset_n=core_reset_n & touch_reset_pipe[2];
+        if(!core_reset_n) control_reset_pipe<=0;
+        else control_reset_pipe<={control_reset_pipe[1:0],1'b1};
+    wire control_reset_n=core_reset_n & control_reset_pipe[2];
     reg video_mode;wire physical_short,physical_long,media_reset_n;
     reg menu_return_active,saved_video_mode;
     reg [4:0] saved_image_index;
-    // This display has no FPGA-compatible touch connection; use physical keys.
+    // The menu and playback controls use the 4x4 matrix keypad.
     wire browser_visible,open_file,open_video,selected_valid;
     wire [4:0] selected_file,query_index,catalog_display_index,query_bmp_index;
     wire [87:0] query_name,catalog_display_name;
@@ -66,8 +66,8 @@ module tf_media_oled_top (
     assign key_prev_pressed=key_event && key_code==4;
     wire replay=key_event && key_code==12 && video_mode && !browser_visible;
     assign media_reset_n=core_reset_n && media_reset_count==0;
-    always @(posedge sys_clk or negedge touch_reset_n)begin
-        if(!touch_reset_n)begin
+    always @(posedge sys_clk or negedge control_reset_n)begin
+        if(!control_reset_n)begin
             zoom_control<=0;interval_switch<=0;interval_seconds_control<=5;subtitle_control<=1;spectrum_control<=1;
             direction_switch<=0;video_mode<=0;media_reset_count<=0;video_paused_setting<=0;
             menu_return_active<=0;saved_video_mode<=0;saved_image_index<=0;
@@ -114,8 +114,8 @@ module tf_media_oled_top (
     reg [87:0] requested_video="VIDEO   RV ";
     // Keep the mixed-media directory ordinal for the item currently opened.
     reg [4:0] current_file_index=0;
-    always @(posedge sys_clk or negedge touch_reset_n)begin
-        if(!touch_reset_n)begin
+    always @(posedge sys_clk or negedge control_reset_n)begin
+        if(!control_reset_n)begin
             catalog_done_sys<=0;file_count_sys<=0;catalog_status_sys<=0;
             debug_root_byte_sys<=0;debug_root_lba_sys<=0;
             default_index_applied<=0;
@@ -136,7 +136,7 @@ module tf_media_oled_top (
             end
         end
     end
-    oled_file_menu u_browser (.clk(sys_clk),.reset_n(touch_reset_n),.enable(touch_reset_n),
+    oled_file_menu u_browser (.clk(sys_clk),.reset_n(control_reset_n),.enable(control_reset_n),
         .catalog_done(catalog_done_sys[1]),.file_count(file_count_sys),.query_type(query_type),
         .visible(browser_visible),.valid(selected_valid),.selected(selected_file),.open_event(open_file),
         .open_video(open_video),.query_index(query_index),
@@ -374,7 +374,7 @@ module tf_media_oled_top (
         .subtitle_done(subtitle_done),.subtitle_error(subtitle_error));
     wire [9:0] x,y;
     wire de,hs,vs;
-    video_timing_640x480 #(.WIDTH(WIDTH),.HEIGHT(HEIGHT),.HTOTAL(HTOTAL),.VTOTAL(VTOTAL),.HSA(HSA),.HBP(HBP),.VSA(VSA),.VBP(VBP)) u_timing (.pixel_clk(pixel_clk),.rst_n(~video_rst),
+    video_timing_registered #(.WIDTH(WIDTH),.HEIGHT(HEIGHT),.HTOTAL(HTOTAL),.VTOTAL(VTOTAL),.HSA(HSA),.HBP(HBP),.VSA(VSA),.VBP(VBP)) u_timing (.pixel_clk(pixel_clk),.rst_n(~video_rst),
         .pixel_x(x),.pixel_y(y),.de(de),.hsync(hs),.vsync(vs));
     (* dont_touch="true" *) reg [2:0] image_sync,ack_sync;
     wire read_ack;
@@ -478,7 +478,7 @@ module tf_media_oled_top (
         .pixel_x(x),.pixel_y(y),.de(de),.rgb(loading_rgb));
     // Atomic feature state crosses clocks, then changes only in vertical blank.
     wire [3:0] feature_snapshot;
-    ui_state_bridge #(.WIDTH(4)) u_feature_bridge (.source_clk(sys_clk),.source_reset_n(touch_reset_n),
+    ui_state_bridge #(.WIDTH(4)) u_feature_bridge (.source_clk(sys_clk),.source_reset_n(control_reset_n),
         .source_data({zoom_setting,subtitles_setting,spectrum_setting}),
         .destination_clk(pixel_clk),.destination_reset_n(~video_rst),.destination_data(feature_snapshot));
     reg [9:0] output_x[0:20],output_y[0:20];
@@ -506,9 +506,9 @@ module tf_media_oled_top (
         .clk(pixel_clk),.rst(video_rst),.frame_start(x==0 && y==0),.frame_started(frame_started),
         .video_mode(video_pixel),.shown(show_image),.fps(audio_fps_sync),.movie_frames(movie_count_pixel),
         .read_index(subtitle_prefetch_x[8:4]),.codepoint(external_subtitle_codepoint),.visible(external_subtitle_visible));
-    media_subtitles #(.WIDTH(WIDTH),.HEIGHT(HEIGHT),.FONT_LATENCY(2),.EXTERNAL_SRT(1)) u_subtitles (.clk(pixel_clk),.rst_n(~video_rst),
-        .frame_start(x==0 && y==0),.frame_started(frame_started),.shown(show_image),
-        .video_mode(video_pixel),.enabled(feature_frame[1]),.fps(audio_fps_sync),.zoom(zoom_frame),
+    media_subtitles #(.WIDTH(WIDTH),.HEIGHT(HEIGHT),.FONT_LATENCY(2)) u_subtitles (.clk(pixel_clk),.rst_n(~video_rst),
+        .frame_start(x==0 && y==0),.shown(show_image),
+        .video_mode(video_pixel),.enabled(feature_frame[1]),.zoom(zoom_frame),
         .x(x),.y(y),.de(de),.font_request(subtitle_request),
         .font_codepoint(subtitle_font_code),.font_row(subtitle_font_row),.font_pixels(status_font_pixels),
         .panel(subtitle_panel),.ink(subtitle_ink),.external_codepoint(external_subtitle_codepoint),.external_visible(external_subtitle_visible));
@@ -521,8 +521,8 @@ module tf_media_oled_top (
     reg[87:0] oled_playing_name;reg image_name_seen;
     reg[3:0] load_ui_meta,load_ui_sync;
     wire[3:0] oled_diagnostic_status=(catalog_status_sys==4'd14) ? {1'b0,init_stage_sys} : load_ui_sync;
-    always @(posedge sys_clk or negedge touch_reset_n)begin
-        if(!touch_reset_n)begin oled_playing_name<=0;image_name_seen<=0;load_ui_meta<=0;load_ui_sync<=0;end
+    always @(posedge sys_clk or negedge control_reset_n)begin
+        if(!control_reset_n)begin oled_playing_name<=0;image_name_seen<=0;load_ui_meta<=0;load_ui_sync<=0;end
         else begin
             load_ui_meta<=load_status;load_ui_sync<=load_ui_meta;image_name_seen<=ready_sys_sync[1];
             if(open_file)oled_playing_name<=query_name;
@@ -530,7 +530,7 @@ module tf_media_oled_top (
         end
     end
     wire[121:0] oled_snapshot;
-    ui_state_bridge #(.WIDTH(122)) u_oled_bridge(.source_clk(sys_clk),.source_reset_n(touch_reset_n),
+    ui_state_bridge #(.WIDTH(122)) u_oled_bridge(.source_clk(sys_clk),.source_reset_n(control_reset_n),
         .source_data({oled_playing_name,catalog_done_sys[1],browser_visible,file_count_sys,selected_file,
             catalog_status_sys,oled_diagnostic_status,video_mode,(video_mode ? video_paused_setting : image_paused),
             interval_switch[0],interval_seconds_control,direction_switch,subtitles_setting,spectrum_setting,zoom_setting}),

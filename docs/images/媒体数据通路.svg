@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="510" viewBox="0 0 1200 510">
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#356b9a"/></marker></defs>
+  <rect width="1200" height="510" rx="24" fill="#f3f6fa"/>
+  <text x="600" y="52" text-anchor="middle" font-family="sans-serif" font-size="30" font-weight="700" fill="#18324d">OLED 多媒体播放器数据通路（逻辑示意）</text>
+  <g font-family="sans-serif" text-anchor="middle">
+    <rect x="55" y="145" width="180" height="100" rx="16" fill="#fff" stroke="#7795b1" stroke-width="2"/><text x="145" y="185" font-size="22" font-weight="700" fill="#18324d">FAT32 / TF</text><text x="145" y="218" font-size="17" fill="#48627b">BMP · RV · SRT</text>
+    <rect x="305" y="145" width="200" height="100" rx="16" fill="#fff" stroke="#7795b1" stroke-width="2"/><text x="405" y="185" font-size="22" font-weight="700" fill="#18324d">媒体读取</text><text x="405" y="218" font-size="17" fill="#48627b">目录 · 簇链 · 帧</text>
+    <rect x="575" y="145" width="190" height="100" rx="16" fill="#fff" stroke="#7795b1" stroke-width="2"/><text x="670" y="185" font-size="22" font-weight="700" fill="#18324d">异步 FIFO</text><text x="670" y="218" font-size="17" fill="#48627b">读写时钟域解耦</text>
+    <rect x="830" y="145" width="170" height="100" rx="16" fill="#fff" stroke="#7795b1" stroke-width="2"/><text x="915" y="185" font-size="22" font-weight="700" fill="#18324d">SDRAM</text><text x="915" y="218" font-size="17" fill="#48627b">双帧缓存</text>
+    <rect x="1035" y="145" width="120" height="100" rx="16" fill="#dcecff" stroke="#356b9a" stroke-width="2"/><text x="1095" y="185" font-size="22" font-weight="700" fill="#18324d">HDMI</text><text x="1095" y="218" font-size="17" fill="#48627b">显示</text>
+    <path d="M235 195H295M505 195H565M765 195H820M1000 195H1025" fill="none" stroke="#356b9a" stroke-width="4" marker-end="url(#arrow)"/>
+    <rect x="305" y="345" width="200" height="85" rx="16" fill="#fff" stroke="#7795b1" stroke-width="2"/><text x="405" y="380" font-size="21" font-weight="700" fill="#18324d">矩阵键盘</text><text x="405" y="408" font-size="16" fill="#48627b">选曲 · 控制 · 页面状态</text>
+    <rect x="575" y="345" width="190" height="85" rx="16" fill="#fff" stroke="#7795b1" stroke-width="2"/><text x="670" y="380" font-size="21" font-weight="700" fill="#18324d">OLED 菜单</text><text x="670" y="408" font-size="16" fill="#48627b">SSD1306 · I²C</text>
+    <path d="M505 388H565" fill="none" stroke="#356b9a" stroke-width="4" marker-end="url(#arrow)"/>
+    <path d="M670 335V255" fill="none" stroke="#356b9a" stroke-width="3" marker-end="url(#arrow)"/>
+    <text x="600" y="477" font-size="16" fill="#667d93">逻辑结构示意，不表示物理布局或实际波形</text>
+  </g>
+</svg>

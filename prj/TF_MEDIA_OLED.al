@@ -207,7 +207,7 @@
                     <Attr Name="UsedInSyn" Val="true" />
                     <Attr Name="UsedInP&R" Val="true" />
                     <Attr Name="BelongTo" Val="design_1" />
-                    <Attr Name="CompileOrder" Val="26" />
+                    <Attr Name="CompileOrder" Val="25" />
                 </FileInfo>
             </File>
             <File Path="../rtl/hdmi_test_audio.v">
@@ -215,15 +215,16 @@
                     <Attr Name="UsedInSyn" Val="true" />
                     <Attr Name="UsedInP&R" Val="true" />
                     <Attr Name="BelongTo" Val="design_1" />
-                    <Attr Name="CompileOrder" Val="27" />
+                    <Attr Name="CompileOrder" Val="26" />
                 </FileInfo>
             </File>
+
             <File Path="../rtl/hdmi_video_stream.v">
                 <FileInfo>
                     <Attr Name="UsedInSyn" Val="true" />
                     <Attr Name="UsedInP&R" Val="true" />
                     <Attr Name="BelongTo" Val="design_1" />
-                    <Attr Name="CompileOrder" Val="28" />
+                    <Attr Name="CompileOrder" Val="27" />
                 </FileInfo>
             </File>
             <File Path="../rtl/hdmi_audio_oled_output.v">
@@ -231,7 +232,7 @@
                     <Attr Name="UsedInSyn" Val="true" />
                     <Attr Name="UsedInP&R" Val="true" />
                     <Attr Name="BelongTo" Val="design_1" />
-                    <Attr Name="CompileOrder" Val="29" />
+                    <Attr Name="CompileOrder" Val="28" />
                 </FileInfo>
             </File>
             <File Path="../rtl/vendor/hdmi_audio/hdmi_1_4b_transmitter_core_wrapper.enc.v">
@@ -239,7 +240,7 @@
                     <Attr Name="UsedInSyn" Val="true" />
                     <Attr Name="UsedInP&R" Val="true" />
                     <Attr Name="BelongTo" Val="design_1" />
-                    <Attr Name="CompileOrder" Val="30" />
+                    <Attr Name="CompileOrder" Val="29" />
                 </FileInfo>
             </File>
             <File Path="../rtl/vendor/hdmi_audio/hdmi_phy_warpper.v">
@@ -247,7 +248,7 @@
                     <Attr Name="UsedInSyn" Val="true" />
                     <Attr Name="UsedInP&R" Val="true" />
                     <Attr Name="BelongTo" Val="design_1" />
-                    <Attr Name="CompileOrder" Val="31" />
+                    <Attr Name="CompileOrder" Val="30" />
                 </FileInfo>
             </File>
             <File Path="../rtl/vendor/hdmi_audio/lane_lvds_10_1.v">
@@ -255,7 +256,7 @@
                     <Attr Name="UsedInSyn" Val="true" />
                     <Attr Name="UsedInP&R" Val="true" />
                     <Attr Name="BelongTo" Val="design_1" />
-                    <Attr Name="CompileOrder" Val="32" />
+                    <Attr Name="CompileOrder" Val="31" />
                 </FileInfo>
             </File>
             <File Path="../rtl/fat32_video_reader.v">
@@ -263,7 +264,7 @@
                     <Attr Name="UsedInSyn" Val="true" />
                     <Attr Name="UsedInP&R" Val="true" />
                     <Attr Name="BelongTo" Val="design_1" />
-                    <Attr Name="CompileOrder" Val="33" />
+                    <Attr Name="CompileOrder" Val="32" />
                 </FileInfo>
             </File>
             <File Path="../rtl/video_frame_presenter.v">
@@ -271,7 +272,7 @@
                     <Attr Name="UsedInSyn" Val="true" />
                     <Attr Name="UsedInP&R" Val="true" />
                     <Attr Name="BelongTo" Val="design_1" />
-                    <Attr Name="CompileOrder" Val="34" />
+                    <Attr Name="CompileOrder" Val="33" />
                 </FileInfo>
             </File>
             <File Path="../rtl/video_audio_buffer.v">
@@ -279,70 +280,7 @@
                     <Attr Name="UsedInSyn" Val="true" />
                     <Attr Name="UsedInP&R" Val="true" />
                     <Attr Name="BelongTo" Val="design_1" />
-                    <Attr Name="CompileOrder" Val="36" />
-                </FileInfo>
-            </File>
-            <File Path="../rtl/touch_menu_hit.v">
-                <FileInfo>
-                    <Attr Name="AutoExcluded" Val="true" />
-                    <Attr Name="UsedInSyn" Val="true" />
-                    <Attr Name="UsedInP&R" Val="true" />
-                    <Attr Name="BelongTo" Val="design_1" />
-                    <Attr Name="CompileOrder" Val="37" />
-                </FileInfo>
-            </File>
-            <File Path="../rtl/touch_menu_control.v">
-                <FileInfo>
-                    <Attr Name="AutoExcluded" Val="true" />
-                    <Attr Name="UsedInSyn" Val="true" />
-                    <Attr Name="UsedInP&R" Val="true" />
-                    <Attr Name="BelongTo" Val="design_1" />
-                    <Attr Name="CompileOrder" Val="38" />
-                </FileInfo>
-            </File>
-            <File Path="../rtl/touch_menu_overlay.v">
-                <FileInfo>
-                    <Attr Name="AutoExcluded" Val="true" />
-                    <Attr Name="UsedInSyn" Val="true" />
-                    <Attr Name="UsedInP&R" Val="true" />
-                    <Attr Name="BelongTo" Val="design_1" />
-                    <Attr Name="CompileOrder" Val="39" />
-                </FileInfo>
-            </File>
-            <File Path="../rtl/i2c_register_master.v">
-                <FileInfo>
-                    <Attr Name="AutoExcluded" Val="true" />
-                    <Attr Name="UsedInSyn" Val="true" />
-                    <Attr Name="UsedInP&R" Val="true" />
-                    <Attr Name="BelongTo" Val="design_1" />
-                    <Attr Name="CompileOrder" Val="40" />
-                </FileInfo>
-            </File>
-            <File Path="../rtl/gt911_touch_reader.v">
-                <FileInfo>
-                    <Attr Name="AutoExcluded" Val="true" />
-                    <Attr Name="UsedInSyn" Val="true" />
-                    <Attr Name="UsedInP&R" Val="true" />
-                    <Attr Name="BelongTo" Val="design_1" />
-                    <Attr Name="CompileOrder" Val="41" />
-                </FileInfo>
-            </File>
-            <File Path="../rtl/touch_coordinate_map.v">
-                <FileInfo>
-                    <Attr Name="AutoExcluded" Val="true" />
-                    <Attr Name="UsedInSyn" Val="true" />
-                    <Attr Name="UsedInP&R" Val="true" />
-                    <Attr Name="BelongTo" Val="design_1" />
-                    <Attr Name="CompileOrder" Val="42" />
-                </FileInfo>
-            </File>
-            <File Path="../rtl/touch_player_frontend.v">
-                <FileInfo>
-                    <Attr Name="AutoExcluded" Val="true" />
-                    <Attr Name="UsedInSyn" Val="true" />
-                    <Attr Name="UsedInP&R" Val="true" />
-                    <Attr Name="BelongTo" Val="design_1" />
-                    <Attr Name="CompileOrder" Val="43" />
+                    <Attr Name="CompileOrder" Val="34" />
                 </FileInfo>
             </File>
             <File Path="../rtl/ui_state_bridge.v">
@@ -350,7 +288,7 @@
                     <Attr Name="UsedInSyn" Val="true" />
                     <Attr Name="UsedInP&R" Val="true" />
                     <Attr Name="BelongTo" Val="design_1" />
-                    <Attr Name="CompileOrder" Val="44" />
+                    <Attr Name="CompileOrder" Val="35" />
                 </FileInfo>
             </File>
             <File Path="../rtl/media_volume.v">
@@ -358,7 +296,7 @@
                     <Attr Name="UsedInSyn" Val="true" />
                     <Attr Name="UsedInP&R" Val="true" />
                     <Attr Name="BelongTo" Val="design_1" />
-                    <Attr Name="CompileOrder" Val="45" />
+                    <Attr Name="CompileOrder" Val="36" />
                 </FileInfo>
             </File>
             <File Path="../rtl/fat32_media_catalog.v">
@@ -366,7 +304,7 @@
                     <Attr Name="UsedInSyn" Val="true" />
                     <Attr Name="UsedInP&R" Val="true" />
                     <Attr Name="BelongTo" Val="design_1" />
-                    <Attr Name="CompileOrder" Val="46" />
+                    <Attr Name="CompileOrder" Val="37" />
                 </FileInfo>
             </File>
             <File Path="../rtl/audio_spectrum.v">
@@ -374,7 +312,7 @@
                     <Attr Name="UsedInSyn" Val="true" />
                     <Attr Name="UsedInP&R" Val="true" />
                     <Attr Name="BelongTo" Val="design_1" />
-                    <Attr Name="CompileOrder" Val="51" />
+                    <Attr Name="CompileOrder" Val="38" />
                 </FileInfo>
             </File>
             <File Path="../rtl/audio_spectrum_overlay.v">
@@ -382,7 +320,7 @@
                     <Attr Name="UsedInSyn" Val="true" />
                     <Attr Name="UsedInP&R" Val="true" />
                     <Attr Name="BelongTo" Val="design_1" />
-                    <Attr Name="CompileOrder" Val="52" />
+                    <Attr Name="CompileOrder" Val="39" />
                 </FileInfo>
             </File>
             <File Path="../rtl/image_scale_address.v">
@@ -390,7 +328,7 @@
                     <Attr Name="UsedInSyn" Val="true" />
                     <Attr Name="UsedInP&R" Val="true" />
                     <Attr Name="BelongTo" Val="design_1" />
-                    <Attr Name="CompileOrder" Val="54" />
+                    <Attr Name="CompileOrder" Val="40" />
                 </FileInfo>
             </File>
             <File Path="../rtl/media_transition.v">
@@ -398,7 +336,7 @@
                     <Attr Name="UsedInSyn" Val="true" />
                     <Attr Name="UsedInP&R" Val="true" />
                     <Attr Name="BelongTo" Val="design_1" />
-                    <Attr Name="CompileOrder" Val="56" />
+                    <Attr Name="CompileOrder" Val="41" />
                 </FileInfo>
             </File>
             <File Path="../rtl/media_subtitles.v">
@@ -406,7 +344,7 @@
                     <Attr Name="UsedInSyn" Val="true" />
                     <Attr Name="UsedInP&R" Val="true" />
                     <Attr Name="BelongTo" Val="design_1" />
-                    <Attr Name="CompileOrder" Val="58" />
+                    <Attr Name="CompileOrder" Val="42" />
                 </FileInfo>
             </File>
             <File Path="../rtl/srt_subtitles.v">
@@ -414,7 +352,7 @@
                     <Attr Name="UsedInSyn" Val="true" />
                     <Attr Name="UsedInP&R" Val="true" />
                     <Attr Name="BelongTo" Val="design_1" />
-                    <Attr Name="CompileOrder" Val="57" />
+                    <Attr Name="CompileOrder" Val="43" />
                 </FileInfo>
             </File>
             <File Path="../rtl/video_pll_48.v">
@@ -422,10 +360,10 @@
                     <Attr Name="UsedInSyn" Val="true" />
                     <Attr Name="UsedInP&R" Val="true" />
                     <Attr Name="BelongTo" Val="design_1" />
-                    <Attr Name="CompileOrder" Val="55" />
+                    <Attr Name="CompileOrder" Val="44" />
                 </FileInfo>
             </File>
-        <File Path="../rtl/matrix_keypad.v"><FileInfo><Attr Name="UsedInSyn" Val="true" /><Attr Name="UsedInP&R" Val="true" /><Attr Name="BelongTo" Val="design_1" /><Attr Name="CompileOrder" Val="60" /></FileInfo></File><File Path="../rtl/oled_file_menu.v"><FileInfo><Attr Name="UsedInSyn" Val="true" /><Attr Name="UsedInP&R" Val="true" /><Attr Name="BelongTo" Val="design_1" /><Attr Name="CompileOrder" Val="60" /></FileInfo></File><File Path="../rtl/oled_text_renderer.v"><FileInfo><Attr Name="UsedInSyn" Val="true" /><Attr Name="UsedInP&R" Val="true" /><Attr Name="BelongTo" Val="design_1" /><Attr Name="CompileOrder" Val="60" /></FileInfo></File><File Path="../rtl/ssd1306_i2c.v"><FileInfo><Attr Name="UsedInSyn" Val="true" /><Attr Name="UsedInP&R" Val="true" /><Attr Name="BelongTo" Val="design_1" /><Attr Name="CompileOrder" Val="60" /></FileInfo></File><File Path="../rtl/browser_ascii_font.v"><FileInfo><Attr Name="UsedInSyn" Val="true"/><Attr Name="UsedInP&R" Val="true"/><Attr Name="BelongTo" Val="design_1"/><Attr Name="CompileOrder" Val="61"/></FileInfo></File><File Path="../rtl/oled_hdmi_phy.v"><FileInfo><Attr Name="UsedInSyn" Val="true"/><Attr Name="UsedInP&R" Val="true"/><Attr Name="BelongTo" Val="design_1"/><Attr Name="CompileOrder" Val="62"/></FileInfo></File></Verilog>
+        <File Path="../rtl/matrix_keypad.v"><FileInfo><Attr Name="UsedInSyn" Val="true" /><Attr Name="UsedInP&R" Val="true" /><Attr Name="BelongTo" Val="design_1" /><Attr Name="CompileOrder" Val="45" /></FileInfo></File><File Path="../rtl/oled_file_menu.v"><FileInfo><Attr Name="UsedInSyn" Val="true" /><Attr Name="UsedInP&R" Val="true" /><Attr Name="BelongTo" Val="design_1" /><Attr Name="CompileOrder" Val="46" /></FileInfo></File><File Path="../rtl/oled_text_renderer.v"><FileInfo><Attr Name="UsedInSyn" Val="true" /><Attr Name="UsedInP&R" Val="true" /><Attr Name="BelongTo" Val="design_1" /><Attr Name="CompileOrder" Val="47" /></FileInfo></File><File Path="../rtl/ssd1306_i2c.v"><FileInfo><Attr Name="UsedInSyn" Val="true" /><Attr Name="UsedInP&R" Val="true" /><Attr Name="BelongTo" Val="design_1" /><Attr Name="CompileOrder" Val="48" /></FileInfo></File><File Path="../rtl/browser_ascii_font.v"><FileInfo><Attr Name="UsedInSyn" Val="true"/><Attr Name="UsedInP&R" Val="true"/><Attr Name="BelongTo" Val="design_1"/><Attr Name="CompileOrder" Val="61"/></FileInfo></File><File Path="../rtl/oled_hdmi_phy.v"><FileInfo><Attr Name="UsedInSyn" Val="true"/><Attr Name="UsedInP&R" Val="true"/><Attr Name="BelongTo" Val="design_1"/><Attr Name="CompileOrder" Val="62"/></FileInfo></File></Verilog>
         <ADC_FILE>
             <File Path="../constraints/tf_media_oled.adc">
                 <FileInfo>
@@ -452,7 +390,7 @@
                     <Attr Name="UsedInSyn" Val="true" />
                     <Attr Name="UsedInP&R" Val="true" />
                     <Attr Name="BelongTo" Val="design_1" />
-                    <Attr Name="CompileOrder" Val="50" />
+                    <Attr Name="CompileOrder" Val="51" />
                 </FileInfo>
             </File>
         </IP_FILE>

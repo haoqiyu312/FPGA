@@ -6,7 +6,7 @@ module tb_media_catalog;
  reg[4:0]query=0;wire[87:0]name,dname;wire[1:0]item_type,dtype;wire[4:0]ordinal;
  wire[7:0]debug_root_byte;wire[15:0]debug_root_lba;wire default_image_valid;wire[4:0]default_image_index;
  integer scenario=0,active=0,pos=0,requests=0;reg[31:0] address;
- fat32_media_catalog #(.WATCHDOG_BITS(12),.READY_WATCHDOG_BITS(13)) dut(clk,rst,sd_ready,req,lba,data,valid,last,done,image_count,count,status,
+ fat32_media_catalog #(.FRAME_WIDTH(640),.FRAME_HEIGHT(480),.AUDIO_RATE(48000),.WATCHDOG_BITS(12),.READY_WATCHDOG_BITS(13)) dut(clk,rst,sd_ready,req,lba,data,valid,last,done,image_count,count,status,
   query,query,name,dname,item_type,dtype,ordinal,clk,debug_root_byte,debug_root_lba,default_image_valid,default_image_index);
  function[7:0] byte_at;
  input integer sec,p;integer item,k,sz,c,next,typ,local_sec;reg[31:0]value;

@@ -7,7 +7,7 @@ python3 - "$project_dir/media/PIC01.BMP" "$test_dir/bmp_bytes.hex" <<'PYCODE'
 import sys
 from pathlib import Path
 b=Path(sys.argv[1]).read_bytes()
-if len(b)!=921654:raise SystemExit('PIC01.BMP文件大小错误')
+if len(b)!=1555254:raise SystemExit('PIC01.BMP文件大小错误（720×720）')
 Path(sys.argv[2]).write_text(''.join(f'{x:02x}\n' for x in b))
 PYCODE
 if command -v iverilog >/dev/null 2>&1; then

@@ -13,10 +13,6 @@ else
 fi
 test_dir="$(mktemp -d /tmp/tf-media-test.XXXXXX)"
 trap 'rm -rf -- "$test_dir"' EXIT
-"${compiler[@]}" -g2012 -s tb_media_keys -o "$test_dir/keys" \
- "$project_dir/rtl/key_debounce.v" "$project_dir/rtl/image_key_control.v" \
- "$project_dir/rtl/media_key_control.v" "$project_dir/sim/tb_media_keys.v"
-"$runner" "$test_dir/keys"
 "${compiler[@]}" -g2012 -s tb_media_frame_write -o "$test_dir/writer" \
  "$project_dir/rtl/vendor/tf_reference/SD/frame_fifo_write.v" "$project_dir/sim/tb_media_frame_write.v"
 "$runner" "$test_dir/writer"

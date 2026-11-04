@@ -1,12 +1,13 @@
-# TD generated synthesis / place-and-route results
+# TD generated build products and reports
 /prj/*_Runs/
 /prj/log/
-/prj/.lock.f
-/prj/multirun_script.tcl
 /prj/run.sh
+/prj/multirun_script.tcl
 /prj/*.log
 /prj/*.logw
 /prj/*.tmp
+/prj/*.bid
+/prj/.tmp_*
 *.db
 *.db-journal
 *.qor
@@ -16,24 +17,20 @@
 *.log
 *.logw
 
-# Downloadable standalone and combined bitstreams
+# Keep only the current distributable firmware
 *.bit
-!/release/TF_IMAGE.bit
-!/release/TF_VIDEO.bit
-!/release/TF_MEDIA.bit
-!/release/TF_MEDIA_TOUCH.bit
-!/release/TF_MEDIA_TOUCH_SILENT.bit
-!/release/TF_MEDIA_SWITCH_FIX.bit
-!/release/TF_MEDIA_BROWSER.bit
-!/release/TF_MEDIA_FEATURES.bit
+!/release/TF_MEDIA_OLED.bit
 
-# Locally generated video media
+# Locally generated media and packaging output
 /VIDEO.RV
 /release/VIDEO.RV
-/release/VIDEO_*.RV
-/release/music_ode_to_joy/
+/release/*_Runs/
+/release/media*/
+/release/*.zip
+/release/*.json
+/release/*.validation.txt
 
-# Simulator outputs and scratch files
+# Simulation outputs
 *.vvp
 *.vcd
 *.fst
@@ -51,46 +48,4 @@ __pycache__/
 Thumbs.db
 .vscode/
 .idea/
-
-# VMware/FUSE placeholders for files already deleted while open
 .fuse_hidden*
-
-# Obsolete GUI colorbar project
-/prj/HDMI_PROJECT.al
-
-# Generated local coffee advertisement deliverables
-/release/coffee_ad/
-/release/coffee_demo/
-/release/COFFEE_DEMO.zip
-!/release/TF_MEDIA_COFFEE.bit
-
-# Native square player generated deliverables
-/release/media720/
-/release/TF_MEDIA_720.zip
-!/release/TF_MEDIA_720.bit
-
-# Generated native-resolution showcase media and review drafts
-/release/resolution_showcase720*/
-/release/720升级效果演示.zip
-
-# Native-panel recovery candidate
-/release/TF_MEDIA_720_R2.zip
-!/release/TF_MEDIA_720_R2.bit
-
-# Generated build and timing reports
-/release/*.json
-/release/*.timing
-/release/*.area
-/release/*.validation.txt
-
-# Local spectrum/subtitle candidates and TD scratch files
-!/release/TF_MEDIA_720_SRT.bit
-/prj/*_inst.bid
-/prj/.tmp_*
-/release/TF_MEDIA_720_SPECTRUM.json
-
-# SSD1306 + matrix keypad candidate
-!/release/TF_MEDIA_OLED.bit
-
-# Obsolete local logo asset (automatic menu background was removed)
-/media/DEFAULT.BMP

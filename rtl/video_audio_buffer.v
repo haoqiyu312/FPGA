@@ -1,7 +1,7 @@
-// RVF2: two 16 KiB banks of 48 kHz mono mu-law samples. The video reader
+// RVF2: two 16 KiB banks of 12 kHz mono mu-law samples. The video reader
 // publishes a bank only after both picture and audio are complete. The
 // presenter returns the old bank only after its audio has finished.
-module video_audio_buffer #(parameter integer AUDIO_RATE=48000) (
+module video_audio_buffer #(parameter integer AUDIO_RATE=12000) (
     input wire write_clk,write_valid,write_bank,
     input wire [13:0] write_address,input wire [7:0] write_data,
     input wire clk,rst,enabled,paused,start,read_bank,sample_tick,

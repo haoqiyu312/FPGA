@@ -5,9 +5,9 @@ reg rst=1,valid=0,done=0,frame=0,started=0;reg[7:0] data;
 wire[15:0] text;wire visible;
 reg[9:0] x=0;wire[9:0] prefetch=x+1-104;
 wire request;wire[15:0] code;wire[3:0] row;wire panel,ink;
-media_subtitles #(.WIDTH(720),.HEIGHT(720),.FONT_LATENCY(2),.EXTERNAL_SRT(1)) renderer(
- .clk(clk),.rst_n(~rst),.frame_start(frame),.frame_started(started),.shown(1'b1),.video_mode(1'b1),.enabled(1'b1),
- .fps(8'd1),.zoom(2'd0),.x(x),.y(10'd620),.de(1'b1),.font_request(request),.font_codepoint(code),.font_row(row),
+media_subtitles #(.WIDTH(720),.HEIGHT(720),.FONT_LATENCY(2)) renderer(
+ .clk(clk),.rst_n(~rst),.frame_start(frame),.shown(1'b1),.video_mode(1'b1),.enabled(1'b1),
+ .zoom(2'd0),.x(x),.y(10'd620),.de(1'b1),.font_request(request),.font_codepoint(code),.font_row(row),
  .font_pixels(16'd0),.panel(panel),.ink(ink),.external_codepoint(text),.external_visible(visible));
 integer pixel;reg[15:0] expected;
 srt_subtitles dut(clk,rst,data,valid,done,1'b0,clk,rst,frame,started,1'b1,1'b1,8'd1,32'd4,prefetch[8:4],text,visible);

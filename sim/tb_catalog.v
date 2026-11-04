@@ -5,7 +5,7 @@ module tb_catalog #(parameter QUICK_SELECT=0);
  reg valid=0,last=0,ack=0,finish=0;
  wire wrreq,pvalid,ready,catalog_valid;wire[31:0]pdata;wire[3:0]status;wire[5:0]total;wire[87:0]file_name;
  integer selected=0,scenario=0,active=0,index=0,delay_count=0,count=0;
- reg[31:0]address;reg[7:0]bmp[0:921653];
+ reg[31:0]address;reg[7:0]bmp[0:1555253];
  fat32_bmp_loader #(.AUTO_SCAN(1),.QUICK_SELECT(QUICK_SELECT),.WATCHDOG_BITS(24)) dut(
  .clk(clk),.rst(rst),.sd_ready(1'b1),.memory_ready(1'b1),.sector_req(req),.sector_lba(lba),
  .sector_byte(data),.sector_valid(valid),.sector_end(last),.write_req(wrreq),.write_ack(ack),
@@ -50,9 +50,9 @@ module tb_catalog #(parameter QUICK_SELECT=0);
     10:cardbyte=entrykind==8 ? "p" : entrykind==5 ? "G" : "P";
     11:cardbyte=entrykind==2 ? 8'h0f : entrykind==3 ? 8'h10 : entrykind==4 ? 8'h08 : 8'h20;
     26:cardbyte=start_cluster(item)&255;27:cardbyte=(start_cluster(item)>>8)&255;
-    28:cardbyte=entrykind==6 ? 54 : 921654&255;
-    29:cardbyte=entrykind==6 ? 0 : (921654>>8)&255;
-    30:cardbyte=entrykind==6 ? 0 : (921654>>16)&255;
+    28:cardbyte=entrykind==6 ? 54 : 1555254&255;
+    29:cardbyte=entrykind==6 ? 0 : (1555254>>8)&255;
+    30:cardbyte=entrykind==6 ? 0 : (1555254>>16)&255;
     31:cardbyte=0;
    endcase
   end else if(sec>=fb && sec<fb+512)begin
@@ -71,7 +71,7 @@ module tb_catalog #(parameter QUICK_SELECT=0);
     item=(cluster-16)/4096;start=start_cluster(item);
     if(item<=5 && cluster>=start && cluster<=start+3600 && (cluster-start)%2==0)begin
      fo=((cluster-start)/2)*512+pos;
-     if(fo<921654)cardbyte=bmp[fo];
+     if(fo<1555254)cardbyte=bmp[fo];
      // Wrong dimensions and compression are skipped during catalog enumeration.
      if((item==0 || scenario==1) && fo==18)cardbyte=1;
      if(item==4 && fo==30)cardbyte=1;
@@ -107,7 +107,7 @@ module tb_catalog #(parameter QUICK_SELECT=0);
    if(status!=11 || total!=0 || !catalog_valid || count!=0 || ready || wrreq)$fatal(1,"empty catalog handling");
    $display("PASS unsupported BMPs skipped, no valid images, error 11, no writes");
   end else begin
-   wait(count==307200);repeat(5)@(negedge clk);finish=1;wait(ready);#20;
+   wait(count==518400);repeat(5)@(negedge clk);finish=1;wait(ready);#20;
    expected_item=selected==0 ? 1 : selected==1 ? 2 : selected==2 ? 3 : selected==3 ? 5 : 1;
    if((!QUICK_SELECT && total!=(scenario==3 ? 32 : 4)) || dut.first_cluster!=start_cluster(scenario==3 ? 1 : expected_item) || status!=5)$fatal(1,"catalog selection/count total=%d selectedcluster=%d",total,dut.first_cluster);
    expected_name=selected==1 ? "I       bmp" : selected==2 ? "A       BMP" : selected==3 ? "C       BMP" : "H       BMP";

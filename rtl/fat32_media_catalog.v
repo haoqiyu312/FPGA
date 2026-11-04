@@ -2,7 +2,7 @@
 // files in directory order; BMP/RV headers are checked before enabling OPEN.
 // Metadata RAM is only written during scanning. Readers must gate with done.
 module fat32_media_catalog #(
- parameter FRAME_WIDTH=640, FRAME_HEIGHT=480,AUDIO_RATE=48000,
+ parameter FRAME_WIDTH=720, FRAME_HEIGHT=720,AUDIO_RATE=12000,
  parameter WATCHDOG_BITS=28,
  parameter READY_WATCHDOG_BITS=32
 )(

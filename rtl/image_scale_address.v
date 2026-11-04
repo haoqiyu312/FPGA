@@ -1,7 +1,7 @@
 // Fixed-rate nearest-neighbour address mapping: 100%, centered 50%, center-crop
-// 200%. A full 640x480 stream is still consumed, so FIFO/timing stay unchanged.
+// 200%. The full frame stream is still consumed, so FIFO/timing stay unchanged.
 // ack is in the memory domain; settings latch while the FIFO is reset.
-module image_scale_address #(parameter integer WIDTH=640,HEIGHT=480) (
+module image_scale_address #(parameter integer WIDTH=720,HEIGHT=720) (
  input wire clk,rst,ack,read_en,video_mode,
  input wire [1:0] zoom_request,
  input wire [20:0] address,

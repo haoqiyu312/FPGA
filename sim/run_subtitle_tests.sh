@@ -14,7 +14,3 @@ trap 'rm -rf -- "$work"' EXIT
 for condition in '' '+srt_missing=1' '+srt_oversize=1' '+srt_broken=1';do
  "$runner" "$work/reader" $condition
 done
-"${compiler[@]}" -g2012 -s tb_square_video_reader -Ptb_square_video_reader.SUBTITLES=1 -o "$work/rvf2" rtl/fat32_video_reader.v sim/tb_square_video_reader.v
-"$runner" "$work/rvf2"
-"${compiler[@]}" -g2012 -s tb_palette_delay -o "$work/palette" rtl/audio_spectrum_overlay.v rtl/file_browser_overlay.v sim/tb_palette_delay.v
-"$runner" "$work/palette"

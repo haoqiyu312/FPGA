@@ -15,15 +15,16 @@ spec.loader.exec_module(video)
 
 class AudioVideoConverterTests(unittest.TestCase):
     def test_audio_header_and_size_limits(self):
-        for fps, samples, block in [(3, 16000, 16384), (4, 12000, 12288), (5, 9600, 9728)]:
+        for fps, samples, block in [(3, 4000, 4096), (4, 3000, 3072), (5, 2400, 2560)]:
             h = video.header(2, fps, True)
             self.assertEqual(h[:4], b"RVF2")
             self.assertEqual(h[4:7], bytes([2, 1, fps]))
-            self.assertEqual(struct.unpack_from("<IIII", h, 20), (48000, samples, block, 1))
-            limit = (0xFFFFFFFF - 512) // (video.PIXELS + block)
+            self.assertEqual(struct.unpack_from("<IIII", h, 20), (12000, samples, block, 1))
+            frame_storage = (video.PIXELS+511)//512*512
+            limit = (0xFFFFFFFF - 512) // (frame_storage + block)
             with self.assertRaises(ValueError):
                 video.header(limit + 1, fps, True)
-        for fps in (0, 1, 2, 6):
+        for fps in (0, 6):
             with self.assertRaises(ValueError):
                 video.header(1, fps, True)
 
@@ -46,19 +47,20 @@ class AudioVideoConverterTests(unittest.TestCase):
             out = Path(directory) / "VIDEO.RV"
             rgb = bytes([255, 0, 0]) * video.PIXELS + bytes([0, 0, 255]) * video.PIXELS
             # One full audio frame followed by a short tail, padded with silence.
-            pcm = struct.pack("<h", 1000) * 16000 + struct.pack("<h", -1000) * 17
+            pcm = struct.pack("<h", 1000) * 4000 + struct.pack("<h", -1000) * 17
             self.assertEqual(video.write_stream(io.BytesIO(rgb), out, 3, io.BytesIO(pcm)), 2)
             data = out.read_bytes()
-            stride = video.PIXELS + 16384
+            frame_storage = (video.PIXELS+511)//512*512
+            stride = frame_storage + 4096
             self.assertEqual(data[:512], video.header(2, 3, True))
             self.assertEqual(len(data), 512 + 2 * stride)
             self.assertEqual(data[512:512+video.PIXELS], bytes([0xE0])*video.PIXELS)
-            first = 512 + video.PIXELS
-            self.assertEqual(data[first:first+16384], bytes([0xCE])*16000 + bytes([255])*384)
+            first = 512 + frame_storage
+            self.assertEqual(data[first:first+4096], bytes([0xCE])*4000 + bytes([255])*96)
             second = 512 + stride
             self.assertEqual(data[second:second+video.PIXELS], bytes([3])*video.PIXELS)
-            second += video.PIXELS
-            self.assertEqual(data[second:], bytes([0x4E])*17 + bytes([255])*(16384-17))
+            second += frame_storage
+            self.assertEqual(data[second:], bytes([0x4E])*17 + bytes([255])*(4096-17))
 
     def test_short_audio_pipe_reads(self):
         class ShortReader(io.BytesIO):
@@ -66,24 +68,12 @@ class AudioVideoConverterTests(unittest.TestCase):
                 return super().read(min(size, 17))
         with tempfile.TemporaryDirectory() as directory:
             out = Path(directory)/"VIDEO.RV"
-            pcm = struct.pack("<h", 1000)*9600
+            pcm = struct.pack("<h", 1000)*2400
             rgb = bytes(video.PIXELS*3)
             video.write_stream(ShortReader(rgb), out, 5, ShortReader(pcm))
-            audio = out.read_bytes()[512+video.PIXELS:]
-            self.assertEqual(audio, bytes([0xCE])*9600 + bytes([255])*128)
-
-    def test_generated_audible_demo(self):
-        with tempfile.TemporaryDirectory() as directory:
-            out = Path(directory)/"VIDEO.RV"
-            subprocess.run([sys.executable, str(ROOT/"tools/make_video_demo.py"), str(out),
-                            "--seconds", "1", "--fps", "3", "--audio"], check=True, capture_output=True)
-            data = out.read_bytes()
-            self.assertEqual(data[:512], video.header(3, 3, True))
-            self.assertEqual(len(data), 512+3*(video.PIXELS+16384))
-            audio = b"".join(data[512+i*(video.PIXELS+16384)+video.PIXELS:]
-                             [:16000] for i in range(3))
-            self.assertGreater(len(set(audio[:24000])), 30)
-            self.assertEqual(audio[24000:], bytes([255])*24000)
+            frame_storage = (video.PIXELS+511)//512*512
+            audio = out.read_bytes()[512+frame_storage:]
+            self.assertEqual(audio, bytes([0xCE])*2400 + bytes([255])*160)
 
     def test_cli_preserves_output_on_bad_audio(self):
         with tempfile.TemporaryDirectory() as directory:

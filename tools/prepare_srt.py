@@ -52,7 +52,7 @@ def prepare(source, font):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('input', type=Path)
-    parser.add_argument('output', type=Path, help='same ASCII 1–8 character basename as the RV file, e.g. COFFEE.SRT')
+    parser.add_argument('output', type=Path, help='same ASCII 1–8 character basename as the RV file, e.g. SAMPLE.SRT')
     args = parser.parse_args()
     if not re.fullmatch(r'[A-Z0-9_]{1,8}\.SRT', args.output.name):
         parser.error('输出名应为 1–8 个大写英文字母/数字/下划线加 .SRT，与视频短文件名一致')

@@ -1,9 +1,9 @@
-// Registered 640x480 timing. Sync -> back porch -> active -> front porch.
+// Registered parameterized video timing. Sync -> back porch -> active -> front porch.
 // Every output comes from the same sampled counter value; no combinational
 // multi-bit counter decode is exposed to the transmitter.
-module video_timing_640x480 #(
- parameter integer WIDTH=640,HEIGHT=480,HTOTAL=800,VTOTAL=525,
- HSA=96,HBP=48,VSA=2,VBP=33
+module video_timing_registered #(
+ parameter integer WIDTH=720,HEIGHT=720,HTOTAL=940,VTOTAL=768,
+ HSA=20,HBP=100,VSA=8,VBP=20
 ) (
  input wire pixel_clk, input wire rst_n,
  output reg [9:0] pixel_x,pixel_y,

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Convert images to 720x720 RGB24 bottom-up BMP. Requires Pillow.
+"""Convert images to 720x720 RGB24 bottom-up BMP for the OLED player. Requires Pillow.
 Use /usr/bin/python3 on the development machine.
 """
 import argparse
@@ -18,13 +18,15 @@ def convert(source, destination, fit='contain'):
     resample = getattr(Image, 'Resampling', Image).LANCZOS
     with Image.open(source) as im:
         im = ImageOps.exif_transpose(im).convert('RGB')
+        if im.height > im.width:
+            im = im.rotate(-90, expand=True)
         if fit == 'cover':
             result = ImageOps.fit(im, (720, 720), method=resample)
         else:
             result = Image.new('RGB', (720, 720), 'black')
             content = ImageOps.contain(im, (720, 720), method=resample)
             result.paste(content, ((720-content.width)//2, (720-content.height)//2))
-        fd, temporary = tempfile.mkstemp(prefix='.image720-', dir=destination.parent)
+        fd, temporary = tempfile.mkstemp(prefix='.image-oled-', dir=destination.parent)
         os.close(fd)
         try:
             result.save(temporary, format='BMP')
@@ -40,7 +42,7 @@ def main():
     parser.add_argument('--fit', choices=('contain', 'cover'), default='contain')
     args = parser.parse_args()
     convert(args.input, args.output, args.fit)
-    print(f'Wrote 720x720 RGB24 BMP: {args.output}')
+    print(f'Wrote OLED 720x720 RGB24 BMP: {args.output}')
 
 
 if __name__ == '__main__':
