@@ -97,7 +97,8 @@ always @* begin
 end
 always @(posedge mem_clk or posedge rst)
     if(rst)burst_length<=BURST_SIZE;
-    else if(state==S_CHECK_FIFO && into_burst)burst_length<=next_burst;
+    else if(state==S_CHECK_FIFO && into_burst)
+        burst_length<=SAFE_BURSTS ? next_burst : BURST_SIZE;
 wire into_burst;
 assign into_burst = (SAFE_BURSTS ? (next_burst!=0 && rdusedw>=next_burst && ~App_rd_busy) : (((write_len_latch <= (rdusedw + write_cnt))||rdusedw > BURST_SIZE) && ~App_rd_busy));//当rd在突发时不会进入burst
 

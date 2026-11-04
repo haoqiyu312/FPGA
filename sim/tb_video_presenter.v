@@ -4,7 +4,11 @@ module tb_video_presenter;
  reg rst=1,vblank=0,start=0,paused=0,toggle=0,ack=0;
  wire consumed,bank,req,shown;
  integer swaps=0;
- video_frame_presenter #(.PIXEL_HZ(100)) dut(clk,rst,vblank,start,paused,toggle,8'd5,consumed,bank,req,ack,shown,1'b0,);
+ video_frame_presenter #(.PIXEL_HZ(100)) dut(
+  .clk(clk),.rst(rst),.vblank(vblank),.frame_start(start),.paused(paused),
+  .frame_toggle(toggle),.fps(8'd5),.consumed_toggle(consumed),.read_bank(bank),
+  .read_req(req),.read_ack(ack),.show_frame(shown),.audio_busy(1'b0),
+  .timebase_tick(1'b0));
  task blank;
   begin @(negedge clk);vblank=1;@(negedge clk);vblank=0;end
  endtask
