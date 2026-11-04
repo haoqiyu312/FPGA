@@ -1,4 +1,4 @@
-> **SSD1306 OLED＋4×4 矩阵键盘版**：[`TF_MEDIA_OLED.bit`](release/TF_MEDIA_OLED.bit)。支持中文文件菜单、BMP/RV 播放、图片轮播、视频字幕/频谱和底部视频进度条；S8/S12 调整图片缩放，提示短暂显示后隐藏。菜单期间 HDMI 为黑屏。TD 6.2.1 完整布线时序通过；此候选尚未上板验证。工程 `prj/TF_MEDIA_OLED.al`；[接线、按键与验证说明](docs/OLED与矩阵键盘.md)。
+> **SSD1306 OLED＋4×4 矩阵键盘版**：[`TF_MEDIA_OLED.bit`](release/TF_MEDIA_OLED.bit)。支持中文文件菜单、BMP/RV 播放、图片轮播、视频字幕/频谱和底部视频进度条；S8/S12 调整图片缩放，提示短暂显示后隐藏。菜单期间 HDMI 为黑屏。TD 6.2.1 完整布线时序通过；此候选尚未上板验证。视频须转换为 720×720 RVF1/RVF2，带音频 RVF2 使用 12 kHz μ-law，最高 5 fps；转换命令和音频间隙说明见 [OLED 版说明](docs/OLED与矩阵键盘.md)。工程 `prj/TF_MEDIA_OLED.al`。
 
 > 跨设备项目背景与验证状态：[CODEX_CONTEXT.md](CODEX_CONTEXT.md)。
 
