@@ -95,7 +95,7 @@ def main():
     for source,suffix in ((BIT,'.bit'),(TIMING,'.timing'),(AREA,'.area')):
         shutil.copyfile(source,STEM.with_suffix(suffix))
     STEM.with_suffix('.json').write_text(json.dumps(record,ensure_ascii=False,indent=2)+'\n')
-    readme=ROOT/'docs/720黑屏排查与R2候选.md'
+    readme=ROOT/'docs/720方屏使用说明.md'
     with ZipFile(STEM.with_suffix('.zip'),'w',ZIP_DEFLATED) as bundle:
         for suffix in ('.bit','.json','.timing','.area'):
             path=STEM.with_suffix(suffix);bundle.write(path,path.name)

@@ -77,6 +77,12 @@ Thumbs.db
 /release/TF_MEDIA_720_R2.zip
 !/release/TF_MEDIA_720_R2.bit
 
+# Generated build and timing reports
+/release/*.json
+/release/*.timing
+/release/*.area
+/release/*.validation.txt
+
 # Local spectrum/subtitle candidates and TD scratch files
 !/release/TF_MEDIA_720_SRT.bit
 /prj/*_inst.bid
